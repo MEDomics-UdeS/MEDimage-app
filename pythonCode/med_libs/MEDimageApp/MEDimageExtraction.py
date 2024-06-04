@@ -4,15 +4,11 @@ import os
 import pickle
 import pprint
 import shutil
-import sys
 from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
-SUBMODULE_DIR = str(Path(os.path.dirname(os.path.abspath(__file__))).parent.parent / 'submodules' / 'MEDimage')
-sys.path.append(SUBMODULE_DIR)
 
 pp = pprint.PrettyPrinter(indent=4, compact=True, width=40, sort_dicts=False)  # allow pretty print of datatypes in console
 
@@ -364,6 +360,11 @@ class MEDimageExtraction:
                     update_pip = True
                     output_obj["MEDimg"] = MEDimg
                     id_obj["output"] = output_obj
+
+                    # Remove dicom header from MEDimg object as it causes errors in get_3d_view()
+                    # TODO: check if dicom header is needed in the future
+                    id_obj["output"]["MEDimg"].dicomH = None
+
                     self.set_progress(now=8.5/len(self.pipelines))
 
                 # SEGMENTATION
