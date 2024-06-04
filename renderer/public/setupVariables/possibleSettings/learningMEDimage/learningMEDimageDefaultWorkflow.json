@@ -1,0 +1,649 @@
+{
+  "nodes": [
+    {
+      "width": 200,
+      "height": 48,
+      "id": "node_e5cdb6c4-7361-44c6-bcac-040d2b16a887",
+      "type": "Split",
+      "name": "Split",
+      "position": {
+        "x": -207.00000000000009,
+        "y": -126.00000000000003
+      },
+      "data": {
+        "internal": {
+          "name": "Split",
+          "img": "split.png",
+          "type": "split",
+          "results": {
+            "checked": false,
+            "contextChecked": false
+          },
+          "hasRun": false,
+          "settings": {
+            "path_outcome_file": "",
+            "outcome_name": "",
+            "path_save_experiments": "",
+            "method": "all_learn"
+          },
+          "subflowId": "MAIN",
+          "enableView": false
+        },
+        "tooltipBy": "node",
+        "setupParam": {
+          "type": "Split",
+          "classes": "object segmentation view",
+          "nbInput": 0,
+          "nbOutput": 1,
+          "input": [],
+          "output": [
+            "split_data"
+          ],
+          "img": "split.png",
+          "title": "Split",
+          "possibleSettings": {
+            "defaultSettings": {
+              "path_outcome_file": "",
+              "outcome_name": "",
+              "path_save_experiments": "",
+              "method": "all_learn"
+            }
+          }
+        },
+        "enableView": false
+      },
+      "draggable": true,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -207.00000000000009,
+        "y": -126.00000000000003
+      },
+      "dragging": false,
+      "hidden": false
+    },
+    {
+      "width": 200,
+      "height": 48,
+      "id": "node_ff840943-3d00-47a8-9619-3f1757101a3f",
+      "type": "Design",
+      "name": "Design",
+      "position": {
+        "x": -128.06962486059354,
+        "y": -53.83567145403653
+      },
+      "data": {
+        "internal": {
+          "name": "Design",
+          "img": "optimize.png",
+          "type": "design",
+          "results": {
+            "checked": false,
+            "contextChecked": false
+          },
+          "hasRun": false,
+          "settings": {
+            "expName": "",
+            "testSets": [
+              "Random"
+            ],
+            "Random": {
+              "method": "SubSampling",
+              "nSplits": 10,
+              "stratifyInstitutions": false,
+              "testProportion": 0.33,
+              "seed": 54288
+            }
+          },
+          "subflowId": "MAIN",
+          "enableView": false
+        },
+        "tooltipBy": "node",
+        "setupParam": {
+          "type": "Design",
+          "classes": "object segmentation view",
+          "nbInput": 1,
+          "nbOutput": 1,
+          "input": [
+            "split_data"
+          ],
+          "output": [
+            "design_data"
+          ],
+          "img": "optimize.png",
+          "title": "Design",
+          "possibleSettings": {
+            "defaultSettings": {
+              "expName": "",
+              "testSets": [
+                "Random"
+              ],
+              "Random": {
+                "method": "SubSampling",
+                "nSplits": 10,
+                "stratifyInstitutions": false,
+                "testProportion": 0.33,
+                "seed": 54288
+              }
+            }
+          }
+        },
+        "enableView": false
+      },
+      "draggable": true,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -128.06962486059354,
+        "y": -53.83567145403653
+      },
+      "dragging": false,
+      "hidden": false
+    },
+    {
+      "width": 200,
+      "height": 48,
+      "id": "node_0ab4dae3-790e-4669-93f3-937fc30a4358",
+      "type": "Data",
+      "name": "Data",
+      "position": {
+        "x": -45.069624860593535,
+        "y": 23.164328545963485
+      },
+      "data": {
+        "internal": {
+          "name": "Data",
+          "img": "dataset.png",
+          "type": "data",
+          "results": {
+            "checked": false,
+            "contextChecked": false
+          },
+          "hasRun": false,
+          "settings": {
+            "nameType": "Radiomics",
+            "featuresFiles": []
+          },
+          "subflowId": "MAIN",
+          "enableView": false
+        },
+        "tooltipBy": "node",
+        "setupParam": {
+          "type": "Data",
+          "classes": "object segmentation view",
+          "nbInput": 1,
+          "nbOutput": 1,
+          "input": [
+            "design_data"
+          ],
+          "output": [
+            "data"
+          ],
+          "img": "dataset.png",
+          "title": "Data",
+          "possibleSettings": {
+            "defaultSettings": {
+              "nameType": "Radiomics",
+              "featuresFiles": []
+            }
+          }
+        },
+        "enableView": false
+      },
+      "draggable": true,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -45.069624860593535,
+        "y": 23.164328545963485
+      },
+      "dragging": false
+    },
+    {
+      "width": 200,
+      "height": 48,
+      "id": "node_c032e4f4-4c93-40db-8425-1ca1d689ec2c",
+      "type": "Normalization",
+      "name": "Normalization",
+      "position": {
+        "x": 182.93037513940646,
+        "y": 185.1643285459635
+      },
+      "data": {
+        "internal": {
+          "name": "Normalization",
+          "img": "normalize.png",
+          "type": "normalization",
+          "results": {
+            "checked": false,
+            "contextChecked": false
+          },
+          "hasRun": false,
+          "settings": {
+            "method": "combat"
+          },
+          "subflowId": "MAIN",
+          "enableView": false
+        },
+        "tooltipBy": "node",
+        "setupParam": {
+          "type": "Normalization",
+          "classes": "object segmentation view",
+          "nbInput": 1,
+          "nbOutput": 1,
+          "input": [
+            "data",
+            "data",
+            "cleaning_data"
+          ],
+          "output": [
+            "normalization_data"
+          ],
+          "img": "normalize.png",
+          "title": "Normalization",
+          "possibleSettings": {
+            "defaultSettings": {
+              "method": "combat"
+            }
+          }
+        },
+        "enableView": false
+      },
+      "draggable": true,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 182.93037513940646,
+        "y": 185.1643285459635
+      },
+      "dragging": false
+    },
+    {
+      "width": 200,
+      "height": 48,
+      "id": "node_2b3d4d2f-3f2a-4445-8fef-2816c9d24330",
+      "type": "FeatureReduction",
+      "name": "Feature Reduction",
+      "position": {
+        "x": 294.9303751394065,
+        "y": 269.16432854596354
+      },
+      "data": {
+        "internal": {
+          "name": "Feature Reduction",
+          "img": "clear.png",
+          "type": "feature_reduction",
+          "results": {
+            "checked": false,
+            "contextChecked": false
+          },
+          "hasRun": false,
+          "settings": {
+            "method": "FDA",
+            "FDA": {
+              "nSplits": 100,
+              "corrType": "Spearman",
+              "threshStableStart": 0.5,
+              "threshInterCorr": 0.7,
+              "minNfeatStable": 100,
+              "minNfeatInterCorr": 60,
+              "minNfeat": 20,
+              "seed": 54288
+            }
+          },
+          "subflowId": "MAIN",
+          "enableView": false
+        },
+        "tooltipBy": "node",
+        "setupParam": {
+          "type": "FeatureReduction",
+          "classes": "object segmentation view",
+          "nbInput": 1,
+          "nbOutput": 1,
+          "input": [
+            "data",
+            "cleaning_data",
+            "normalization_data"
+          ],
+          "output": [
+            "feature_reduction_data"
+          ],
+          "img": "clear.png",
+          "title": "Feature Reduction",
+          "possibleSettings": {
+            "defaultSettings": {
+              "method": "FDA",
+              "FDA": {
+                "nSplits": 100,
+                "corrType": "Spearman",
+                "threshStableStart": 0.5,
+                "threshInterCorr": 0.7,
+                "minNfeatStable": 100,
+                "minNfeatInterCorr": 60,
+                "minNfeat": 20,
+                "seed": 54288
+              }
+            }
+          }
+        },
+        "enableView": false
+      },
+      "draggable": true,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 294.9303751394065,
+        "y": 269.16432854596354
+      },
+      "dragging": false
+    },
+    {
+      "width": 200,
+      "height": 48,
+      "id": "node_8ee1ae73-de07-46c6-8a9a-97670da959c6",
+      "type": "RadiomicsLearner",
+      "name": "Radiomics learner",
+      "position": {
+        "x": 431.9303751394065,
+        "y": 356.16432854596354
+      },
+      "data": {
+        "internal": {
+          "name": "Radiomics learner",
+          "img": "compare_models.png",
+          "type": "radiomics_learner",
+          "results": {
+            "checked": false,
+            "contextChecked": false
+          },
+          "hasRun": false,
+          "settings": {
+            "model": "XGBoost",
+            "XGBoost": {
+              "varImportanceThreshold": 0.3,
+              "optimalThreshold": 0.5,
+              "nameSave": "xgboost_5perc",
+              "optimizationMetric": "MCC",
+              "method": "pycaret",
+              "seed": 54288
+            }
+          },
+          "subflowId": "MAIN",
+          "enableView": false
+        },
+        "tooltipBy": "node",
+        "setupParam": {
+          "type": "RadiomicsLearner",
+          "classes": "object segmentation view",
+          "nbInput": 1,
+          "nbOutput": 1,
+          "input": [
+            "feature_reduction_data",
+            "cleaning_data",
+            "data",
+            "normalization_data"
+          ],
+          "output": [
+            "radiomics_learner_data"
+          ],
+          "img": "compare_models.png",
+          "title": "Radiomics learner",
+          "possibleSettings": {
+            "defaultSettings": {
+              "model": "XGBoost",
+              "XGBoost": {
+                "varImportanceThreshold": 0.3,
+                "optimalThreshold": 0.5,
+                "nameSave": "xgboost_5perc",
+                "optimizationMetric": "MCC",
+                "method": "pycaret",
+                "seed": 54288
+              }
+            }
+          }
+        },
+        "enableView": false
+      },
+      "draggable": true,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 431.9303751394065,
+        "y": 356.16432854596354
+      },
+      "dragging": false
+    },
+    {
+      "width": 200,
+      "height": 48,
+      "id": "node_001f259f-4024-4936-852e-291907d6975b",
+      "type": "Analyze",
+      "name": "Analyze",
+      "position": {
+        "x": 567.9303751394066,
+        "y": 439.16432854596354
+      },
+      "data": {
+        "internal": {
+          "name": "Analyze",
+          "img": "analyze.png",
+          "type": "analyze",
+          "results": {
+            "checked": false,
+            "contextChecked": false
+          },
+          "hasRun": false,
+          "settings": {
+            "histogram": true,
+            "tree": true,
+            "heatmap": true,
+            "histParams": {
+              "sortOption": "importance"
+            },
+            "heatmapParams": {
+              "metric": "AUC_mean",
+              "extraMetrics": "Sensitivity_mean,Specificity_mean",
+              "pValues": true,
+              "pValuesMethod": "delong",
+              "title": ""
+            }
+          },
+          "subflowId": "MAIN",
+          "enableView": false
+        },
+        "tooltipBy": "node",
+        "setupParam": {
+          "type": "Analyze",
+          "classes": "object segmentation view",
+          "nbInput": 1,
+          "nbOutput": 0,
+          "input": [
+            "radiomics_learner_data"
+          ],
+          "output": [
+            "analyze_data"
+          ],
+          "img": "analyze.png",
+          "title": "Analyze",
+          "possibleSettings": {
+            "defaultSettings": {
+              "histogram": true,
+              "tree": true,
+              "heatmap": true,
+              "histParams": {
+                "sortOption": "importance"
+              },
+              "heatmapParams": {
+                "metric": "AUC_mean",
+                "extraMetrics": "Sensitivity_mean,Specificity_mean",
+                "pValues": true,
+                "pValuesMethod": "delong",
+                "title": ""
+              }
+            }
+          }
+        },
+        "enableView": false
+      },
+      "draggable": true,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 567.9303751394066,
+        "y": 439.16432854596354
+      },
+      "dragging": false
+    },
+    {
+      "width": 200,
+      "height": 48,
+      "id": "node_821c5f04-8eea-4089-a05d-b3812a50bd3f",
+      "type": "Cleaning",
+      "name": "Cleaning",
+      "position": {
+        "x": 82.329710903565,
+        "y": 102.77229219675678
+      },
+      "data": {
+        "internal": {
+          "name": "Cleaning",
+          "img": "clean.png",
+          "type": "cleaning",
+          "results": {
+            "checked": false,
+            "contextChecked": false
+          },
+          "hasRun": false,
+          "settings": {
+            "default": {
+              "feature": {
+                "continuous": {
+                  "missingCutoffps": 0.25,
+                  "covCutoff": 0.1,
+                  "missingCutoffpf": 0.1,
+                  "imputation": "mean"
+                }
+              }
+            }
+          },
+          "subflowId": "MAIN",
+          "enableView": false
+        },
+        "tooltipBy": "node",
+        "setupParam": {
+          "type": "Cleaning",
+          "classes": "object segmentation view",
+          "nbInput": 1,
+          "nbOutput": 1,
+          "input": [
+            "data"
+          ],
+          "output": [
+            "cleaning_data"
+          ],
+          "img": "clean.png",
+          "title": "Cleaning",
+          "possibleSettings": {
+            "defaultSettings": {
+              "default": {
+                "feature": {
+                  "continuous": {
+                    "missingCutoffps": 0.25,
+                    "covCutoff": 0.1,
+                    "missingCutoffpf": 0.1,
+                    "imputation": "mean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "enableView": false
+      },
+      "draggable": true,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 82.329710903565,
+        "y": 102.77229219675678
+      },
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "node_e5cdb6c4-7361-44c6-bcac-040d2b16a887",
+      "sourceHandle": "0_node_e5cdb6c4-7361-44c6-bcac-040d2b16a887",
+      "target": "node_ff840943-3d00-47a8-9619-3f1757101a3f",
+      "targetHandle": "0_node_ff840943-3d00-47a8-9619-3f1757101a3f",
+      "id": "reactflow__edge-node_e5cdb6c4-7361-44c6-bcac-040d2b16a8870_node_e5cdb6c4-7361-44c6-bcac-040d2b16a887-node_ff840943-3d00-47a8-9619-3f1757101a3f0_node_ff840943-3d00-47a8-9619-3f1757101a3f",
+      "data": {
+        "hasRun": false
+      },
+      "className": ""
+    },
+    {
+      "source": "node_ff840943-3d00-47a8-9619-3f1757101a3f",
+      "sourceHandle": "0_node_ff840943-3d00-47a8-9619-3f1757101a3f",
+      "target": "node_0ab4dae3-790e-4669-93f3-937fc30a4358",
+      "targetHandle": "0_node_0ab4dae3-790e-4669-93f3-937fc30a4358",
+      "id": "reactflow__edge-node_ff840943-3d00-47a8-9619-3f1757101a3f0_node_ff840943-3d00-47a8-9619-3f1757101a3f-node_0ab4dae3-790e-4669-93f3-937fc30a43580_node_0ab4dae3-790e-4669-93f3-937fc30a4358",
+      "data": {
+        "hasRun": false
+      },
+      "className": ""
+    },
+    {
+      "source": "node_0ab4dae3-790e-4669-93f3-937fc30a4358",
+      "sourceHandle": "0_node_0ab4dae3-790e-4669-93f3-937fc30a4358",
+      "target": "node_821c5f04-8eea-4089-a05d-b3812a50bd3f",
+      "targetHandle": "0_node_821c5f04-8eea-4089-a05d-b3812a50bd3f",
+      "id": "reactflow__edge-node_0ab4dae3-790e-4669-93f3-937fc30a43580_node_0ab4dae3-790e-4669-93f3-937fc30a4358-node_821c5f04-8eea-4089-a05d-b3812a50bd3f0_node_821c5f04-8eea-4089-a05d-b3812a50bd3f",
+      "data": {
+        "hasRun": false
+      },
+      "className": ""
+    },
+    {
+      "source": "node_821c5f04-8eea-4089-a05d-b3812a50bd3f",
+      "sourceHandle": "0_node_821c5f04-8eea-4089-a05d-b3812a50bd3f",
+      "target": "node_c032e4f4-4c93-40db-8425-1ca1d689ec2c",
+      "targetHandle": "0_node_c032e4f4-4c93-40db-8425-1ca1d689ec2c",
+      "id": "reactflow__edge-node_821c5f04-8eea-4089-a05d-b3812a50bd3f0_node_821c5f04-8eea-4089-a05d-b3812a50bd3f-node_c032e4f4-4c93-40db-8425-1ca1d689ec2c0_node_c032e4f4-4c93-40db-8425-1ca1d689ec2c",
+      "data": {
+        "hasRun": false
+      },
+      "className": ""
+    },
+    {
+      "source": "node_c032e4f4-4c93-40db-8425-1ca1d689ec2c",
+      "sourceHandle": "0_node_c032e4f4-4c93-40db-8425-1ca1d689ec2c",
+      "target": "node_2b3d4d2f-3f2a-4445-8fef-2816c9d24330",
+      "targetHandle": "0_node_2b3d4d2f-3f2a-4445-8fef-2816c9d24330",
+      "id": "reactflow__edge-node_c032e4f4-4c93-40db-8425-1ca1d689ec2c0_node_c032e4f4-4c93-40db-8425-1ca1d689ec2c-node_2b3d4d2f-3f2a-4445-8fef-2816c9d243300_node_2b3d4d2f-3f2a-4445-8fef-2816c9d24330",
+      "data": {
+        "hasRun": false
+      },
+      "className": ""
+    },
+    {
+      "source": "node_2b3d4d2f-3f2a-4445-8fef-2816c9d24330",
+      "sourceHandle": "0_node_2b3d4d2f-3f2a-4445-8fef-2816c9d24330",
+      "target": "node_8ee1ae73-de07-46c6-8a9a-97670da959c6",
+      "targetHandle": "0_node_8ee1ae73-de07-46c6-8a9a-97670da959c6",
+      "id": "reactflow__edge-node_2b3d4d2f-3f2a-4445-8fef-2816c9d243300_node_2b3d4d2f-3f2a-4445-8fef-2816c9d24330-node_8ee1ae73-de07-46c6-8a9a-97670da959c60_node_8ee1ae73-de07-46c6-8a9a-97670da959c6",
+      "data": {
+        "hasRun": false
+      },
+      "className": ""
+    },
+    {
+      "source": "node_8ee1ae73-de07-46c6-8a9a-97670da959c6",
+      "sourceHandle": "0_node_8ee1ae73-de07-46c6-8a9a-97670da959c6",
+      "target": "node_001f259f-4024-4936-852e-291907d6975b",
+      "targetHandle": "0_node_001f259f-4024-4936-852e-291907d6975b",
+      "id": "reactflow__edge-node_8ee1ae73-de07-46c6-8a9a-97670da959c60_node_8ee1ae73-de07-46c6-8a9a-97670da959c6-node_001f259f-4024-4936-852e-291907d6975b0_node_001f259f-4024-4936-852e-291907d6975b",
+      "data": {
+        "hasRun": false
+      },
+      "className": ""
+    }
+  ],
+  "viewport": {
+    "x": 247.13578820439622,
+    "y": 260.3053937559004,
+    "zoom": 0.9700533491384525
+  }
+}
