@@ -19,15 +19,20 @@ const SegmentationNode = ({ id, data, type }) => {
   const [selectedRois, setSelectedRois] = useState(data.internal.settings.rois) // Hook to keep track of the selected ROIs
   const { updateNode } = useContext(FlowFunctionsContext)
 
+  /**
+   *
+   */
   // Hook called when the rois data of the node is changed, initializes the new selected rois
   useEffect(() => {
     let newSelectedRois = {}
-    if (data.internal.settings.rois && Object.keys(data.internal.settings.rois).length > 0) {
+    if (data.internal.settings.rois && Object.keys(data.internal.settings.rois).length > 0 && Object.keys(data.internal.settings.selected_rois).length === 0) {
       for (const roiNumber in data.internal.settings.rois) {
         newSelectedRois[data.internal.settings.rois[roiNumber]] = "2"
       }
+      setSelectedRois(newSelectedRois)
+    } else {
+      setSelectedRois(data.internal.settings.selected_rois)
     }
-    setSelectedRois(newSelectedRois)
   }, [data.internal.settings.rois])
 
   // Hook called whenever selectedRois changes, updates the ROIs selection and warnings
@@ -108,6 +113,9 @@ const SegmentationNode = ({ id, data, type }) => {
     console.log("The ROIs currently selected are : ", roisString)
     // Add the ROI list to the node's data
     data.internal.settings["rois_data"] = roisString
+    // Add the selected ROIs to the node's data
+    data.internal.settings["selected_rois"] = selectedRois
+
     // And set changeView to true to update the view
     updateNode({
       id: id,
