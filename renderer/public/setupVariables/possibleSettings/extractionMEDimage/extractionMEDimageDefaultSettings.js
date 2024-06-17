@@ -5,7 +5,8 @@ const extractionDefaultSettings = {
   },
   segmentation: {
     rois_data: "",
-    rois: {}
+    rois: {},
+    selected_rois: {}
   },
   interpolation: {
     scale_non_text: [2, 2, 2],

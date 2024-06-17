@@ -131,21 +131,30 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
         (nodes.find((node) => node.id === edge.source).data.internal.type === "input" && nodes.find((node) => node.id === edge.target).data.internal.type === "segmentation") ||
         (nodes.find((node) => node.id === edge.source).data.internal.type === "segmentation" && nodes.find((node) => node.id === edge.target).data.internal.type === "inputNode")
     )
+
     nodes.forEach((node) => {
-      if (node.data.internal.type === "segmentation" && inputSegmentationConnections.some((connection) => connection.target === node.id)) {
-        let inputNode = nodes.find((node) => node.data.internal.type === "input")
-        if (inputNode) {
-          let inputROIs = inputNode.data.internal.settings.rois
-          node.data.internal.settings.rois = inputROIs
-          setNodes((prevNodes) =>
-            prevNodes.map((n) => {
-              if (n.id === node.id) {
-                return node
-              }
-              return n
-            })
-          )
+      if (node.data.internal.type === "segmentation") {
+        // If the node is a segmentation node and it is connected to an input node, update the ROIs
+        if (inputSegmentationConnections.some((connection) => connection.target === node.id)) {
+          let inputNode = nodes.find((node) => node.data.internal.type === "input")
+          if (inputNode) {
+            let inputROIs = inputNode.data.internal.settings.rois
+            node.data.internal.settings.rois = inputROIs
+          }
+        } else {
+          // If the node is a segmentation node and it is not connected to an input node, reset ROIs
+          if (Object.keys(node.data.internal.settings.rois).length > 0) {
+            node.data.internal.settings.rois = {}
+            node.data.internal.settings.rois_data = ""
+            node.data.internal.settings.selected_rois = {}
+          }
         }
+
+        // Update the node
+        updateNode({
+          id: node.id,
+          updatedData: node.data.internal
+        })
       }
     })
 
@@ -164,7 +173,6 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
   }, [edges])
 
   useEffect(() => {
-    console.log("UPDATEDING SEGMENTATION INPUT")
     // Check if there are any connections between an input and segmentation node
     const inputSegmentationConnections = edges.filter(
       (edge) =>
