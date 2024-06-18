@@ -55,7 +55,7 @@ const SegmentationNode = ({ id, data, type }) => {
   const handleRadioChange = useCallback(
     (event, currentRoi) => {
       try {
-        if (event.target.value === "1") {
+        if (event.target.value === "1" || event.target.value === "2") {
           let tempSelectedRois = { ...selectedRois }
           delete tempSelectedRois[currentRoi]
 
