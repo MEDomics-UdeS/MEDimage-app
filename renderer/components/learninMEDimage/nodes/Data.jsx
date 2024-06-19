@@ -5,6 +5,7 @@ import { Col, Form, Row } from "react-bootstrap";
 import Card from 'react-bootstrap/Card';
 import Node from "../../flow/node";
 import { updateHasWarning } from "../../flow/node";
+import { ScrollPanel } from 'primereact/scrollpanel';
 
 
 /**
@@ -23,6 +24,7 @@ const Data = ({ id, data, type }) => {
 
   const handleSaveFolderChange = (event) => {
     const fs = require('fs');
+    let featureList = []
     var fileList = event.target.files
     if (fileList.length > 0) {
       fileList = fileList[0].path
@@ -47,9 +49,10 @@ const Data = ({ id, data, type }) => {
     for (const i in files){
       console.log(files[i])
       if (files[i].endsWith(".csv")){
-        featuresFiles.push(files[i])
+        featureList.push(files[i])
       }
     }
+    setFeaturesFiles(featureList)
     updateHasWarning(data);
     setReload(!reload);
   };
@@ -120,24 +123,26 @@ const Data = ({ id, data, type }) => {
                       Select Features Files
               </Form.Label>
               <Card style={{ position: "relative" }}>
-              {featuresFiles.map((file) => (
-                <div key={file} style={{display: 'flex', justifyContent:'flex-start'}}>
-                <Checkbox
-                  onChange={(event) => {
-                    // check if the file is already in the list if yes remove it
-                    if (data.internal.settings.featuresFiles.includes(file)) {
-                      data.internal.settings.featuresFiles.splice(data.internal.settings.featuresFiles.indexOf(file), 1);
-                    } else {
-                      data.internal.settings.featuresFiles.push(file);
-                    }
-                    updateHasWarning(data);
-                    setReload(!reload);
-                  }}
-                  checked={data.internal.settings.featuresFiles.includes(file)}
-                />
-                <label htmlFor={file} className="ml-2">{file}</label>
-                </div>
-              ))}
+                <ScrollPanel style={{height: '200px' }}>
+                  {featuresFiles.map((file) => (
+                    <div key={file} style={{display: 'flex', justifyContent:'flex-start'}}>
+                    <Checkbox
+                      onChange={(event) => {
+                        // check if the file is already in the list if yes remove it
+                        if (data.internal.settings.featuresFiles.includes(file)) {
+                          data.internal.settings.featuresFiles.splice(data.internal.settings.featuresFiles.indexOf(file), 1);
+                        } else {
+                          data.internal.settings.featuresFiles.push(file);
+                        }
+                        updateHasWarning(data);
+                        setReload(!reload);
+                      }}
+                      checked={data.internal.settings.featuresFiles.includes(file)}
+                    />
+                    <label htmlFor={file} className="ml-2">{file}</label>
+                    </div>
+                  ))}
+                </ScrollPanel>
               </Card>
             </Form.Group>
             )}
