@@ -52,7 +52,14 @@ const InputForm = ({ nodeForm, changeNodeForm, enableView }) => {
       const fullPath = selectedFile.webkitRelativePath;
 
       // Split the full path to get the directory parts
-      const mainFolder = fullPath.split("/")[0];
+      let mainFolder = ""
+      if (fullPath.indexOf("\\") >= 0) {
+        mainFolder = fullPath.split("\\")[0];
+      } else if (fullPath.indexOf("/") >= 0) {
+        mainFolder = fullPath.split("/")[0];
+      } else {
+        mainFolder = fullPath.split("/")[0];
+      }
       const idxMainFolder = filePath.indexOf(mainFolder);
 
       let selectedImageFolder = filePath.slice(0, idxMainFolder + mainFolder.length)
