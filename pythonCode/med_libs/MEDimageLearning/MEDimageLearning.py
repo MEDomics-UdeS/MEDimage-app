@@ -21,7 +21,17 @@ class MEDimageLearning:
         self.json_config = json_config
         self._progress = {'currentLabel': '', 'now': 0.0}
     
-    def __round_dict(self, dict, decimals):
+    def __round_dict(self, dict: dict, decimals: int) -> dict:
+        """
+        Rounds all the values of a dictionary to a given number of decimals
+
+        Args:
+            dict (dict): Dictionary to round
+            decimals (int): Number of decimals to round to
+            
+        Returns:
+            dict: Dictionary with rounded values
+        """
         for key, value in dict.items():
             if (type(value) is list):
                 dict[key] = [round(x, decimals) for x in value]
