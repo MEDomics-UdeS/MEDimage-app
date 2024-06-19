@@ -339,69 +339,21 @@ class MEDimageExtraction:
                 # ------------------------------------------ HOME ------------------------------------------
                 # INPUT
                 if (content["name"] == "input"):
+                    # Update progress
                     self.set_progress(now=0.0, label=f"Pip {idx_pip + 1} | Loading input")
-                    print("\n********INPUT execution********")
+                    
+                    scan_res, filename_loaded, MEDimg = self.run_input(filename_loaded, pip, im_params, content, id_obj, output_obj)
 
-                    # If new input computed
-                    if (filename_loaded != content["data"]["filepath"]):
-                        scan_res = {}
-                        filename_loaded = content["data"]["filepath"]
-
-                    # Load MEDscan instance from file
-                    with open(UPLOAD_FOLDER / filename_loaded, 'rb') as f:
-                        MEDimg = pickle.load(f)
-                        MEDimg = MEDimage.MEDscan(MEDimg)
-
-                    scan_type = MEDimg.type
-                    im_params = self.__update_pip_settings(pip, im_params, scan_type)
-                    MEDimage.MEDscan.init_params(MEDimg, im_params)
-
-                    # Update output infos for RUNS
-                    update_pip = True
-                    output_obj["MEDimg"] = MEDimg
-                    id_obj["output"] = output_obj
-
-                    # Remove dicom header from MEDimg object as it causes errors in get_3d_view()
-                    # TODO: check if dicom header is needed in the future
-                    id_obj["output"]["MEDimg"].dicomH = None
-
+                    # Update progress
                     self.set_progress(now=8.5/len(self.pipelines))
 
                 # SEGMENTATION
                 elif (content["name"] == "segmentation"):
-                    print("\n********SEGMENTATION execution********")
-                    
                     # Update progress
                     self.set_progress(now=8.5/len(self.pipelines), label=f"Pip {idx_pip + 1} | Segmentation")
-
-                    # Get ROI (region of interest)
-                    # Safety check
-                    if not content["data"]["rois_data"]:
-                        return {"error": "ERROR on segmentation. No ROI name provided."}
-
-                    vol_obj_init, roi_obj_init = MEDimage.processing.get_roi_from_indexes(
-                        MEDimg,
-                        name_roi=content["data"]["rois_data"],
-                        # retrieve name_roi from segmentation rois_data. pip[0] match the input id of current pip.
-                        box_string="full"
-                    )
-
-                    # ADDED CODE FRAGMENT FOR TEXTURE FEATURES
-                    # If there are some texture features to compute later, keep initial version of vol_obj_init
-                    # and roi_obj_init
-                    if flag_texture:
-                        vol_obj_init_texture = copy.deepcopy(vol_obj_init)
-                        roi_obj_init_texture = copy.deepcopy(roi_obj_init)
-
-                    # Update output infos
-                    update_pip = True
-                    output_obj["vol"] = vol_obj_init
-                    output_obj["roi"] = roi_obj_init
-                    id_obj["output"] = output_obj
-
-                    # Update settings infos pour json response
-                    settings_res[content["name"]] = content["data"]
-
+                    
+                    vol_obj_init_texture,roi_obj_init_texture, update_pip, output_obj, id_obj, settings_res = self.run_segmentation(MEDimg, content, id_obj, output_obj, settings_res)
+                    
                     # Update progress
                     self.set_progress(now=17.0/len(self.pipelines))
 
@@ -411,38 +363,7 @@ class MEDimageExtraction:
                     # Update progress
                     self.set_progress(now=17.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Interpolation")
 
-                    # Intensity Mask
-                    vol_obj = MEDimage.processing.interp_volume(
-                        vol_obj_s=last_vol_compute,  # vol_obj_init,
-                        medscan=MEDimg,
-                        vox_dim=MEDimg.params.process.scale_non_text,
-                        interp_met=MEDimg.params.process.vol_interp,
-                        round_val=MEDimg.params.process.gl_round,
-                        image_type='image',
-                        roi_obj_s=last_roi_compute,  # roi_obj_init
-                        box_string="full"
-                    )
-                    # Morphological Mask
-                    roi_obj_morph = MEDimage.processing.interp_volume(
-                        vol_obj_s=last_roi_compute,  # roi_obj_init,
-                        medscan=MEDimg,
-                        vox_dim=MEDimg.params.process.scale_non_text,
-                        interp_met=MEDimg.params.process.roi_interp,
-                        round_val=MEDimg.params.process.roi_pv,
-                        image_type='roi',
-                        roi_obj_s=last_roi_compute,  # roi_obj_init
-                        box_string="full"
-                    )
-
-                    # Update output infos
-                    update_pip = True
-                    output_obj["vol"] = vol_obj
-                    output_obj["roi"] = roi_obj_morph
-                    output_obj["roi_morph"] = roi_obj_morph
-                    id_obj["output"] = output_obj
-
-                    # Update settings infos pour json response
-                    settings_res[content["name"]] = content["data"]
+                    update_pip, output_obj, id_obj, settings_res = self.run_interpolation(last_vol_compute, MEDimg, last_roi_compute, output_obj, id_obj, settings_res, content)
 
                     # Update progress
                     self.set_progress(now=25.5/len(self.pipelines))
@@ -452,18 +373,7 @@ class MEDimageExtraction:
                     # Update progress
                     self.set_progress(now=25.5/len(self.pipelines), label=f"Pip {idx_pip + 1} | Filtering")
 
-                    # Apply filter to the imaging volume
-                    MEDimg.params.filter.filter_type = content["data"]["filter_type"] 
-                    vol_obj_filter = MEDimage.filters.apply_filter(MEDimg, last_vol_compute)  # vol_obj_init
-
-                    # Update output infos
-                    update_pip = True
-                    output_obj["vol"] = vol_obj_filter
-                    output_obj["roi"] = "empty"
-                    id_obj["output"] = output_obj
-                    
-                    # Update settings infos pour json response
-                    settings_res[content["name"]] = content["data"]
+                    MEDimg, update_pip, output_obj, id_obj, settings_res = self.run_filter(MEDimg, content, last_vol_compute, output_obj, id_obj, settings_res)
 
                     # Update progress
                     self.set_progress(now=35/len(self.pipelines))
@@ -473,37 +383,7 @@ class MEDimageExtraction:
                     # Update progress
                     self.set_progress(now=35/len(self.pipelines), label=f"Pip {idx_pip + 1} | Re-segmentation")
 
-                    # Intensity mask range re-segmentation
-                    roi_obj_int = deepcopy(last_roi_compute)  # roi_obj_morph
-                    roi_obj_int.data = MEDimage.processing.range_re_seg(
-                        vol=last_vol_compute.data,  # vol_obj
-                        roi=roi_obj_int.data,
-                        im_range=MEDimg.params.process.im_range
-                    )
-
-                    # Intensity mask outlier re-segmentation
-                    roi_obj_int.data = np.logical_and(
-                        MEDimage.processing.outlier_re_seg(
-                            vol=last_vol_compute.data,  # vol_obj
-                            roi=roi_obj_int.data,
-                            outliers=MEDimg.params.process.outliers
-                        ),
-                        roi_obj_int.data
-                    ).astype(int)
-
-                    # Update output infos
-                    update_pip = True
-                    output_obj["vol"] = "empty"
-                    output_obj["roi"] = roi_obj_int
-                    id_obj["output"] = output_obj
-
-                    # Update settings infos pour json response
-                    # If re-segmentation is not serialized, change inf to string
-                    if np.isinf(MEDimg.params.process.im_range[1]):
-                        content["data"]['range'][1] = "inf"
-                    if np.isinf(MEDimg.params.process.im_range[0]):
-                        content["data"]['range'][0] = "inf"
-                    settings_res[content["name"]] = content["data"]
+                    update_pip, output_obj, id_obj, settings_res = self.run_reseg(last_roi_compute, last_vol_compute, MEDimg, content, output_obj, id_obj, settings_res)
 
                     # Update progress
                     self.set_progress(now=42.5/len(self.pipelines))
@@ -513,17 +393,7 @@ class MEDimageExtraction:
                     # Update progress
                     self.set_progress(now=42.5/len(self.pipelines), label=f"Pip {idx_pip + 1} | ROI extraction")
 
-                    # ROI Extraction :
-                    vol_int_re = MEDimage.processing.roi_extract(
-                        vol=last_vol_compute.data,  # vol_obj
-                        roi=last_roi_compute.data  # roi_obj_int
-                    )
-
-                    # Update output infos
-                    update_pip = True
-                    output_obj["vol"] = vol_int_re
-                    output_obj["roi"] = "empty"
-                    id_obj["output"] = output_obj
+                    vol_int_re, update_pip, output_obj, id_obj = self.run_roiextract(last_vol_compute, last_roi_compute, output_obj, id_obj)
 
                     # Update progress
                     self.set_progress(now=50/len(self.pipelines))
@@ -533,28 +403,7 @@ class MEDimageExtraction:
                     # Update progress
                     self.set_progress(now=50/len(self.pipelines), label=f"Pip {idx_pip + 1} | Discretization")
 
-                    # Intensity histogram equalization of the imaging volume
-                    if MEDimg.params.process.ivh and 'type' in MEDimg.params.process.ivh and 'val' in MEDimg.params.process.ivh:
-                        if MEDimg.params.process.ivh['type'] and MEDimg.params.process.ivh['val']:
-                            vol_quant_re, wd = MEDimage.processing.discretize(
-                                vol_re=last_vol_compute,  # vol_int_re
-                                discr_type=MEDimg.params.process.ivh['type'],
-                                n_q=MEDimg.params.process.ivh['val'],
-                                user_set_min_val=MEDimg.params.process.user_set_min_value,
-                                ivh=True
-                            )
-                    else:
-                        vol_quant_re = last_vol_compute
-                        wd = 1
-
-                    # Update output infos
-                    update_pip = True
-                    output_obj["vol"] = vol_quant_re  # temp : to change after new implementation of discretization node
-                    output_obj["roi"] = "empty"
-                    id_obj["output"] = output_obj
-
-                    # Update settings infos for json response
-                    settings_res[content["name"]] = content["data"]
+                    wd, update_pip, output_obj, id_obj, settings_res = self.run_discretization(MEDimg, last_vol_compute, output_obj, id_obj, settings_res, content)
 
                     # Update progress
                     self.set_progress(now=60.0/len(self.pipelines))
@@ -564,564 +413,20 @@ class MEDimageExtraction:
                     # Update progress
                     self.set_progress(now=60.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Extraction")
 
-                    # Preparation of computation :
-                    MEDimg.init_ntf_calculation(last_vol_compute)  # vol_obj
-
-                    # ----------------- CODE FRAGMENT ADDED FOR TEXTURE FEATURES -----------------------------------------
-                    # THIS IS A PATCH : we prepare texture feature for extraction AS IF all the nodes are placed correctly
-                    # the pipeline.
-                    if flag_texture:
-                        # TODO : Verifier si on doit bien mettre zero pour scale_text!
-                        # Interpolation
-                        # Intensity Mask
-                        vol_obj_texture = MEDimage.processing.interp_volume(
-                            vol_obj_s=vol_obj_init_texture,
-                            vox_dim=MEDimg.params.process.scale_text[0],
-                            interp_met=MEDimg.params.process.vol_interp,
-                            round_val=MEDimg.params.process.gl_round,
-                            image_type='image',
-                            roi_obj_s=roi_obj_init_texture,
-                            box_string=MEDimg.params.process.box_string
-                        )
-                        # Morphological Mask
-                        roi_obj_morph_texture = MEDimage.processing.interp_volume(
-                            vol_obj_s=roi_obj_init_texture,
-                            vox_dim=MEDimg.params.process.scale_text[0],
-                            interp_met=MEDimg.params.process.roi_interp,
-                            round_val=MEDimg.params.process.roi_pv,
-                            image_type='roi',
-                            roi_obj_s=roi_obj_init_texture,
-                            box_string=MEDimg.params.process.box_string
-                        )
-
-                        # update progress
-                        self.set_progress(now=65.0/len(self.pipelines))
-
-                        # Re-segmentation
-                        # Intensity mask range re-segmentation
-                        roi_obj_int_texture = deepcopy(roi_obj_morph_texture)
-                        roi_obj_int_texture.data = MEDimage.processing.range_re_seg(
-                            vol=vol_obj_texture.data,
-                            roi=roi_obj_int_texture.data,
-                            im_range=MEDimg.params.process.im_range
-                        )
-                        # Intensity mask outlier re-segmentation
-                        roi_obj_int_texture.data = np.logical_and(
-                            MEDimage.processing.outlier_re_seg(
-                                vol=vol_obj_texture.data,
-                                roi=roi_obj_int_texture.data,
-                                outliers=MEDimg.params.process.outliers
-                            ),
-                            roi_obj_int_texture.data
-                        ).astype(int)
-
-                        # Image filtering
-                        if MEDimg.params.filter.filter_type:
-                            vol_obj_texture = MEDimage.filters.apply_filter(MEDimg, vol_obj_texture)
-
-                        a = 0
-                        n = 0
-                        s = 0
-
-                        # Preparation of computation :
-                        MEDimg.init_tf_calculation(
-                            algo=a,
-                            gl=n,
-                            scale=s)
-
-                        # ROI Extraction :
-                        vol_int_re_texture = MEDimage.processing.roi_extract(
-                            vol=vol_obj_texture.data,
-                            roi=roi_obj_int_texture.data)
-
-                        # Discretisation :
-                        vol_quant_re_texture, _texture = MEDimage.processing.discretize(
-                            vol_re=vol_int_re_texture,
-                            discr_type=MEDimg.params.process.algo[a],
-                            n_q=MEDimg.params.process.gray_levels[a][n],
-                            user_set_min_val=MEDimg.params.process.user_set_min_value
-                        )
-
-                        # Update progress
-                        self.set_progress(now=70.0/len(self.pipelines))
-
-                    # update progress
-                    self.set_progress(now=70.0/len(self.pipelines))
-                        
-                    # Get IDs of nodes contained into feature node and extract all features selected in node
-                    features_id = self.__get_features_list(content)
-                    features_id = self.__sort_features_categories(features_id)
-                    for id in features_id:
-                        feature_content = get_node_content(id, self.json_config)
-                        feature_name = feature_content["name"]
-
-                        # Get list of all features to extract
-                        features_to_extract = feature_content["data"]["features"]
-                        # Initialize features to put in dictionnary
-                        features = None
-
-                        # ---------------------------------- NON TEXTURE FEATURES -----------------------------------------
-                        # MORPH
-                        if feature_name == "morph":
-
-                            nodes_allowed = ["interpolation", "re_segmentation", "filter_processing"]
-                            if self.__min_node_required(pip_obj, nodes_allowed):
-                                last_feat_vol = self.__get_last_output_from_pip(pip_obj, "vol", nodes_allowed)
-                                last_feat_roi = self.__get_last_output_from_pip(pip_obj, "roi", nodes_allowed)
-                            else:
-                                error = "ERROR on " + feature_content["name"] + \
-                                    " extraction. Minimum one node required from this list :", nodes_allowed
-                                return error
-
-                            # Morphological features extraction
-                            try:
-                                # update progress
-                                self.set_progress(now=70.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Morphological features extraction")
-
-                                # Create an empty list to store the keys that match the condition
-                                roi_morph = []
-
-                                # Iterate through the outer dictionary items
-                                for key, inner_dict in pip_obj.items():
-                                    if 'type' in inner_dict and inner_dict['type'] == 'interpolation':
-                                        # Append the key to the list if the condition is met
-                                        roi_morph = inner_dict['output']['roi_morph']
-                                
-                                
-                                # If all features need to be extracted
-                                if features_to_extract[0] == "extract_all":
-                                    features = MEDimage.biomarkers.morph.extract_all(
-                                        vol=last_feat_vol.data,  # vol_obj.data
-                                        mask_int=last_feat_roi.data,  # roi_obj_morph.data,
-                                        mask_morph=roi_morph.data,  # roi_obj_morph.data,
-                                        res=MEDimg.params.process.scale_non_text,
-                                        intensity_type=MEDimg.params.process.intensity_type
-                                    )
-
-                                    # update progress
-                                    self.set_progress(now=72.0/len(self.pipelines))
-
-                                else:
-                                    # If only some features need to be extracted, use the name of the feature to build
-                                    # extraction code (executed dynamically using exec()).
-                                    features = {}
-                                    for i in range(len(features_to_extract)):
-                                        # TODO : Would a for loop be more efficient than calling exec for each feature?
-                                        function_name = "MEDimage.biomarkers.morph." + str(features_to_extract[i])
-                                        function_params = "vol=last_feat_vol.data, mask_int=last_feat_roi.data, " \
-                                                        "mask_morph=last_feat_roi.data, res=MEDimg.params.process.scale_non_text"
-                                        function_call = "result = " + function_name + "(" + function_params + ")"
-                                        local_vars = {}
-                                        global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol,
-                                                    "last_feat_roi": last_feat_roi, "MEDimg": MEDimg}
-                                        exec(function_call, global_vars, local_vars)
-
-                                        feature_name_convention = "F" + feature_name + "_" + str(features_to_extract[i])
-                                        features[feature_name_convention] = local_vars.get("result")
-
-                            except Exception as e:
-                                return {"error": f"PROBLEM WITH COMPUTATION OF MORPHOLOGICAL FEATURES {str(e)}"}
-
-                        # LOCAL INTENSITY
-                        elif feature_name == "local_intensity":
-                            nodes_allowed = ["interpolation", "re_segmentation", "filter_processing"]
-                            if self.__min_node_required(pip_obj, nodes_allowed):
-                                last_feat_vol = self.__get_last_output_from_pip(pip_obj, "vol", nodes_allowed)
-                                last_feat_roi = self.__get_last_output_from_pip(pip_obj, "roi", nodes_allowed)
-                            else:
-                                print("ERROR on " + feature_content["name"],
-                                      " extraction. Minimum one node required from this list :", nodes_allowed)
-
-                            # Local intensity features extraction
-                            try:
-                                # update progress
-                                self.set_progress(now=72.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Local intensity features extraction")
-
-                                # If all features need to be extracted
-                                if features_to_extract[0] == "extract_all":
-                                    features = MEDimage.biomarkers.local_intensity.extract_all(
-                                        img_obj=last_feat_vol.data,  # vol_obj
-                                        roi_obj=last_feat_roi.data,  # roi_obj_int
-                                        res=MEDimg.params.process.scale_non_text,
-                                        intensity_type=MEDimg.params.process.intensity_type
-                                        # TODO: missing parameter that is automatically set to false
-                                    )
-                                else:
-                                    # If only some features need to be extracted, use the name of the feature to build
-                                    # extraction code (executed dynamically using exec()).
-                                    features = {}
-                                    for i in range(len(features_to_extract)):
-                                        function_name = "MEDimage.biomarkers.local_intensity." + str(features_to_extract[i])
-                                        function_params = "img_obj=last_feat_vol.data, roi_obj=last_feat_roi.data, " \
-                                                        "res=MEDimg.params.process.scale_non_text "
-                                        function_call = "result = " + function_name + "(" + function_params + ")"
-                                        local_vars = {}
-                                        global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol,
-                                                    "last_feat_roi": last_feat_roi, "MEDimg": MEDimg}
-                                        exec(function_call, global_vars, local_vars)
-
-                                        feature_name_convention = "Floc_" + str(features_to_extract[i])
-                                        features[feature_name_convention] = local_vars.get("result")
-                                
-                                # update progress
-                                self.set_progress(now=74.0/len(self.pipelines))
-                            except Exception as e:
-                                return {"error": f"PROBLEM WITH COMPUTATION OF LOCAL INTENSITY FEATURES {str(e)}"}
-
-                        # STATS
-                        elif feature_name == "stats":
-                            if self.__min_node_required(pip_obj, ["roi_extraction"]):
-                                last_feat_vol = self.__get_last_output_from_pip(pip_obj, "vol", ["roi_extraction"])
-                            else:
-                                print("ERROR on ", feature_content["name"], 
-                                      " extraction. Minimum one node required from this list :", ["roi_extraction"])
-
-                            # Statistical features extraction
-                            try:
-                                # update progress
-                                self.set_progress(now=74.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Statistical features extraction")
-
-                                # If all features need to be extracted
-                                if features_to_extract[0] == "extract_all":
-                                    features = MEDimage.biomarkers.stats.extract_all(
-                                        vol=last_feat_vol,  # vol_int_re
-                                        intensity_type=MEDimg.params.process.intensity_type
-                                    )
-                                else:
-                                    # If only some features need to be extracted, use the name of the feature to build
-                                    # extraction code (executed dynamically using exec()).
-                                    features = {}
-                                    for i in range(len(features_to_extract)):
-                                        function_name = "MEDimage.biomarkers.stats." + str(features_to_extract[i])
-                                        function_params = "vol=last_feat_vol"
-                                        function_call = "result = " + function_name + "(" + function_params + ")"
-                                        local_vars = {}
-                                        global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol}
-                                        exec(function_call, global_vars, local_vars)
-
-                                        feature_name_convention = "Fstat_" + str(features_to_extract[i])
-                                        features[feature_name_convention] = local_vars.get("result")
-                                
-                                # update progress
-                                self.set_progress(now=76.0/len(self.pipelines))
-                                
-                            except Exception as e:
-                                return {"error": f"PROBLEM WITH COMPUTATION OF STATISTICAL FEATURES {str(e)}"}
-
-                        # IH
-                        elif feature_name == "intensity_histogram":
-                            # DISCRETIZATION
-                            if self.__min_node_required(pip_obj, ["discretization"]):
-                                last_vol_compute = self.__get_last_output_from_pip(pip_obj, "vol", ["roi_extraction"])
-                                last_feat_vol, _ = MEDimage.processing.discretize(
-                                    vol_re=last_vol_compute,  # vol_int_re
-                                    discr_type=MEDimg.params.process.ih['type'],
-                                    n_q=MEDimg.params.process.ih['val'],
-                                    user_set_min_val=MEDimg.params.process.user_set_min_value
-                                )
-
-                            elif self.__min_node_required(pip_obj, ["roi_extraction", "discretization"]):
-                                last_feat_vol = self.__get_last_output_from_pip(pip_obj, "vol", ["roi_extraction", "discretization"])
-
-                            else:
-                                print("ERROR on ", feature_content["name"],
-                                    " extraction. Minimum one node required from this list :", ["roi_extraction", "discretization"])
-
-                            # Intensity histogram features extraction
-                            try:
-                                # update progress
-                                self.set_progress(now=76.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Intensity histogram features extraction")
-
-                                # If all features need to be extracted
-                                if features_to_extract[0] == "extract_all":
-                                    features = MEDimage.biomarkers.intensity_histogram.extract_all(vol=last_feat_vol)
-                                else:
-                                    # If only some features need to be extracted, use the name of the feature to build
-                                    # extraction code (executed dynamically using exec()).
-                                    features = {}
-                                    for i in range(len(features_to_extract)):
-                                        function_name = "MEDimage.biomarkers.intensity_histogram." + str(
-                                            features_to_extract[i])
-                                        function_params = "vol=last_feat_vol"
-                                        function_call = "result = " + function_name + "(" + function_params + ")"
-                                        local_vars = {}
-                                        global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol}
-                                        exec(function_call, global_vars, local_vars)
-
-                                        feature_name_convention = "Fih_" + str(features_to_extract[i])
-                                        features[feature_name_convention] = local_vars.get("result")
-                                
-                                # update progress
-                                self.set_progress(now=78.0/len(self.pipelines))
-                            except Exception as e:
-                                return {"error": f"PROBLEM WITH COMPUTATION OF INTENSITY HISTOGRAM FEATURES {str(e)}"}
-
-                        # IVH
-                        elif feature_name == "int_vol_hist":
-                            if self.__min_node_required(pip_obj, ["discretization"]):
-                                last_vol_compute = self.__get_last_output_from_pip(pip_obj, "vol", ["roi_extraction"])
-
-                                # Intensity histogram equalization of the imaging volume
-                                if MEDimg.params.process.ivh and 'type' in MEDimg.params.process.ivh and 'val' in MEDimg.params.process.ivh:
-                                    if MEDimg.params.process.ivh['type'] and MEDimg.params.process.ivh['val']:
-                                        last_feat_vol, wd = MEDimage.processing.discretize(
-                                            vol_re=last_vol_compute,  # vol_int_re
-                                            discr_type=MEDimg.params.process.ivh['type'],
-                                            n_q=MEDimg.params.process.ivh['val'],
-                                            user_set_min_val=MEDimg.params.process.user_set_min_value,
-                                            ivh=True
-                                        )
-
-                            elif self.__min_node_required(pip_obj, ["roi_extraction", "discretization"]):
-                                last_feat_vol = self.__get_last_output_from_pip(pip_obj, "vol", ["roi_extraction", "discretization"])
-                                wd = 1
-
-                            else:
-                                print("ERROR on ", feature_content["name"],
-                                    " extraction. Minimum one node required from this list :", ["roi_extraction", "discretization"])
-
-                            # Intensity volume histogram features extraction
-                            try:
-                                # update progress
-                                self.set_progress(now=78.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Intensity volume histogram features extraction")
-
-                                # If all features need to be extracted
-                                if features_to_extract[0] == "extract_all":
-                                    features = MEDimage.biomarkers.int_vol_hist.extract_all(
-                                        medscan=MEDimg,
-                                        vol=last_feat_vol,  # vol_quant_re
-                                        vol_int_re=vol_int_re,
-                                        wd=wd  # TODO: Missing user_set_range argument?
-                                    )
-                                else:
-                                    # If only some features need to be extracted, use the name of the feature to build
-                                    # extraction code (executed dynamically using exec()).
-                                    features = {}
-                                    for i in range(len(features_to_extract)):
-                                        function_name = "MEDimage.biomarkers.int_vol_hist." + str(features_to_extract[i])
-                                        function_params = "medscan=MEDimg, vol=last_feat_vol, vol_int_re=vol_int_re, wd=wd"
-                                        function_call = "result = " + function_name + "(" + function_params + ")"
-                                        local_vars = {}
-                                        global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol,
-                                                    "vol_int_re": vol_int_re, "MEDimg": MEDimg, "wd": wd}
-                                        exec(function_call, global_vars, local_vars)
-
-                                        feature_name_convention = "F" + feature_name + "_" + str(features_to_extract[i])
-                                        features[feature_name_convention] = local_vars.get("result")
-                                
-                                # update progress
-                                self.set_progress(now=80.0/len(self.pipelines))
-
-                            except Exception as e:
-                                return {"error": f"PROBLEM WITH COMPUTATION OF INTENSITY VOLUME HISTOGRAM FEATURES {str(e)}"}
-
-                        # ------------------------------------- TEXTURE FEATURES ------------------------------------------
-                        # GLCM
-                        elif feature_name == "glcm":
-                            try:
-                                # update progress
-                                self.set_progress(now=80.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | GLCM features extraction")
-
-                                # If all features need to be extracted
-                                if features_to_extract[0] == "extract_all":
-                                    features = MEDimage.biomarkers.glcm.extract_all(
-                                        vol=vol_quant_re_texture,
-                                        dist_correction=MEDimg.params.radiomics.glcm.dist_correction,
-                                        merge_method=MEDimg.params.radiomics.glcm.merge_method)
-                                else:
-                                    # Extracts co-occurrence matrices from the intensity roi mask prior to features
-                                    matrices_dict = MEDimage.biomarkers.glcm.get_glcm_matrices(
-                                        vol_quant_re_texture,
-                                        merge_method=MEDimg.params.radiomics.glcm.merge_method,
-                                        dist_weight_norm=MEDimg.params.radiomics.glcm.dist_correction)
-
-                                    # If not all features need to be extracted, use the name of each feature to build
-                                    # extraction code (executed dynamically using exec()).
-                                    features = {}
-                                    for i in range(len(features_to_extract)):
-                                        function_name = "MEDimage.biomarkers.glcm." + str(features_to_extract[i])
-                                        function_params = "matrices_dict"
-                                        function_call = "result = " + function_name + "(" + function_params + ")"
-                                        local_vars = {}
-                                        global_vars = {"MEDimage": MEDimage, "matrices_dict": matrices_dict}
-                                        exec(function_call, global_vars, local_vars)
-
-                                        feature_name_convention = "Fcm_" + str(features_to_extract[i])
-                                        features[feature_name_convention] = local_vars.get("result")
-
-                                # update progress
-                                self.set_progress(now=83.0/len(self.pipelines))
-
-                            except Exception as e:
-                                return {"error": f"PROBLEM WITH COMPUTATION OF GLCM FEATURES {str(e)}"}
-
-                        # GLRLM
-                        elif feature_name == "glrlm":
-                            try:
-                                # update progress
-                                self.set_progress(now=83.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | GLRLM features extraction")
-
-                                # TODO : temporary code used to replace single feature extraction for user
-                                all_features = MEDimage.biomarkers.glrlm.extract_all(
-                                    vol=vol_quant_re_texture,
-                                    dist_correction=MEDimg.params.radiomics.glrlm.dist_correction,
-                                    merge_method=MEDimg.params.radiomics.glrlm.merge_method)
-
-                                # If all features need to be extracted
-                                if features_to_extract[0] == "extract_all":
-                                    features = all_features
-                                else:
-                                    features = {}
-                                    for i in range(len(features_to_extract)):
-                                        feature_name_convention = "Frlm_" + str(features_to_extract[i])
-                                        features[feature_name_convention] = all_features[feature_name_convention]
-
-                                # update progress
-                                self.set_progress(now=86.0/len(self.pipelines))
-                            except Exception as e:
-                                return {"error": f"PROBLEM WITH COMPUTATION OF GLRLM FEATURES {str(e)}"}
-
-                        # GLSZM
-                        elif feature_name == "glszm":
-                            try:
-                                # update progress
-                                self.set_progress(now=86.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | GLSZM features extraction")
-
-                                # TODO : temporary code used to replace single feature extraction for user
-                                all_features = MEDimage.biomarkers.glszm.extract_all(vol=vol_quant_re_texture)
-
-                                # If all features need to be extracted
-                                if features_to_extract[0] == "extract_all":
-                                    features = all_features
-                                else:
-                                    features = {}
-                                    for i in range(len(features_to_extract)):
-                                        feature_name_convention = "Fszm_" + str(features_to_extract[i])
-                                        features[feature_name_convention] = all_features[feature_name_convention]
-
-                                # update progress
-                                self.set_progress(now=89.0/len(self.pipelines))
-                            except Exception as e:
-                                return {"error": f"PROBLEM WITH COMPUTATION OF GLSZM FEATURES {str(e)}"}
-
-                        # GLDZM
-                        elif feature_name == "gldzm":
-                            try:
-                                # update progress
-                                self.set_progress(now=92.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | GLDZM features extraction")
-
-                                # TODO : temporary code used to replace single feature extraction for user
-                                all_features = MEDimage.biomarkers.gldzm.extract_all(
-                                        vol_int=vol_quant_re_texture,
-                                        mask_morph=roi_obj_morph_texture.data)
-
-                                # If all features need to be extracted
-                                if features_to_extract[0] == "extract_all":
-                                    features = all_features
-                                else:
-                                    features = {}
-                                    for i in range(len(features_to_extract)):
-                                        feature_name_convention = "Fdzm_" + str(features_to_extract[i])
-                                        features[feature_name_convention] = all_features[feature_name_convention]
-
-                                # update progress
-                                self.set_progress(now=95.0/len(self.pipelines))
-                            except Exception as e:
-                                return {"error": f"PROBLEM WITH COMPUTATION OF GLDZM FEATURES {str(e)}"}
-
-                        # NGTDM
-                        elif feature_name == "ngtdm":
-                            try:
-                                # update progress
-                                self.set_progress(now=95.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | NGTDM features extraction")
-
-                                # TODO : temporary code used to replace single feature extraction for user
-                                all_features = MEDimage.biomarkers.ngtdm.extract_all(
-                                        vol=vol_quant_re_texture,
-                                        dist_correction=MEDimg.params.radiomics.ngtdm.dist_correction)
-
-                                # If all features need to be extracted
-                                if features_to_extract[0] == "extract_all":
-                                    features = all_features
-                                else:
-                                    features = {}
-                                    for i in range(len(features_to_extract)):
-                                        feature_name_convention = "Fngt_" + str(features_to_extract[i])
-                                        features[feature_name_convention] = all_features[feature_name_convention]
-
-                                # update progress
-                                self.set_progress(now=98.0/len(self.pipelines))
-
-                            except Exception as e:
-                                return {"error": f"PROBLEM WITH COMPUTATION OF NGTDM FEATURES {str(e)}"}
-
-                        # NGLDM
-                        elif feature_name == "ngldm":
-                            try:
-                                # update progress
-                                self.set_progress(now=98.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | NGLDM features extraction")
-
-                                # TODO : temporary code used to replace single feature extraction for user
-                                all_features = MEDimage.biomarkers.ngldm.extract_all(vol=vol_quant_re_texture)
-
-                                # If all features need to be extracted
-                                if features_to_extract[0] == "extract_all":
-                                    features = all_features
-                                else:
-                                    features = {}
-                                    for i in range(len(features_to_extract)):
-                                        feature_name_convention = "Fngl_" + str(features_to_extract[i])
-                                        features[feature_name_convention] = all_features[feature_name_convention]
-
-                                    """ NOTE : Code to use in prevision of future MEDimage update allowing extraction of single features
-                                    matrices_dict = MEDimage.biomarkers.ngldm.get_ngldm_matrices(
-                                        vol=vol_quant_re_texture)
-                                    
-                                    # If only some features need to be extracted, use the name of the feature to build
-                                    # extraction code (executed dynamically using exec()).
-                                    features = {}
-                                    for i in range(len(features_to_extract)):
-                                        function_name = "MEDimage.biomarkers.ngldm." + str(features_to_extract[i])
-                                        function_params = "matrices_dict"
-                                        function_call = "result = " + function_name + "(" + function_params + ")"
-                                        local_vars = {}
-                                        global_vars = {"MEDimage": MEDimage, "matrices_dict": matrices_dict}
-                                        exec(function_call, global_vars, local_vars)
-                                        features[str(features_to_extract[i])] = local_vars.get("result")
-                                    """
-
-                                # update progress
-                                self.set_progress(now=100.0/len(self.pipelines))
-
-                            except Exception as e:
-                                return {"error": f"PROBLEM WITH COMPUTATION OF NGLDM FEATURES {str(e)}"}
-
-                        # FEATURE NOT FOUND
-                        else:
-                            print("Feature : ", feature_name, " is not a valid feature name.")
-
-                        # Add feature to dictionnary
-                        if features is not None:
-                            features = self.__format_features(features)
-                            features_res[feature_name] = features  # UP response
-                            output_obj[feature_name] = features  # UP runs
-
-                    # Update output infos of extraction node
-                    update_pip = True
-                    id_obj["output"] = output_obj
+                    update_pip, features_res, output_obj, id_obj = self.run_extraction(MEDimg, flag_texture, vol_obj_init_texture, roi_obj_init_texture, content, pip_obj, idx_pip, vol_int_re, features_res, output_obj, id_obj, last_vol_compute)
 
                 # NODE NOT FOUND
                 else:
                     print("Node not implemented yet:", content["name"])
 
-                    # add relevant nodes
+                # Add relevant nodes
                 if (update_pip):
                     pip_obj[content["id"]] = id_obj
 
             # Update final progress
             self.set_progress(now=100.0, label="Done!")
 
-            # pip features and settings update
+            # Pip features and settings update
             pip_res["features"] = features_res
             pip_res["settings"] = settings_res
             scan_res[pip_name_res] = pip_res
@@ -1141,7 +446,754 @@ class MEDimageExtraction:
             pickle.dump(self.runs, f)
         
         return pips_res
+
+    def run_input(self, filename_loaded, pip, im_params, content, id_obj, output_obj):
+        print("\n********INPUT execution********")
+
+        # If new input computed
+        if (filename_loaded != content["data"]["filepath"]):
+            scan_res = {}
+            filename_loaded = content["data"]["filepath"]
+
+        # Load MEDscan instance from file
+        with open(UPLOAD_FOLDER / filename_loaded, 'rb') as f:
+            MEDimg = pickle.load(f)
+            MEDimg = MEDimage.MEDscan(MEDimg)
+
+        scan_type = MEDimg.type
+        im_params = self.__update_pip_settings(pip, im_params, scan_type)
+        MEDimage.MEDscan.init_params(MEDimg, im_params)
+
+        # Update output infos for RUNS
+        update_pip = True
+        output_obj["MEDimg"] = MEDimg
+        id_obj["output"] = output_obj
+
+        # Remove dicom header from MEDimg object as it causes errors in get_3d_view()
+        # TODO: check if dicom header is needed in the future
+        id_obj["output"]["MEDimg"].dicomH = None
+
+        return scan_res, filename_loaded, MEDimg
     
+    def run_segmentation(self, MEDimg, content, id_obj, output_obj, settings_res, flag_texture=False):
+        print("\n********SEGMENTATION execution********")
+        
+        # Get ROI (region of interest)
+        # Safety check
+        if not content["data"]["rois_data"]:
+            return {"error": "ERROR on segmentation. No ROI name provided."}
+
+        vol_obj_init, roi_obj_init = MEDimage.processing.get_roi_from_indexes(
+            MEDimg,
+            name_roi=content["data"]["rois_data"],
+            # retrieve name_roi from segmentation rois_data. pip[0] match the input id of current pip.
+            box_string="full"
+        )
+
+        # ADDED CODE FRAGMENT FOR TEXTURE FEATURES
+        # If there are some texture features to compute later, keep initial version of vol_obj_init
+        # and roi_obj_init
+        if flag_texture:
+            vol_obj_init_texture = copy.deepcopy(vol_obj_init)
+            roi_obj_init_texture = copy.deepcopy(roi_obj_init)
+        else:
+            vol_obj_init_texture = None
+            roi_obj_init_texture = None
+
+        # Update output infos
+        update_pip = True
+        output_obj["vol"] = vol_obj_init
+        output_obj["roi"] = roi_obj_init
+        id_obj["output"] = output_obj
+
+        # Update settings infos pour json response
+        settings_res[content["name"]] = content["data"]
+        
+        return vol_obj_init_texture,roi_obj_init_texture, update_pip, output_obj, id_obj, settings_res
+        
+    def run_interpolation(self, last_vol_compute, MEDimg, last_roi_compute, output_obj, id_obj, settings_res, content):
+        # Intensity Mask
+        vol_obj = MEDimage.processing.interp_volume(
+            vol_obj_s=last_vol_compute,  # vol_obj_init,
+            medscan=MEDimg,
+            vox_dim=MEDimg.params.process.scale_non_text,
+            interp_met=MEDimg.params.process.vol_interp,
+            round_val=MEDimg.params.process.gl_round,
+            image_type='image',
+            roi_obj_s=last_roi_compute,  # roi_obj_init
+            box_string="full"
+        )
+        # Morphological Mask
+        roi_obj_morph = MEDimage.processing.interp_volume(
+            vol_obj_s=last_roi_compute,  # roi_obj_init,
+            medscan=MEDimg,
+            vox_dim=MEDimg.params.process.scale_non_text,
+            interp_met=MEDimg.params.process.roi_interp,
+            round_val=MEDimg.params.process.roi_pv,
+            image_type='roi',
+            roi_obj_s=last_roi_compute,  # roi_obj_init
+            box_string="full"
+        )
+
+        # Update output infos
+        update_pip = True
+        output_obj["vol"] = vol_obj
+        output_obj["roi"] = roi_obj_morph
+        output_obj["roi_morph"] = roi_obj_morph
+        id_obj["output"] = output_obj
+
+        # Update settings infos pour json response
+        settings_res[content["name"]] = content["data"]
+        return update_pip, output_obj, id_obj, settings_res
+
+    def run_filter(self, MEDimg, content, last_vol_compute, output_obj, id_obj, settings_res):
+        print("\n********FILTER execution********")
+        
+        # Apply filter to the imaging volume
+        MEDimg.params.filter.filter_type = content["data"]["filter_type"] 
+        vol_obj_filter = MEDimage.filters.apply_filter(MEDimg, last_vol_compute)  # vol_obj_init
+
+        # Update output infos
+        update_pip = True
+        output_obj["vol"] = vol_obj_filter
+        output_obj["roi"] = "empty"
+        id_obj["output"] = output_obj
+        
+        # Update settings infos pour json response
+        settings_res[content["name"]] = content["data"]
+        
+        return MEDimg, update_pip, output_obj, id_obj, settings_res
+
+    def run_reseg(self, last_roi_compute, last_vol_compute, MEDimg, content, output_obj, id_obj, settings_res):
+        print("\n********RE-SEGMENTATION execution********")
+        
+        # Intensity mask range re-segmentation
+        roi_obj_int = deepcopy(last_roi_compute)  # roi_obj_morph
+        roi_obj_int.data = MEDimage.processing.range_re_seg(
+            vol=last_vol_compute.data,  # vol_obj
+            roi=roi_obj_int.data,
+            im_range=MEDimg.params.process.im_range
+        )
+
+        # Intensity mask outlier re-segmentation
+        roi_obj_int.data = np.logical_and(
+            MEDimage.processing.outlier_re_seg(
+                vol=last_vol_compute.data,  # vol_obj
+                roi=roi_obj_int.data,
+                outliers=MEDimg.params.process.outliers
+            ),
+            roi_obj_int.data
+        ).astype(int)
+
+        # Update output infos
+        update_pip = True
+        output_obj["vol"] = "empty"
+        output_obj["roi"] = roi_obj_int
+        id_obj["output"] = output_obj
+
+        # Update settings infos pour json response
+        # If re-segmentation is not serialized, change inf to string
+        if np.isinf(MEDimg.params.process.im_range[1]):
+            content["data"]['range'][1] = "inf"
+        if np.isinf(MEDimg.params.process.im_range[0]):
+            content["data"]['range'][0] = "inf"
+        settings_res[content["name"]] = content["data"]
+        
+        return update_pip, output_obj, id_obj, settings_res
+
+    def run_roiextract(self, last_vol_compute, last_roi_compute, output_obj, id_obj):
+        print("\n********ROI EXTRACTION execution********")
+        
+        # ROI Extraction :
+        vol_int_re = MEDimage.processing.roi_extract(
+            vol=last_vol_compute.data,  # vol_obj
+            roi=last_roi_compute.data  # roi_obj_int
+        )
+
+        # Update output infos
+        update_pip = True
+        output_obj["vol"] = vol_int_re
+        output_obj["roi"] = "empty"
+        id_obj["output"] = output_obj
+        
+        return vol_int_re, update_pip, output_obj, id_obj
+    
+    def run_discretization(self, MEDimg, last_vol_compute, output_obj, id_obj, settings_res, content):
+        print("\n********DISCRETIZATION execution********")
+
+        # Intensity histogram equalization of the imaging volume
+        if MEDimg.params.process.ivh and 'type' in MEDimg.params.process.ivh and 'val' in MEDimg.params.process.ivh:
+            if MEDimg.params.process.ivh['type'] and MEDimg.params.process.ivh['val']:
+                vol_quant_re, wd = MEDimage.processing.discretize(
+                    vol_re=last_vol_compute,  # vol_int_re
+                    discr_type=MEDimg.params.process.ivh['type'],
+                    n_q=MEDimg.params.process.ivh['val'],
+                    user_set_min_val=MEDimg.params.process.user_set_min_value,
+                    ivh=True
+                )
+        else:
+            vol_quant_re = last_vol_compute
+            wd = 1
+
+        # Update output infos
+        update_pip = True
+        output_obj["vol"] = vol_quant_re  # temp : to change after new implementation of discretization node
+        output_obj["roi"] = "empty"
+        id_obj["output"] = output_obj
+
+        # Update settings infos for json response
+        settings_res[content["name"]] = content["data"]
+        
+        return wd, update_pip, output_obj, id_obj, settings_res
+
+    def run_extraction(self, MEDimg, flag_texture, vol_obj_init_texture, roi_obj_init_texture, content, pip_obj, idx_pip, vol_int_re, features_res, output_obj, id_obj, last_vol_compute):
+         # Preparation of computation :
+        MEDimg.init_ntf_calculation(last_vol_compute)  # vol_obj
+
+        # ----------------- CODE FRAGMENT ADDED FOR TEXTURE FEATURES -----------------------------------------
+        # THIS IS A PATCH : we prepare texture feature for extraction AS IF all the nodes are placed correctly
+        # the pipeline.
+        if flag_texture:
+            # TODO : Verifier si on doit bien mettre zero pour scale_text!
+            # Interpolation
+            # Intensity Mask
+            vol_obj_texture = MEDimage.processing.interp_volume(
+                vol_obj_s=vol_obj_init_texture,
+                vox_dim=MEDimg.params.process.scale_text[0],
+                interp_met=MEDimg.params.process.vol_interp,
+                round_val=MEDimg.params.process.gl_round,
+                image_type='image',
+                roi_obj_s=roi_obj_init_texture,
+                box_string=MEDimg.params.process.box_string
+            )
+            # Morphological Mask
+            roi_obj_morph_texture = MEDimage.processing.interp_volume(
+                vol_obj_s=roi_obj_init_texture,
+                vox_dim=MEDimg.params.process.scale_text[0],
+                interp_met=MEDimg.params.process.roi_interp,
+                round_val=MEDimg.params.process.roi_pv,
+                image_type='roi',
+                roi_obj_s=roi_obj_init_texture,
+                box_string=MEDimg.params.process.box_string
+            )
+
+            # update progress
+            self.set_progress(now=65.0/len(self.pipelines))
+
+            # Re-segmentation
+            # Intensity mask range re-segmentation
+            roi_obj_int_texture = deepcopy(roi_obj_morph_texture)
+            roi_obj_int_texture.data = MEDimage.processing.range_re_seg(
+                vol=vol_obj_texture.data,
+                roi=roi_obj_int_texture.data,
+                im_range=MEDimg.params.process.im_range
+            )
+            # Intensity mask outlier re-segmentation
+            roi_obj_int_texture.data = np.logical_and(
+                MEDimage.processing.outlier_re_seg(
+                    vol=vol_obj_texture.data,
+                    roi=roi_obj_int_texture.data,
+                    outliers=MEDimg.params.process.outliers
+                ),
+                roi_obj_int_texture.data
+            ).astype(int)
+
+            # Image filtering
+            if MEDimg.params.filter.filter_type:
+                vol_obj_texture = MEDimage.filters.apply_filter(MEDimg, vol_obj_texture)
+
+            a = 0
+            n = 0
+            s = 0
+
+            # Preparation of computation :
+            MEDimg.init_tf_calculation(
+                algo=a,
+                gl=n,
+                scale=s)
+
+            # ROI Extraction :
+            vol_int_re_texture = MEDimage.processing.roi_extract(
+                vol=vol_obj_texture.data,
+                roi=roi_obj_int_texture.data)
+
+            # Discretisation :
+            vol_quant_re_texture, _texture = MEDimage.processing.discretize(
+                vol_re=vol_int_re_texture,
+                discr_type=MEDimg.params.process.algo[a],
+                n_q=MEDimg.params.process.gray_levels[a][n],
+                user_set_min_val=MEDimg.params.process.user_set_min_value
+            )
+
+            # Update progress
+            self.set_progress(now=70.0/len(self.pipelines))
+
+        # update progress
+        self.set_progress(now=70.0/len(self.pipelines))
+            
+        # Get IDs of nodes contained into feature node and extract all features selected in node
+        features_id = self.__get_features_list(content)
+        features_id = self.__sort_features_categories(features_id)
+        for id in features_id:
+            feature_content = get_node_content(id, self.json_config)
+            feature_name = feature_content["name"]
+
+            # Get list of all features to extract
+            features_to_extract = feature_content["data"]["features"]
+            # Initialize features to put in dictionnary
+            features = None
+
+            # ---------------------------------- NON TEXTURE FEATURES -----------------------------------------
+            # MORPH
+            if feature_name == "morph":
+
+                nodes_allowed = ["interpolation", "re_segmentation", "filter_processing"]
+                if self.__min_node_required(pip_obj, nodes_allowed):
+                    last_feat_vol = self.__get_last_output_from_pip(pip_obj, "vol", nodes_allowed)
+                    last_feat_roi = self.__get_last_output_from_pip(pip_obj, "roi", nodes_allowed)
+                else:
+                    error = "ERROR on " + feature_content["name"] + \
+                        " extraction. Minimum one node required from this list :", nodes_allowed
+                    return error
+
+                # Morphological features extraction
+                try:
+                    # update progress
+                    self.set_progress(now=70.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Morphological features extraction")
+
+                    # Create an empty list to store the keys that match the condition
+                    roi_morph = []
+
+                    # Iterate through the outer dictionary items
+                    for key, inner_dict in pip_obj.items():
+                        if 'type' in inner_dict and inner_dict['type'] == 'interpolation':
+                            # Append the key to the list if the condition is met
+                            roi_morph = inner_dict['output']['roi_morph']
+                    
+                    
+                    # If all features need to be extracted
+                    if features_to_extract[0] == "extract_all":
+                        features = MEDimage.biomarkers.morph.extract_all(
+                            vol=last_feat_vol.data,  # vol_obj.data
+                            mask_int=last_feat_roi.data,  # roi_obj_morph.data,
+                            mask_morph=roi_morph.data,  # roi_obj_morph.data,
+                            res=MEDimg.params.process.scale_non_text,
+                            intensity_type=MEDimg.params.process.intensity_type
+                        )
+
+                        # update progress
+                        self.set_progress(now=72.0/len(self.pipelines))
+
+                    else:
+                        # If only some features need to be extracted, use the name of the feature to build
+                        # extraction code (executed dynamically using exec()).
+                        features = {}
+                        for i in range(len(features_to_extract)):
+                            # TODO : Would a for loop be more efficient than calling exec for each feature?
+                            function_name = "MEDimage.biomarkers.morph." + str(features_to_extract[i])
+                            function_params = "vol=last_feat_vol.data, mask_int=last_feat_roi.data, " \
+                                            "mask_morph=last_feat_roi.data, res=MEDimg.params.process.scale_non_text"
+                            function_call = "result = " + function_name + "(" + function_params + ")"
+                            local_vars = {}
+                            global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol,
+                                        "last_feat_roi": last_feat_roi, "MEDimg": MEDimg}
+                            exec(function_call, global_vars, local_vars)
+
+                            feature_name_convention = "F" + feature_name + "_" + str(features_to_extract[i])
+                            features[feature_name_convention] = local_vars.get("result")
+
+                except Exception as e:
+                    return {"error": f"PROBLEM WITH COMPUTATION OF MORPHOLOGICAL FEATURES {str(e)}"}
+
+            # LOCAL INTENSITY
+            elif feature_name == "local_intensity":
+                nodes_allowed = ["interpolation", "re_segmentation", "filter_processing"]
+                if self.__min_node_required(pip_obj, nodes_allowed):
+                    last_feat_vol = self.__get_last_output_from_pip(pip_obj, "vol", nodes_allowed)
+                    last_feat_roi = self.__get_last_output_from_pip(pip_obj, "roi", nodes_allowed)
+                else:
+                    print("ERROR on " + feature_content["name"],
+                        " extraction. Minimum one node required from this list :", nodes_allowed)
+
+                # Local intensity features extraction
+                try:
+                    # update progress
+                    self.set_progress(now=72.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Local intensity features extraction")
+
+                    # If all features need to be extracted
+                    if features_to_extract[0] == "extract_all":
+                        features = MEDimage.biomarkers.local_intensity.extract_all(
+                            img_obj=last_feat_vol.data,  # vol_obj
+                            roi_obj=last_feat_roi.data,  # roi_obj_int
+                            res=MEDimg.params.process.scale_non_text,
+                            intensity_type=MEDimg.params.process.intensity_type
+                            # TODO: missing parameter that is automatically set to false
+                        )
+                    else:
+                        # If only some features need to be extracted, use the name of the feature to build
+                        # extraction code (executed dynamically using exec()).
+                        features = {}
+                        for i in range(len(features_to_extract)):
+                            function_name = "MEDimage.biomarkers.local_intensity." + str(features_to_extract[i])
+                            function_params = "img_obj=last_feat_vol.data, roi_obj=last_feat_roi.data, " \
+                                            "res=MEDimg.params.process.scale_non_text "
+                            function_call = "result = " + function_name + "(" + function_params + ")"
+                            local_vars = {}
+                            global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol,
+                                        "last_feat_roi": last_feat_roi, "MEDimg": MEDimg}
+                            exec(function_call, global_vars, local_vars)
+
+                            feature_name_convention = "Floc_" + str(features_to_extract[i])
+                            features[feature_name_convention] = local_vars.get("result")
+                    
+                    # update progress
+                    self.set_progress(now=74.0/len(self.pipelines))
+                except Exception as e:
+                    return {"error": f"PROBLEM WITH COMPUTATION OF LOCAL INTENSITY FEATURES {str(e)}"}
+
+            # STATS
+            elif feature_name == "stats":
+                if self.__min_node_required(pip_obj, ["roi_extraction"]):
+                    last_feat_vol = self.__get_last_output_from_pip(pip_obj, "vol", ["roi_extraction"])
+                else:
+                    print("ERROR on ", feature_content["name"], 
+                        " extraction. Minimum one node required from this list :", ["roi_extraction"])
+
+                # Statistical features extraction
+                try:
+                    # update progress
+                    self.set_progress(now=74.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Statistical features extraction")
+
+                    # If all features need to be extracted
+                    if features_to_extract[0] == "extract_all":
+                        features = MEDimage.biomarkers.stats.extract_all(
+                            vol=last_feat_vol,  # vol_int_re
+                            intensity_type=MEDimg.params.process.intensity_type
+                        )
+                    else:
+                        # If only some features need to be extracted, use the name of the feature to build
+                        # extraction code (executed dynamically using exec()).
+                        features = {}
+                        for i in range(len(features_to_extract)):
+                            function_name = "MEDimage.biomarkers.stats." + str(features_to_extract[i])
+                            function_params = "vol=last_feat_vol"
+                            function_call = "result = " + function_name + "(" + function_params + ")"
+                            local_vars = {}
+                            global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol}
+                            exec(function_call, global_vars, local_vars)
+
+                            feature_name_convention = "Fstat_" + str(features_to_extract[i])
+                            features[feature_name_convention] = local_vars.get("result")
+                    
+                    # update progress
+                    self.set_progress(now=76.0/len(self.pipelines))
+                    
+                except Exception as e:
+                    return {"error": f"PROBLEM WITH COMPUTATION OF STATISTICAL FEATURES {str(e)}"}
+
+            # IH
+            elif feature_name == "intensity_histogram":
+                # DISCRETIZATION
+                if self.__min_node_required(pip_obj, ["discretization"]):
+                    last_vol_compute = self.__get_last_output_from_pip(pip_obj, "vol", ["roi_extraction"])
+                    last_feat_vol, _ = MEDimage.processing.discretize(
+                        vol_re=last_vol_compute,  # vol_int_re
+                        discr_type=MEDimg.params.process.ih['type'],
+                        n_q=MEDimg.params.process.ih['val'],
+                        user_set_min_val=MEDimg.params.process.user_set_min_value
+                    )
+
+                elif self.__min_node_required(pip_obj, ["roi_extraction", "discretization"]):
+                    last_feat_vol = self.__get_last_output_from_pip(pip_obj, "vol", ["roi_extraction", "discretization"])
+
+                else:
+                    print("ERROR on ", feature_content["name"],
+                        " extraction. Minimum one node required from this list :", ["roi_extraction", "discretization"])
+
+                # Intensity histogram features extraction
+                try:
+                    # update progress
+                    self.set_progress(now=76.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Intensity histogram features extraction")
+
+                    # If all features need to be extracted
+                    if features_to_extract[0] == "extract_all":
+                        features = MEDimage.biomarkers.intensity_histogram.extract_all(vol=last_feat_vol)
+                    else:
+                        # If only some features need to be extracted, use the name of the feature to build
+                        # extraction code (executed dynamically using exec()).
+                        features = {}
+                        for i in range(len(features_to_extract)):
+                            function_name = "MEDimage.biomarkers.intensity_histogram." + str(
+                                features_to_extract[i])
+                            function_params = "vol=last_feat_vol"
+                            function_call = "result = " + function_name + "(" + function_params + ")"
+                            local_vars = {}
+                            global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol}
+                            exec(function_call, global_vars, local_vars)
+
+                            feature_name_convention = "Fih_" + str(features_to_extract[i])
+                            features[feature_name_convention] = local_vars.get("result")
+                    
+                    # update progress
+                    self.set_progress(now=78.0/len(self.pipelines))
+                except Exception as e:
+                    return {"error": f"PROBLEM WITH COMPUTATION OF INTENSITY HISTOGRAM FEATURES {str(e)}"}
+
+            # IVH
+            elif feature_name == "int_vol_hist":
+                if self.__min_node_required(pip_obj, ["discretization"]):
+                    last_vol_compute = self.__get_last_output_from_pip(pip_obj, "vol", ["roi_extraction"])
+
+                    # Intensity histogram equalization of the imaging volume
+                    if MEDimg.params.process.ivh and 'type' in MEDimg.params.process.ivh and 'val' in MEDimg.params.process.ivh:
+                        if MEDimg.params.process.ivh['type'] and MEDimg.params.process.ivh['val']:
+                            last_feat_vol, wd = MEDimage.processing.discretize(
+                                vol_re=last_vol_compute,  # vol_int_re
+                                discr_type=MEDimg.params.process.ivh['type'],
+                                n_q=MEDimg.params.process.ivh['val'],
+                                user_set_min_val=MEDimg.params.process.user_set_min_value,
+                                ivh=True
+                            )
+
+                elif self.__min_node_required(pip_obj, ["roi_extraction", "discretization"]):
+                    last_feat_vol = self.__get_last_output_from_pip(pip_obj, "vol", ["roi_extraction", "discretization"])
+                    wd = 1
+
+                else:
+                    print("ERROR on ", feature_content["name"],
+                        " extraction. Minimum one node required from this list :", ["roi_extraction", "discretization"])
+
+                # Intensity volume histogram features extraction
+                try:
+                    # update progress
+                    self.set_progress(now=78.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Intensity volume histogram features extraction")
+
+                    # If all features need to be extracted
+                    if features_to_extract[0] == "extract_all":
+                        features = MEDimage.biomarkers.int_vol_hist.extract_all(
+                            medscan=MEDimg,
+                            vol=last_feat_vol,  # vol_quant_re
+                            vol_int_re=vol_int_re,
+                            wd=wd  # TODO: Missing user_set_range argument?
+                        )
+                    else:
+                        # If only some features need to be extracted, use the name of the feature to build
+                        # extraction code (executed dynamically using exec()).
+                        features = {}
+                        for i in range(len(features_to_extract)):
+                            function_name = "MEDimage.biomarkers.int_vol_hist." + str(features_to_extract[i])
+                            function_params = "medscan=MEDimg, vol=last_feat_vol, vol_int_re=vol_int_re, wd=wd"
+                            function_call = "result = " + function_name + "(" + function_params + ")"
+                            local_vars = {}
+                            global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol,
+                                        "vol_int_re": vol_int_re, "MEDimg": MEDimg, "wd": wd}
+                            exec(function_call, global_vars, local_vars)
+
+                            feature_name_convention = "F" + feature_name + "_" + str(features_to_extract[i])
+                            features[feature_name_convention] = local_vars.get("result")
+                    
+                    # update progress
+                    self.set_progress(now=80.0/len(self.pipelines))
+
+                except Exception as e:
+                    return {"error": f"PROBLEM WITH COMPUTATION OF INTENSITY VOLUME HISTOGRAM FEATURES {str(e)}"}
+
+            # ------------------------------------- TEXTURE FEATURES ------------------------------------------
+            # GLCM
+            elif feature_name == "glcm":
+                try:
+                    # update progress
+                    self.set_progress(now=80.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | GLCM features extraction")
+
+                    # If all features need to be extracted
+                    if features_to_extract[0] == "extract_all":
+                        features = MEDimage.biomarkers.glcm.extract_all(
+                            vol=vol_quant_re_texture,
+                            dist_correction=MEDimg.params.radiomics.glcm.dist_correction,
+                            merge_method=MEDimg.params.radiomics.glcm.merge_method)
+                    else:
+                        # Extracts co-occurrence matrices from the intensity roi mask prior to features
+                        matrices_dict = MEDimage.biomarkers.glcm.get_glcm_matrices(
+                            vol_quant_re_texture,
+                            merge_method=MEDimg.params.radiomics.glcm.merge_method,
+                            dist_weight_norm=MEDimg.params.radiomics.glcm.dist_correction)
+
+                        # If not all features need to be extracted, use the name of each feature to build
+                        # extraction code (executed dynamically using exec()).
+                        features = {}
+                        for i in range(len(features_to_extract)):
+                            function_name = "MEDimage.biomarkers.glcm." + str(features_to_extract[i])
+                            function_params = "matrices_dict"
+                            function_call = "result = " + function_name + "(" + function_params + ")"
+                            local_vars = {}
+                            global_vars = {"MEDimage": MEDimage, "matrices_dict": matrices_dict}
+                            exec(function_call, global_vars, local_vars)
+
+                            feature_name_convention = "Fcm_" + str(features_to_extract[i])
+                            features[feature_name_convention] = local_vars.get("result")
+
+                    # update progress
+                    self.set_progress(now=83.0/len(self.pipelines))
+
+                except Exception as e:
+                    return {"error": f"PROBLEM WITH COMPUTATION OF GLCM FEATURES {str(e)}"}
+
+            # GLRLM
+            elif feature_name == "glrlm":
+                try:
+                    # update progress
+                    self.set_progress(now=83.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | GLRLM features extraction")
+
+                    # TODO : temporary code used to replace single feature extraction for user
+                    all_features = MEDimage.biomarkers.glrlm.extract_all(
+                        vol=vol_quant_re_texture,
+                        dist_correction=MEDimg.params.radiomics.glrlm.dist_correction,
+                        merge_method=MEDimg.params.radiomics.glrlm.merge_method)
+
+                    # If all features need to be extracted
+                    if features_to_extract[0] == "extract_all":
+                        features = all_features
+                    else:
+                        features = {}
+                        for i in range(len(features_to_extract)):
+                            feature_name_convention = "Frlm_" + str(features_to_extract[i])
+                            features[feature_name_convention] = all_features[feature_name_convention]
+
+                    # update progress
+                    self.set_progress(now=86.0/len(self.pipelines))
+                except Exception as e:
+                    return {"error": f"PROBLEM WITH COMPUTATION OF GLRLM FEATURES {str(e)}"}
+
+            # GLSZM
+            elif feature_name == "glszm":
+                try:
+                    # update progress
+                    self.set_progress(now=86.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | GLSZM features extraction")
+
+                    # TODO : temporary code used to replace single feature extraction for user
+                    all_features = MEDimage.biomarkers.glszm.extract_all(vol=vol_quant_re_texture)
+
+                    # If all features need to be extracted
+                    if features_to_extract[0] == "extract_all":
+                        features = all_features
+                    else:
+                        features = {}
+                        for i in range(len(features_to_extract)):
+                            feature_name_convention = "Fszm_" + str(features_to_extract[i])
+                            features[feature_name_convention] = all_features[feature_name_convention]
+
+                    # update progress
+                    self.set_progress(now=89.0/len(self.pipelines))
+                except Exception as e:
+                    return {"error": f"PROBLEM WITH COMPUTATION OF GLSZM FEATURES {str(e)}"}
+
+            # GLDZM
+            elif feature_name == "gldzm":
+                try:
+                    # update progress
+                    self.set_progress(now=92.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | GLDZM features extraction")
+
+                    # TODO : temporary code used to replace single feature extraction for user
+                    all_features = MEDimage.biomarkers.gldzm.extract_all(
+                            vol_int=vol_quant_re_texture,
+                            mask_morph=roi_obj_morph_texture.data)
+
+                    # If all features need to be extracted
+                    if features_to_extract[0] == "extract_all":
+                        features = all_features
+                    else:
+                        features = {}
+                        for i in range(len(features_to_extract)):
+                            feature_name_convention = "Fdzm_" + str(features_to_extract[i])
+                            features[feature_name_convention] = all_features[feature_name_convention]
+
+                    # update progress
+                    self.set_progress(now=95.0/len(self.pipelines))
+                except Exception as e:
+                    return {"error": f"PROBLEM WITH COMPUTATION OF GLDZM FEATURES {str(e)}"}
+
+            # NGTDM
+            elif feature_name == "ngtdm":
+                try:
+                    # update progress
+                    self.set_progress(now=95.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | NGTDM features extraction")
+
+                    # TODO : temporary code used to replace single feature extraction for user
+                    all_features = MEDimage.biomarkers.ngtdm.extract_all(
+                            vol=vol_quant_re_texture,
+                            dist_correction=MEDimg.params.radiomics.ngtdm.dist_correction)
+
+                    # If all features need to be extracted
+                    if features_to_extract[0] == "extract_all":
+                        features = all_features
+                    else:
+                        features = {}
+                        for i in range(len(features_to_extract)):
+                            feature_name_convention = "Fngt_" + str(features_to_extract[i])
+                            features[feature_name_convention] = all_features[feature_name_convention]
+
+                    # update progress
+                    self.set_progress(now=98.0/len(self.pipelines))
+
+                except Exception as e:
+                    return {"error": f"PROBLEM WITH COMPUTATION OF NGTDM FEATURES {str(e)}"}
+
+            # NGLDM
+            elif feature_name == "ngldm":
+                try:
+                    # update progress
+                    self.set_progress(now=98.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | NGLDM features extraction")
+
+                    # TODO : temporary code used to replace single feature extraction for user
+                    all_features = MEDimage.biomarkers.ngldm.extract_all(vol=vol_quant_re_texture)
+
+                    # If all features need to be extracted
+                    if features_to_extract[0] == "extract_all":
+                        features = all_features
+                    else:
+                        features = {}
+                        for i in range(len(features_to_extract)):
+                            feature_name_convention = "Fngl_" + str(features_to_extract[i])
+                            features[feature_name_convention] = all_features[feature_name_convention]
+
+                        """ NOTE : Code to use in prevision of future MEDimage update allowing extraction of single features
+                        matrices_dict = MEDimage.biomarkers.ngldm.get_ngldm_matrices(
+                            vol=vol_quant_re_texture)
+                        
+                        # If only some features need to be extracted, use the name of the feature to build
+                        # extraction code (executed dynamically using exec()).
+                        features = {}
+                        for i in range(len(features_to_extract)):
+                            function_name = "MEDimage.biomarkers.ngldm." + str(features_to_extract[i])
+                            function_params = "matrices_dict"
+                            function_call = "result = " + function_name + "(" + function_params + ")"
+                            local_vars = {}
+                            global_vars = {"MEDimage": MEDimage, "matrices_dict": matrices_dict}
+                            exec(function_call, global_vars, local_vars)
+                            features[str(features_to_extract[i])] = local_vars.get("result")
+                        """
+
+                    # update progress
+                    self.set_progress(now=100.0/len(self.pipelines))
+
+                except Exception as e:
+                    return {"error": f"PROBLEM WITH COMPUTATION OF NGLDM FEATURES {str(e)}"}
+
+            # FEATURE NOT FOUND
+            else:
+                print("Feature : ", feature_name, " is not a valid feature name.")
+
+            # Add feature to dictionnary
+            if features is not None:
+                features = self.__format_features(features)
+                features_res[feature_name] = features  # UP response
+                output_obj[feature_name] = features  # UP runs
+
+        # Update output infos of extraction node
+        update_pip = True
+        id_obj["output"] = output_obj
+        return update_pip, features_res, output_obj, id_obj
+
     def get_3d_view(self):
         """
         Plots the 3D view of the volume and the ROI.
