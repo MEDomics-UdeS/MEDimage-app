@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useContext } from "re
 import Node from "../../flow/node"
 import { Form } from "react-bootstrap"
 import { FlowFunctionsContext } from "../../flow/context/flowFunctionsContext"
+import { ScrollPanel } from 'primereact/scrollpanel';
 
 /**
  * @param {string} id id of the node
@@ -177,7 +178,8 @@ const FeaturesNode = ({ id, data, type }) => {
           ) : null
         }
         nodeSpecific={
-          <>
+          <ScrollPanel style={{ height: '200px' }}>
+            <br />
             <Form.Check
               type="checkbox"
               label="Select all"
@@ -201,7 +203,8 @@ const FeaturesNode = ({ id, data, type }) => {
                 onChange={handleToggleFeature}
               />
             ))}
-          </>
+            <br />
+          </ScrollPanel >
         }
       />
     </>
