@@ -206,7 +206,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
                 eventKey="learning" 
                 data-tooltip-id="tooltip-learning"
                 onDoubleClick={(event) => handleDoubleClick(event, "LearningMEDimage")} 
-                onClick={(event) => handleClick(event, "LearningMEDimage")} 
+                onClick={(event) => handleDoubleClick(event, "LearningMEDimage")} 
                 disabled={disabledIcon}
                 >
                 {" "}
