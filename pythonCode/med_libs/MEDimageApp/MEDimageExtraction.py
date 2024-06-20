@@ -1194,8 +1194,7 @@ class MEDimageExtraction:
 
             if file_type == "folder":
                 # Initialize the DataManager class
-                path_to_dicoms = file
-                dm = MEDimage.wrangling.DataManager(path_to_dicoms=path_to_dicoms, path_save=UPLOAD_FOLDER, save=True)
+                dm = MEDimage.wrangling.DataManager(path_to_dicoms=file, path_save=UPLOAD_FOLDER, save=True)
 
                 # Process the DICOM scan
                 dm.process_all_dicoms()

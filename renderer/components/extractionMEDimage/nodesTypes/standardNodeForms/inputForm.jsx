@@ -46,12 +46,24 @@ const InputForm = ({ nodeForm, changeNodeForm, enableView }) => {
   const handleFolderChange = (event) => {
     const fileList = event.target.files
     if (fileList.length > 0) {
+      // Get the selected file
       const selectedFile = fileList[0]
+      const filePath = selectedFile.path;
+      const fullPath = selectedFile.webkitRelativePath;
 
-      // The path of the image needs to be the path of the common folder of all the files
-      // If the directory is constructed according to standard DICOM format, the path
-      // of the image is the one containning the folders image and mask
-      let selectedImageFolder = "/" + selectedFile.path.split("/").slice(1, -2).join("/")
+      // Split the full path to get the directory parts
+      let mainFolder = ""
+      if (fullPath.indexOf("\\") >= 0) {
+        mainFolder = fullPath.split("\\")[0];
+      } else if (fullPath.indexOf("/") >= 0) {
+        mainFolder = fullPath.split("/")[0];
+      } else {
+        mainFolder = fullPath.split("/")[0];
+      }
+      const idxMainFolder = filePath.indexOf(mainFolder);
+
+      let selectedImageFolder = filePath.slice(0, idxMainFolder + mainFolder.length)
+      
       setSelectedFile(selectedImageFolder)
     }
   }
