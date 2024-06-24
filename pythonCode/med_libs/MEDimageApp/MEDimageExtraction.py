@@ -352,7 +352,7 @@ class MEDimageExtraction:
                     # Update progress
                     self.set_progress(now=8.5/len(self.pipelines), label=f"Pip {idx_pip + 1} | Segmentation")
                     
-                    vol_obj_init_texture,roi_obj_init_texture, update_pip, output_obj, id_obj, settings_res = self.run_segmentation(MEDimg, content, id_obj, output_obj, settings_res)
+                    vol_obj_init_texture,roi_obj_init_texture, update_pip, output_obj, id_obj, settings_res = self.run_segmentation(MEDimg, content, id_obj, output_obj, settings_res, flag_texture)
                     
                     # Update progress
                     self.set_progress(now=17.0/len(self.pipelines))
@@ -512,6 +512,7 @@ class MEDimageExtraction:
         return vol_obj_init_texture,roi_obj_init_texture, update_pip, output_obj, id_obj, settings_res
         
     def run_interpolation(self, last_vol_compute, MEDimg, last_roi_compute, output_obj, id_obj, settings_res, content):
+        print("\n********INTERPOLATION execution********")
         # Intensity Mask
         vol_obj = MEDimage.processing.interp_volume(
             vol_obj_s=last_vol_compute,  # vol_obj_init,
@@ -647,6 +648,7 @@ class MEDimageExtraction:
         return wd, update_pip, output_obj, id_obj, settings_res
 
     def run_extraction(self, MEDimg, flag_texture, vol_obj_init_texture, roi_obj_init_texture, content, pip_obj, idx_pip, vol_int_re, features_res, output_obj, id_obj, last_vol_compute):
+        print("\n********EXTRACTION execution********")
          # Preparation of computation :
         MEDimg.init_ntf_calculation(last_vol_compute)  # vol_obj
 
@@ -1004,7 +1006,6 @@ class MEDimageExtraction:
                 try:
                     # update progress
                     self.set_progress(now=80.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | GLCM features extraction")
-
                     # If all features need to be extracted
                     if features_to_extract[0] == "extract_all":
                         features = MEDimage.biomarkers.glcm.extract_all(
