@@ -16,11 +16,58 @@ import MEDimage
 import ray
 
 from .utils import *
+from .pipeline import Pipeline
+from .node import Node
 
 # Global variables
 JSON_SETTINGS_PATH = Path(os.path.join(os.path.dirname(os.path.abspath(__file__)))) / 'settings/settings_frame.json'
 UPLOAD_FOLDER = Path(os.path.dirname(os.path.abspath(__file__)))  / 'tmp'
 
+class ExtractionWorkflow:
+    def __init__(self, json_config: dict) -> None:
+        self.pipelines = self.get_pipelines(json_config)
+
+    def generate_pipelines(self, node_id, drawflow_scene, pipelines, nodes_list):
+        # Get the home module from the drawflow scene
+        home_module = drawflow_scene['Home']['data']
+
+        # Add the node associated with node_id to the nodes_list
+        if home_module[node_id]['name'] == 'extraction':
+            # It the node is an extraction node, the node data is in a separate module
+            node_data = drawflow_scene['extraction-' + str(node_id)]
+            node_data['name'] = 'extraction'
+            node_data['id'] = node_id
+        else:
+            node_data = home_module[node_id]
+        
+        nodes_list.append(Node.createNode(node_data))
+        
+        # If the node has output nodes, generate the pipelines starting from the output nodes
+        output_nodes = home_module[node_id]['outputs']
+        if output_nodes:
+            for output_node_id in output_nodes["output_1"]["connections"]:
+                self.generate_pipelines(output_node_id['node'], drawflow_scene, pipelines, nodes_list[:])
+        else:
+            # If there are no outputs it is a end node, so we create a pipeline from the nodes_list
+            new_pipeline_id = len(self.pipelines) + 1
+            pipelines.append(Pipeline(nodes_list, new_pipeline_id))
+        
+        
+    def get_pipelines(self, json_config):
+        # In the json config, get the drawflow scene
+        drawflow_scene = json_config['drawflow']
+        
+        # In the drawflow scene, there is one Home module and zero or more extraction modules
+        home_module = drawflow_scene['Home']['data']
+        
+        # Pass over all nodes in the home module. If the node doesnt have any inputs, it is the start of a pipeline
+        pipelines = []
+        for node_id in home_module:
+            if not home_module[node_id]['inputs']:
+                self.generate_pipelines(node_id, drawflow_scene, pipelines, []) # Generate the pipelines starting from this node
+        
+        # Return the generated pipelines
+        return pipelines
 
 class MEDimageExtraction:
     def __init__(self, json_config: dict) -> None:
