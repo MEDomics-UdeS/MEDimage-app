@@ -27,6 +27,14 @@ class ExtractionWorkflow:
     def __init__(self, json_config: dict) -> None:
         self.pipelines = self.get_pipelines(json_config)
 
+    # TEMPORARY DEBUG FUNCTION TO PRINT PIPELINES
+    def print_pipelines(self):
+        for pipeline in self.pipelines:
+            print("Pipeline:")
+            for node in pipeline.nodes:
+                print(node.id)
+            print("\n")
+    
     def generate_pipelines(self, node_id, drawflow_scene, pipelines, nodes_list):
         # Get the home module from the drawflow scene
         home_module = drawflow_scene['Home']['data']
@@ -40,7 +48,7 @@ class ExtractionWorkflow:
         else:
             node_data = home_module[node_id]
         
-        nodes_list.append(Node.createNode(node_data))
+        nodes_list.append(Node.create_node(node_data))
         
         # If the node has output nodes, generate the pipelines starting from the output nodes
         output_nodes = home_module[node_id]['outputs']
@@ -49,10 +57,11 @@ class ExtractionWorkflow:
                 self.generate_pipelines(output_node_id['node'], drawflow_scene, pipelines, nodes_list[:])
         else:
             # If there are no outputs it is a end node, so we create a pipeline from the nodes_list
-            new_pipeline_id = len(self.pipelines) + 1
+            new_pipeline_id = len(pipelines) + 1
             pipelines.append(Pipeline(nodes_list, new_pipeline_id))
         
-        
+
+    # A pipeline is considered to start from an input node.        
     def get_pipelines(self, json_config):
         # In the json config, get the drawflow scene
         drawflow_scene = json_config['drawflow']
@@ -63,16 +72,26 @@ class ExtractionWorkflow:
         # Pass over all nodes in the home module. If the node doesnt have any inputs, it is the start of a pipeline
         pipelines = []
         for node_id in home_module:
-            if not home_module[node_id]['inputs']:
-                self.generate_pipelines(node_id, drawflow_scene, pipelines, []) # Generate the pipelines starting from this node
+            if not home_module[node_id]['inputs'] and home_module[node_id]['name'] == 'input':
+                self.generate_pipelines(node_id, drawflow_scene, pipelines, []) # Generate the pipelines starting from an input node
         
         # Return the generated pipelines
         return pipelines
+    
+    def run_all_pipelines(self):
+        for pipeline in self.pipelines:
+            pipeline.run("all")
+    
+    def run_pipelines_to_node(self, node_id="all"):
+        for pipeline in self.pipelines:
+            if pipeline.contains_node(node_id):
+                pipeline.run(node_id)
 
 class MEDimageExtraction:
     def __init__(self, json_config: dict) -> None:
-        self.json_config = json_config
-        self.medscan_obj = {}
+        self.json_config = json_config # JSON config sent from the front end in the form of a dictionary
+        self.medscan_obj = {} # Dictionary to store the MEDscan objects in the form {"filename": "MEDscan object"}
+        
         self.pipelines = []
         self._progress = {'currentLabel': '', 'now': 0.0}
         self.nb_runs = 0
@@ -165,7 +184,6 @@ class MEDimageExtraction:
         # Generate the sorted list based on the order in features_order
         return [features_ids_dict[name] for name in features_order if name in features_ids_dict]
 
-    
     def __update_pip_settings(self, pip: list, im_params: dict, scan_type: str) -> dict:
         """
         Updates the extraction parameters of the pipeline
@@ -389,7 +407,7 @@ class MEDimageExtraction:
                     # Update progress
                     self.set_progress(now=0.0, label=f"Pip {idx_pip + 1} | Loading input")
                     
-                    scan_res, filename_loaded, MEDimg = self.run_input(filename_loaded, pip, im_params, content, id_obj, output_obj)
+                    scan_res, filename_loaded, MEDimg = self.run_input(filename_loaded, pip, im_params, content, id_obj, output_obj, scan_res)
 
                     # Update progress
                     self.set_progress(now=8.5/len(self.pipelines))
@@ -494,7 +512,7 @@ class MEDimageExtraction:
         
         return pips_res
 
-    def run_input(self, filename_loaded, pip, im_params, content, id_obj, output_obj):
+    def run_input(self, filename_loaded, pip, im_params, content, id_obj, output_obj, scan_res={}):
         print("\n********INPUT execution********")
 
         # If new input computed
@@ -1292,6 +1310,7 @@ class MEDimageExtraction:
             file = self.json_config["file"]
             file_type = self.json_config["type"]
 
+            # If the file is a folder, process the DICOM scan
             if file_type == "folder":
                 # Initialize the DataManager class
                 dm = MEDimage.wrangling.DataManager(path_to_dicoms=file, path_save=UPLOAD_FOLDER, save=True)
@@ -1313,19 +1332,19 @@ class MEDimageExtraction:
                 if file_type == "file":
                     shutil.copy2(file, file_path)
 
-                # Load and store MEDimage instance from file loaded
+                # Load and store MEDimage instance from file loaded into medscan_obj
                 with open(file_path, 'rb') as f:
                     medscan = pickle.load(f)
                 medscan = MEDimage.MEDscan(medscan)
                 self.medscan_obj[filename] = medscan
-
+                
                 # Return infos of instance loaded
                 rois_list = medscan.data.ROI.roi_names
                 up_file_infos["name"] = filename
                 up_file_infos["rois_list"] = rois_list
                 return up_file_infos
             else:
-                return {"error": "The file you tried to upload doesnt have the right format."}
+                return {"error": "The file you tried to upload doesn't have the right format."}
         except Exception as e:
             return {"error": str(e)}
     
@@ -1348,18 +1367,24 @@ class MEDimageExtraction:
     
     def run_all(self) -> dict:
         try:
+            ################################ TESTING REFACTOR ################################
+            extraction_workflow = ExtractionWorkflow(self.json_config)
+            extraction_workflow.run_all_pipelines()
+            ###############################################################################
+            
             drawflow_scene = self.json_config['drawflow']
+            
             for module in drawflow_scene:  # We scan all module in scene
                 for node_id in drawflow_scene[module]['data']:  # We scan all node of each module in scene
                     node_content = drawflow_scene[module]['data'][node_id]  # Getting node content
                     if node_content["name"] == "input":  # If the node name is input, it is the start of a pipeline
-                        pip = []
-                        pip = self.generate_all_pipelines(str(node_content["id"]), node_content, [])
+                        self.generate_all_pipelines(str(node_content["id"]), node_content, [])
 
             print("\n The pipelines found in the current drawflow scene are : ", self.pipelines)
             json_res = self.execute_pips()
 
             return json_res  # return pipeline results in the form of a dict
+            
         except Exception as e:
             return {"error": str(e)}
     
