@@ -35,13 +35,7 @@ const WaveletFilter = ({ changeFilterForm, data }) => {
 
   return (
     <Form.Group as={Row} controlId="filter-wavelet">
-      <DocLink
-        linkString={
-          "https://medimage.readthedocs.io/en/latest/configuration_file.html#wavelet"
-        }
-        name={"Wavelet filter documentation"}
-        image={"../icon/extraction_img/exclamation.svg"}
-      />
+      <DocLink linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#wavelet"} name={"Wavelet filter documentation"} image={"../icon/extraction_img/exclamation.svg"} />
       <Form.Group as={Row} controlId="ndims">
         <Form.Label column>Dimension:</Form.Label>
         <Col>
