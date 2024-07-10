@@ -1184,6 +1184,11 @@ class MEDimageExtraction:
             elif 'type' not in self.json_config and self.json_config['type'] != "":
                 return {"error": "No type found in the configuration dict."}
 
+            # TODO : temporary fix to create tmp folder if it doesn't exist
+            # Should probably be done in the workspace
+            if not os.path.isdir(UPLOAD_FOLDER): 
+                os.makedirs(UPLOAD_FOLDER) 
+
             file = self.json_config["file"]
             file_type = self.json_config["type"]
 
