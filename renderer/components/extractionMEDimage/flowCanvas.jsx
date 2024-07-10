@@ -572,6 +572,13 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
             json_scene: newFlow
           }
 
+          // Activate progress if node is extraction node
+          if (nodeName === "extraction") {
+            // Start progress bar
+            setProgress({now: 0, currentLabel: progress.currentLabel})
+            setIsProgressUpdating(true)
+          }
+
           requestBackend(
             port, 
             "/extraction_MEDimage/run_all/node" + pageId, 
@@ -591,6 +598,16 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
                   setError({"message": response.error})
                 }
                 setShowError(true)
+
+                // Update progress
+                if (nodeName === "extraction") {
+                  // Update progress
+                  setIsProgressUpdating(false)
+                  setProgress({
+                    now: 0,
+                    currentLabel: ""
+                  })
+                }
               } else {
                 toast.success("Node executed successfully")
                 console.log("Response from backend is: ", response)
@@ -605,6 +622,15 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
                     let pipelineNodeIds = pipeline.match(/node_[a-f0-9-]+/g)
                     executedNodes = mergeWithoutDuplicates(executedNodes, pipelineNodeIds)
                   }
+                }
+
+                // Update progress
+                if (nodeName === "extraction") {
+                  setIsProgressUpdating(false)
+                  setProgress({
+                    now: 100,
+                    currentLabel: "Done!"
+                  })
                 }
 
                 // Update the extractionNode data with the response from the backend
@@ -680,10 +706,10 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
 
         // Update progress
         setIsProgressUpdating(false)
-          setProgress({
-            now: 0,
-            currentLabel: ""
-          })
+        setProgress({
+          now: 0,
+          currentLabel: ""
+        })
 
         // check if error has message or not
         if (response.error.message){
@@ -702,13 +728,12 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
 
         // Update progress
         setIsProgressUpdating(false)
-          setProgress({
-            now: 100,
-            currentLabel: "Done!"
-          })
+        setProgress({
+          now: 100,
+          currentLabel: "Done!"
+        })
 
         // A response from the backend is only given if there are e
-
         setNodes((prevNodes) =>
           prevNodes.map((node) => {
             // If the type of the node is extractionNode, update the results according
