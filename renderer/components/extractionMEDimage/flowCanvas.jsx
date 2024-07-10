@@ -637,14 +637,14 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
                 }
               }
 
-                // Update progress
-                if (nodeName === "extraction") {
-                  setIsProgressUpdating(false)
-                  setProgress({
-                    now: 100,
-                    currentLabel: "Done!"
-                  })
-                }
+              // Update progress
+              if (nodeName === "extraction") {
+                setIsProgressUpdating(false)
+                setProgress({
+                  now: 100,
+                  currentLabel: "Done!"
+                })
+              }
 
               // Update the extractionNode data with the response from the backend
               // And enable the view button of the nodes
