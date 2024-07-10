@@ -143,6 +143,10 @@ class MEDimageExtraction:
             if (content["name"] == "filter") or (content["name"] == "filter_processing"):
                 im_params["imParamFilter"] = content["data"]
 
+                # Update filter type:
+                if "filter_type" in content["data"]:
+                    im_params[scan_type]["filter_type"] = content["data"]["filter_type"]
+
             # INTERPOLATION
             elif (content["name"] == "interpolation"):
                 im_params[scan_type]["interp"] = content["data"]
@@ -352,9 +356,10 @@ class MEDimageExtraction:
                         MEDimg = pickle.load(f)
                         MEDimg = MEDimage.MEDscan(MEDimg)
 
+                    # Initialize settings for MEDscan object
                     scan_type = MEDimg.type
-                    im_params = self.__update_pip_settings(pip, im_params, scan_type)
-                    MEDimage.MEDscan.init_params(MEDimg, im_params)
+                    im_params = deepcopy(self.__update_pip_settings(pip, im_params, scan_type))
+                    MEDimg.init_params(im_params)
 
                     # Update output infos for RUNS
                     update_pip = True
