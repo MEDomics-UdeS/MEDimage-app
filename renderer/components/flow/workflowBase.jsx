@@ -584,7 +584,7 @@ const WorkflowBase = ({ isGoodConnection, groupNodeHandlingDefault, onDeleteNode
         <Background />
         {miniMapState && <MiniMap className="minimapStyle" zoomable pannable />}
         <Controls>
-          <ControlButton onClick={() => setMiniMapState(!miniMapState)} title="Toggle Minimap">
+          <ControlButton onClick={() => setMiniMapState(!miniMapState)} title="toggle minimap">
             <div>
               <i className="pi pi-map"></i>
             </div>
