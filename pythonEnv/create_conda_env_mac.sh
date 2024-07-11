@@ -246,6 +246,14 @@ else
         exit 1
     }
 fi
+
+# Add the virtual environment to jupyter notebook
+echo "Adding the virtual environment to jupyter notebook..."
+python -m ipykernel install --user --name=med_conda_env || {
+    echo "An error occurred while adding the virtual environment to jupyter notebook."
+    exit 1
+}
+
 source ~/.zshrc
 
 echo "Done."
