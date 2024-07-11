@@ -6,16 +6,15 @@ from ..pipeline import Pipeline
 
 class InputNode(Node):
     def __init__(self, params: dict):
+        super().__init__(params)
         
-        self.id = params['id']
+        self.filepath = params['data']['filepath'] # TODO : Check if the filepath is empty!!!
 
-        self.filepath = params['data']['filepath']
-        
-        self.output_obj = None
-        
-        self.scan_type = None
+        self.scan_type = None # Scan type formatted of the image
         
     def run(self, pipeline: Pipeline):
+        print("************************ RUNNING INPUT ***************************")
+        
         # Load the MEDimg object from the input file
         with open(UPLOAD_FOLDER / self.filepath, 'rb') as f:
             MEDimg = pickle.load(f)
@@ -28,15 +27,15 @@ class InputNode(Node):
         else:
             scan_type = "imParam" + scan_type[:-4]
         self.scan_type = scan_type
-        
+
         # Update the im_params of the pipeline with the scan type
         pipeline.update_im_params()
         # Update the MEDimg object with the pipeline im_params
-        MEDimage.MEDscan.init_params(MEDimg, pipeline.im_params)
+        MEDimg.init_params(pipeline.im_params)
         
         # Remove dicom header from MEDimg object as it causes errors in get_3d_view()
         # TODO: check if dicom header is needed in the future
         MEDimg.dicomH = None
         
-        # Place the result in the output_obj attribute
-        self.output_obj = MEDimg
+        # Place the result in the pipeline
+        pipeline.MEDimg = MEDimg

@@ -2,13 +2,26 @@ from abc import ABC, abstractmethod
 
 class Node(ABC):
     @abstractmethod
+    def __init__(self, params: dict):
+        # A node must have a name and an id
+        self.name = params["name"]
+        self.id = params["id"]
+
+        # The parameters associated with the node are stored in the params attribute unformatted
+        self.params = params['data']
+    
+        # The output of the node is stored in the output_obj attribute
+        self.output = {}
+    
+    @abstractmethod
     def run(self, pipeline):
         pass
     
-    # TODO : REFACTOR AVEC FACTORY METHOD
+    # TODO : Refactor with factory pattern
     @staticmethod
     def create_node(node_data: dict):
         print('Creating node with ID: ' + str(node_data['id']))
+        print(node_data)
         node_type = node_data["name"]
         if node_type == 'input':
             from .node_types.input_node import InputNode

@@ -500,14 +500,14 @@ class MEDimageExtraction:
             pips_obj[pip_name_obj] = pip_obj  # pips object update
         
         # Update RUNS dict
-        print("FINISHED ALL")
+        #print("FINISHED ALL")
         self.runs[self.nb_runs] = pips_obj
 
-        print("RUNS DICT : ", self.runs)
+        #print("RUNS DICT : ", self.runs)
         
         # Pickle dump runs
         with open(os.path.join(UPLOAD_FOLDER, "runs.pkl"), 'wb') as f:
-            print("\n**************PICKLE DUMP RUNS")
+            #print("\n**************PICKLE DUMP RUNS")
             pickle.dump(self.runs, f)
         
         return pips_res
@@ -830,13 +830,11 @@ class MEDimageExtraction:
 
                     # Create an empty list to store the keys that match the condition
                     roi_morph = []
-
                     # Iterate through the outer dictionary items
                     for key, inner_dict in pip_obj.items():
                         if 'type' in inner_dict and inner_dict['type'] == 'interpolation':
                             # Append the key to the list if the condition is met
                             roi_morph = inner_dict['output']['roi_morph']
-                    
                     
                     # If all features need to be extracted
                     if features_to_extract[0] == "extract_all":
@@ -1369,8 +1367,9 @@ class MEDimageExtraction:
         try:
             ################################ TESTING REFACTOR ################################
             extraction_workflow = ExtractionWorkflow(self.json_config)
+            extraction_workflow.print_pipelines()
             extraction_workflow.run_all_pipelines()
-            ###############################################################################
+            ##################################################################################
             
             drawflow_scene = self.json_config['drawflow']
             

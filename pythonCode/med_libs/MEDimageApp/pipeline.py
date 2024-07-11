@@ -1,54 +1,76 @@
 from .node import Node
 from typing import List
-import copy
 import os
 from pathlib import Path
 import MEDimage
-from .node_types.filter_node import FilterNode
-from .node_types.interpolation_node import InterpolationNode
-from .node_types.re_segmentation_node import ReSegmentationNode
-from .node_types.discretization_node import DiscretizationNode 
-
 
 JSON_SETTINGS_PATH = Path(os.path.join(os.path.dirname(os.path.abspath(__file__)))) / 'settings/settings_frame.json'
 class Pipeline:
     def __init__(self, nodes: List[Node], pipeline_id: int):
         self.nodes = nodes # List of nodes object in the pipeline
-        self.pipeline_id = pipeline_id
-        
-        self.nb_runs = 0
-        self.runs = {}
+        self.pipeline_id = pipeline_id # ID of the pipeline
     
-        self.flag_texture = False
+        self.flag_texture = False # Flag to check if the pipeline includes texture features
+        if nodes[-1].name and nodes[-1].name == "extraction" and nodes[-1].includes_texture_features():
+            self.flag_texture = True
+            
+        self.MEDimg = None # MEDimg object of the input image
+        self.latest_node_output = {} # Output of the latest node in the pipeline
+        self.obj_init_texture = {} # Output of segmentation node to keep initial version of vol_obj_init and roi_obj_init for texture features
         
-        self.node_outputs = {} # Dictionary to store the output of each node
-        self.scan_results = {} # Dictionary to store the scan results (radiomics)
+        self.settings_res = {} # Dictionary to store the settings results of the pipeline
+        self.scan_res = {} # Dictionary to store the scan results (radiomics)
     
         # Loading default settings from MEDimageApp json file as im_params
         self.im_params = MEDimage.utils.json_utils.load_json(JSON_SETTINGS_PATH)
 
-        # If the first node is an input node update im_params to correspond with scan type
-        #if self.nodes[0].__class__.__name__ == "InputNode":
-            # Update image parameters of the pipeline using the data from it's nodes
-        #    self.im_params = self.__update_im_params()
 
-    def update_im_params(self):
-        scan_type = self.nodes[0].scan_type # Get the scan type from the input node
+    def get_previous_node_output(self, node: Node):
+        """ Given a node, return the output of the previous node in the pipeline
+
+        Args:
+            node (Node): the node for which to get the previous output
+        """
+        prev = [self.nodes[i-1] for i in range(len(self.nodes)) if self.nodes[i].id == node.id]
+        if prev:
+            return prev[0].output
+        else:
+            return None
+        
+    
+    def get_node_output_from_type(self, node_name: str):
+        """ Checks if a node with the given name exists in the pipeline and returns its output
+
+        Args:
+            node_name (str): _description_
+
+        Returns:
+            _type_: _description_
+        """
         for node in self.nodes:
-            # FILTERING
-            if (isinstance(node, FilterNode)):
+            if node.name == node_name:
+                return node.output
+        return {"error": f"Node not found in pipeline."} # TODO : Bonne facon de retourner error?
+    
+    
+    def update_im_params(self):
+        """ Update the im_params dictionnary with the parameters of the nodes in the pipeline.
+            im_params is a dictionnary that contains the parameters of the image processing pipeline
+            in the format used by MEDimage.
+        """
+        scan_type = self.nodes[0].scan_type # Get the scan type from the input node
+        
+        for node in self.nodes:
+            if (node.name == "filter"):
                 self.im_params["imParamFilter"] = node.params
                 
-            # INTERPOLATION
-            elif (isinstance(node, InterpolationNode)):
+            elif (node.name == "interpolation"):
                 self.im_params[scan_type]["interp"] = node.params
 
-            # RE-SEGMENTATION
-            elif (isinstance(node, ReSegmentationNode)):
+            elif (node.name == "re_segmentation"):
                 self.im_params[scan_type]["reSeg"] = node.params
 
-            # DISCRETIZATION
-            elif (isinstance(node, DiscretizationNode)):
+            elif (node.name == "discretization"):
                 self.im_params[scan_type]["discretisation"] = node.params
 
     
@@ -57,7 +79,3 @@ class Pipeline:
             node.run(self)
             if node.id == node_id:
                 break
-    
-        self.nb_runs += 1 # Incrementing the number of runs
-        self.runs[self.nb_runs] = copy.deepcopy(self.scan_results) # Storing the scan results in the runs dictionary
-        self.scan_results = {} # Reset scan_results for the next run
