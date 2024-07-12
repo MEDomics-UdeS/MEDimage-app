@@ -678,6 +678,10 @@ class MEDimageLearning:
                                     level = experiment_label.split("_")[1]
                                     modality = experiment_label.split("_")[-1]
                                     sort_option = content["data"]["histParams"]["sortOption"]
+
+                                    # Create the folder if it does not exist
+                                    if not (Path.cwd().parent / "renderer/public/images/analyze").exists():
+                                        os.makedirs(Path.cwd().parent / "renderer/public/images/analyze")
                                     path_image = Path(path_study) / f'features_importance_histogram_{level}_{modality}_{sort_option}.png'
                                     path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'features_importance_histogram_{level}_{modality}_{sort_option}_{pip_name}.png'
                                     path_save = shutil.copy(path_image, path_save)
@@ -786,6 +790,10 @@ class MEDimageLearning:
                         
                         # Move images to public folder
                         path_image = Path(path_study) / f'{title}.png' if title else Path(path_study) / f'{metric}_heatmap.png'
+
+                        # Create the folder if it does not exist
+                        if not (Path.cwd().parent / "renderer/public/images/analyze").exists():
+                            os.makedirs(Path.cwd().parent / "renderer/public/images/analyze")
                         path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'{title}_{pip_name}.png' if title else Path.cwd().parent / "renderer/public/images/analyze" / f'{metric}_heatmap_{pip_name}.png'
                         path_save = shutil.copy(path_image, path_save)
 
@@ -861,18 +869,25 @@ class MEDimageLearning:
                                     
                                     # Move plot to public folder
                                     if path_tree is not None:
+                                        # Create the folder if it does not exist
+                                        if not (Path.cwd().parent / "renderer/public/images/analyze").exists():
+                                            os.makedirs(Path.cwd().parent / "renderer/public/images/analyze")
                                         if 'Text' in optimal_level:
                                             path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'Original_level_{experiment}_{optimal_level}_{modalities[idx_m]}_explanation_tree_{pip_name}.png'
+                                            path_save = shutil.copy(path_tree, path_save)
                                         elif 'LF' in optimal_level:
                                             path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'LF_level_{experiment}_{optimal_level}_{modalities[idx_m]}_explanation_tree_{pip_name}.png'
+                                            path_save = shutil.copy(path_tree, path_save)
                                         elif 'TF' in optimal_level:
                                             path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'TF_level_{experiment}_{optimal_level}_{modalities[idx_m]}_explanation_tree_{pip_name}.png'
-                                        path_save = shutil.copy(path_tree, path_save)
-
+                                            path_save = shutil.copy(path_tree, path_save)
+                                        else:
+                                            path_save = None
+                                        
                                         # Update Analysis dict
                                         figures_dict["optimal_level"]["tree"] = {}
                                         figures_dict["optimal_level"]["tree"][optimal_level] = {}
-                                        figures_dict["optimal_level"]["tree"][optimal_level]["path"] = '.' + str(path_save).split('public')[-1].replace('\\', '/')
+                                        figures_dict["optimal_level"]["tree"][optimal_level]["path"] = '.' + str(path_save).split('public')[-1].replace('\\', '/') if path_save is not None else ""
                             except Exception as e:
                                 return {"error": str(e)}
                     
