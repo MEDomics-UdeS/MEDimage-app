@@ -122,11 +122,11 @@ const Data = ({ id, data, type }) => {
                   data-pr-position="bottom">
                       Select Features Files
               </Form.Label>
-              <Card style={{ position: "relative" }}>
-                <ScrollPanel style={{height: '200px' }}>
+              <Card style={{display: 'block', overflow: 'auto', padding: '10px'}}>
                   {featuresFiles.map((file) => (
                     <div key={file} style={{display: 'flex', justifyContent:'flex-start'}}>
                     <Checkbox
+                      style={{marginTop: '2px'}}
                       onChange={(event) => {
                         // check if the file is already in the list if yes remove it
                         if (data.internal.settings.featuresFiles.includes(file)) {
@@ -139,10 +139,9 @@ const Data = ({ id, data, type }) => {
                       }}
                       checked={data.internal.settings.featuresFiles.includes(file)}
                     />
-                    <label htmlFor={file} className="ml-2">{file}</label>
+                    <label htmlFor={file} className="ml-2 mt-1 ms-1">{file}</label>
                     </div>
                   ))}
-                </ScrollPanel>
               </Card>
             </Form.Group>
             )}
