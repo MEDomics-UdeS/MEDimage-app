@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useContext } from "re
 import Node from "../../flow/node"
 import { Form } from "react-bootstrap"
 import { FlowFunctionsContext } from "../../flow/context/flowFunctionsContext"
-import { ScrollPanel } from 'primereact/scrollpanel';
+import Card from 'react-bootstrap/Card';
 
 /**
  * @param {string} id id of the node
@@ -178,15 +178,13 @@ const FeaturesNode = ({ id, data, type }) => {
           ) : null
         }
         nodeSpecific={
-          <ScrollPanel style={{ height: '200px' }}>
-            <br />
+          <Card style={{display: 'block', overflow: 'auto', padding: '10px', height: "180px"}}>
             <Form.Check
               type="checkbox"
               label="Select all"
               checked={isAllChecked || selectedFeatures[0] === "extract_all"}
               onChange={handleToggleAll}
             />
-
             {features.map((feature) => (
               <Form.Check
                 key={feature}
@@ -203,8 +201,7 @@ const FeaturesNode = ({ id, data, type }) => {
                 onChange={handleToggleFeature}
               />
             ))}
-            <br />
-          </ScrollPanel >
+          </Card>
         }
       />
     </>
