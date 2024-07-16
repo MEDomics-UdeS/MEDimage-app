@@ -167,7 +167,7 @@ conda install pycaret -y || {
 
 # Install packages with pip
 echo "Installing packages with pip..."
-pip install -r requirements_mac.txt || {
+pip install -r "$(dirname "$0")/requirements.txt" || {
     echo "An error occurred while installing packages with pip."
     exit 1
 }
