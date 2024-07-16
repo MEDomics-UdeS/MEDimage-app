@@ -122,7 +122,7 @@ const Data = ({ id, data, type }) => {
                   data-pr-position="bottom">
                       Select Features Files
               </Form.Label>
-              <Card style={{display: 'block', overflow: 'auto', padding: '10px'}}>
+              <Card style={{display: 'block', overflow: 'auto', padding: '10px', maxHeight: "250px"}}>
                   {featuresFiles.map((file) => (
                     <div key={file} style={{display: 'flex', justifyContent:'flex-start'}}>
                     <Checkbox

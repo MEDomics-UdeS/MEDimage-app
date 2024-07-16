@@ -178,7 +178,7 @@ const FeaturesNode = ({ id, data, type }) => {
           ) : null
         }
         nodeSpecific={
-          <Card style={{display: 'block', overflow: 'auto', padding: '10px', height: "180px"}}>
+          <Card style={{display: 'block', overflow: 'auto', padding: '10px', maxHeight: "250px"}}>
             <Form.Check
               type="checkbox"
               label="Select all"
