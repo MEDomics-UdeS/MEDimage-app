@@ -167,7 +167,7 @@ conda install pycaret -y || {
 
 # Install packages with pip
 echo "Installing packages with pip..."
-pip install -r requirements_mac.txt || {
+pip install -r "$(dirname "$0")/requirements.txt" || {
     echo "An error occurred while installing packages with pip."
     exit 1
 }
@@ -246,6 +246,14 @@ else
         exit 1
     }
 fi
+
+# Add the virtual environment to jupyter notebook
+echo "Adding the virtual environment to jupyter notebook..."
+python -m ipykernel install --user --name=med_conda_env || {
+    echo "An error occurred while adding the virtual environment to jupyter notebook."
+    exit 1
+}
+
 source ~/.zshrc
 
 echo "Done."
