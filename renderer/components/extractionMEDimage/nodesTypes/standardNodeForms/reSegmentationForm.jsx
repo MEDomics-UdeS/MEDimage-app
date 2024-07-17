@@ -54,48 +54,25 @@ const ReSegmentationForm = ({ nodeForm, changeNodeForm, data }) => {
 
   return (
     <Form className="standard-form">
-      <DocLink
-        linkString={
-          "https://medimage.readthedocs.io/en/latest/configuration_file.html#reseg"
-        }
-        name={"Re-segmentation documentation"}
-        image={"../icon/extraction_img/exclamation.svg"}
-      />
+      <DocLink linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#reseg"} name={"Re-segmentation documentation"} image={"../icon/extraction_img/exclamation.svg"} />
 
       <Form.Group>
         <Form.Label>Range:</Form.Label>
         <Row>
           <Col>
             <Form.Label>Min range</Form.Label>
-            <Form.Control
-              name="range-0"
-              type="number"
-              value={nodeForm.range[0] !== "inf" ? nodeForm.range[0] : ""}
-              placeholder="Infinity"
-              onChange={handleRange}
-            />
+            <Form.Control name="range-0" type="number" value={nodeForm.range[0] !== "inf" ? nodeForm.range[0] : ""} placeholder="Infinity" onChange={handleRange} />
           </Col>
           <Col>
             <Form.Label>Max range</Form.Label>
-            <Form.Control
-              name="range-1"
-              type="number"
-              value={nodeForm.range[1] !== "inf" ? nodeForm.range[1] : ""}
-              placeholder="Infinity"
-              onChange={handleRange}
-            />
+            <Form.Control name="range-1" type="number" value={nodeForm.range[1] !== "inf" ? nodeForm.range[1] : ""} placeholder="Infinity" onChange={handleRange} />
           </Col>
         </Row>
       </Form.Group>
 
       <Form.Group style={{ paddingTop: "10px" }}>
         <Form.Label>Outliers:</Form.Label>
-        <Form.Control
-          as="select"
-          name="outliers"
-          value={nodeForm.outliers}
-          onChange={changeNodeForm}
-        >
+        <Form.Control as="select" name="outliers" value={nodeForm.outliers} onChange={changeNodeForm}>
           <option value="">None</option>
           <option value="Collewet">Collewet</option>
         </Form.Control>
