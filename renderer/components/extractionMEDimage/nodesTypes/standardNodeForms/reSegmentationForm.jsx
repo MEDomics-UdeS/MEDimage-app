@@ -33,7 +33,7 @@ const ReSegmentationForm = ({ nodeForm, changeNodeForm, data }) => {
       if (value === "") {
         outliers[outliers_number] = "inf"
       } else {
-        outliers[outliers_number] = parseInt(value)
+        outliers[outliers_number] = parseFloat(value)
       }
 
       // Modify the event object
