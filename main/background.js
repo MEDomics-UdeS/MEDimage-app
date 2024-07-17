@@ -128,25 +128,25 @@ if (isProd) {
         {
           label: "Report an issue",
           click() {
-            openWindowFromURL("https://forms.office.com/r/8tbTBHL4bv")
+            openWindowFromURL("https://medomics-udes.gitbook.io/medimage-app-docs/forms/report-an-issue")
           }
         },
         {
           label: "Contact us",
           click() {
-            openWindowFromURL("https://forms.office.com/r/Zr8xJbQs64")
+            openWindowFromURL("https://medomics-udes.gitbook.io/medimage-app-docs/forms/contact-us")
           }
         },
         {
           label: "Join Us on Discord !",
           click() {
-            openWindowFromURL("https://discord.gg/ZbaGj8E6mP")
+            openWindowFromURL("https://discord.gg/kzNVmDsXWp")
           }
         },
         {
           label: "Documentation",
           click() {
-            openWindowFromURL("https://medomics-udes.gitbook.io/medomicslab-docs")
+            openWindowFromURL("https://medomics-udes.gitbook.io/medimage-app-docs")
           }
         },
         { type: "separator" },

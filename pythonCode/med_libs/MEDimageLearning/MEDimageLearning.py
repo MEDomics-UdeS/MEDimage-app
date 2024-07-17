@@ -45,18 +45,18 @@ class MEDimageLearning:
         pip.append(id)  # Current node added to pip
 
         # ---------------------------------------------- NEXT NODES COMPUTE ----------------------------------------------
-        # NO OUPUT CONNECTION
-        if not "output_1" in node_content["outputs"]:  # if no ouput connection
+        # NO output CONNECTION
+        if not "output_1" in node_content["outputs"]:  # if no output connection
             pips.append(deepcopy(pip))  # Add the current pip to pips
             return pip
 
-        # ONE OUPUT CONNECTION
+        # ONE output CONNECTION
         elif len(node_content["outputs"]["output_1"]["connections"]) == 1:
             out_node_id = node_content["outputs"]["output_1"]["connections"][0]["node"]
             out_node_content = get_node_content(out_node_id, json_scene)
             pip = self.generate_all_pips(out_node_id, out_node_content, pip, json_scene, pips, counter)
 
-        # MORE ONE OUPUT CONNECTION
+        # MORE ONE output CONNECTION
         else:
             connections = node_content["outputs"]["output_1"]["connections"]  # output connections of last node added to pip
             for connection in connections:
@@ -411,7 +411,7 @@ class MEDimageLearning:
                                 # Update progress
                                 self.set_progress(label=f"Pip {str(pip_idx+1)} | Split {split_counter+1} | Reducing data")
 
-                                # Seperate training and testing data before feature set reduction
+                                # Separate training and testing data before feature set reduction
                                 rad_tables_testing = deepcopy(rad_tables_learning)
                                 rad_tables_training = []
                                 for rad_tab in rad_tables_learning:
@@ -482,7 +482,7 @@ class MEDimageLearning:
                                 # Update progress
                                 self.set_progress(label=f"Pip {str(pip_idx+1)} | Split {split_counter+1} | Model training")
 
-                                # Seperate training and testing if no feature set reduction step was performed
+                                # Separate training and testing if no feature set reduction step was performed
                                 if not reduced_features:
                                     rad_tables_testing = deepcopy(rad_tables_learning)
                                     rad_tables_training = []
@@ -530,7 +530,7 @@ class MEDimageLearning:
                                 else:
                                     return {"error":  "Radiomics learner: seed was not provided"}
 
-                                # Serperate variable table for training sets (repetitive but double-checking)
+                                # Separate variable table for training sets (repetitive but double-checking)
                                 var_table_train = rad_tables_training.loc[patients_train, :]
 
                                 # Training the model
@@ -562,7 +562,7 @@ class MEDimageLearning:
                                     [patients_train, patients_test]
                                 ) 
                                 if holdout_test:
-                                    # --> D. Holdoutset testing phase
+                                    # --> D. Holdout set testing phase
                                     # D.1. Prepare holdout test data
                                     # Loading and pre-processing
                                     rad_tables_holdout = list()
@@ -678,6 +678,10 @@ class MEDimageLearning:
                                     level = experiment_label.split("_")[1]
                                     modality = experiment_label.split("_")[-1]
                                     sort_option = content["data"]["histParams"]["sortOption"]
+
+                                    # Create the folder if it does not exist
+                                    if not (Path.cwd().parent / "renderer/public/images/analyze").exists():
+                                        os.makedirs(Path.cwd().parent / "renderer/public/images/analyze")
                                     path_image = Path(path_study) / f'features_importance_histogram_{level}_{modality}_{sort_option}.png'
                                     path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'features_importance_histogram_{level}_{modality}_{sort_option}_{pip_name}.png'
                                     path_save = shutil.copy(path_image, path_save)
@@ -704,7 +708,7 @@ class MEDimageLearning:
                         results_avg.append({pip_name: {experiment_label: results_avg_dict, "analysis": analysis_dict}})
 
                     except Exception as e:
-                        return {"error": "Reults averaging & Features analysis:" + str(e)}
+                        return {"error": "Results averaging & Features analysis:" + str(e)}
                 
                 # Check if all the splits are done
                 if designed_experiment and split_counter == len(paths_splits):
@@ -786,6 +790,10 @@ class MEDimageLearning:
                         
                         # Move images to public folder
                         path_image = Path(path_study) / f'{title}.png' if title else Path(path_study) / f'{metric}_heatmap.png'
+
+                        # Create the folder if it does not exist
+                        if not (Path.cwd().parent / "renderer/public/images/analyze").exists():
+                            os.makedirs(Path.cwd().parent / "renderer/public/images/analyze")
                         path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'{title}_{pip_name}.png' if title else Path.cwd().parent / "renderer/public/images/analyze" / f'{metric}_heatmap_{pip_name}.png'
                         path_save = shutil.copy(path_image, path_save)
 
@@ -861,28 +869,35 @@ class MEDimageLearning:
                                     
                                     # Move plot to public folder
                                     if path_tree is not None:
+                                        # Create the folder if it does not exist
+                                        if not (Path.cwd().parent / "renderer/public/images/analyze").exists():
+                                            os.makedirs(Path.cwd().parent / "renderer/public/images/analyze")
                                         if 'Text' in optimal_level:
                                             path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'Original_level_{experiment}_{optimal_level}_{modalities[idx_m]}_explanation_tree_{pip_name}.png'
+                                            path_save = shutil.copy(path_tree, path_save)
                                         elif 'LF' in optimal_level:
                                             path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'LF_level_{experiment}_{optimal_level}_{modalities[idx_m]}_explanation_tree_{pip_name}.png'
+                                            path_save = shutil.copy(path_tree, path_save)
                                         elif 'TF' in optimal_level:
                                             path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'TF_level_{experiment}_{optimal_level}_{modalities[idx_m]}_explanation_tree_{pip_name}.png'
-                                        path_save = shutil.copy(path_tree, path_save)
-
+                                            path_save = shutil.copy(path_tree, path_save)
+                                        else:
+                                            path_save = None
+                                        
                                         # Update Analysis dict
                                         figures_dict["optimal_level"]["tree"] = {}
                                         figures_dict["optimal_level"]["tree"][optimal_level] = {}
-                                        figures_dict["optimal_level"]["tree"][optimal_level]["path"] = '.' + str(path_save).split('public')[-1].replace('\\', '/')
+                                        figures_dict["optimal_level"]["tree"][optimal_level]["path"] = '.' + str(path_save).split('public')[-1].replace('\\', '/') if path_save is not None else ""
                             except Exception as e:
                                 return {"error": str(e)}
                     
                     # Break the nodes loop
                     break
 
-            # Break the pips loop (only one analyze node is allowed per scence)
+            # Break the pips loop (only one analyze node is allowed per scene)
             break
         
-        # pip features and settings updateded
+        # pip features and settings updated
         scan_res[pip_name_res] = pip_res
     
         # pips response update
@@ -924,7 +939,7 @@ class MEDimageLearning:
                 if analyze_nodes > 1:
                     return {"error": "Only one analyze node is allowed!"}
         
-        # Process Piplines starting with split
+        # Process Pipelines starting with split
         for module in drawflow_scene:  # We scan all module in scene
             for node_id in drawflow_scene[module]['data']:  # We scan all node of each module in scene
                 node_content = drawflow_scene[module]['data'][node_id]  # Getting node content
@@ -932,7 +947,7 @@ class MEDimageLearning:
                     self.generate_all_pips(str(node_content["id"]), node_content, [], json_scene, pips, counter)
                     counter += 1
         
-        # Full expeience check
+        # Full experience check
         design_nodes = 0
         for module in drawflow_scene:
             for node_id in drawflow_scene[module]['data']:
@@ -1073,7 +1088,7 @@ class MEDimageLearning:
                         f.writelines("\n# Initializing experiment data\n")
                         f.writelines("experiment_label = design_settings['expName']\n")
                         f.writelines("paths_splits = [tests_dict[run] for run in tests_dict.keys()]\n")
-                        f.writelines("\n# Numebr of splits\n")
+                        f.writelines("\n# Number of splits\n")
                         f.writelines("nb_split = len(paths_splits)\n")
 
                         f.writelines("# make sure we have at least two splits\n")
@@ -1248,14 +1263,14 @@ class MEDimageLearning:
                         f.writelines(f"    fsr_settings = {pp.pformat(content['data'])}\n")
                         if not cleaned_data and not normalized_features:
                             f.writelines("    for item in rad_var_struct['path'].values():\n")
-                            f.writelines("        # Loading the tablen\n")
+                            f.writelines("        # Loading the table\n")
                             f.writelines("        path_radiomics_csv = item['csv']\n")
                             f.writelines("        path_radiomics_txt = item['txt']\n")
                             f.writelines("        image_type = item['type']\n")
                             f.writelines("        rad_table_learning = MEDimage.learning.ml_utils.get_radiomics_table(path_radiomics_csv, path_radiomics_txt, image_type, patient_ids)\n")
                             f.writelines("        rad_tables_learning.append(rad_table_learning)\n")
 
-                        f.writelines("\n    # Seperate training and testing data before feature set reduction\n")
+                        f.writelines("\n    # Separate training and testing data before feature set reduction\n")
                         f.writelines("    rad_tables_testing = deepcopy(rad_tables_learning)\n")
                         f.writelines("    rad_tables_training = []\n")
                         f.writelines("    for rad_tab in rad_tables_learning:\n")
@@ -1316,7 +1331,7 @@ class MEDimageLearning:
                             f.writelines("        rad_table_learning = MEDimage.learning.ml_utils.get_radiomics_table(path_radiomics_csv, path_radiomics_txt, image_type, patient_ids)\n")
                             f.writelines("        rad_tables_learning.append(rad_table_learning)\n")
                         
-                        f.writelines("\n    # Seperate training and testing if no feature set reduction step was performed\n")
+                        f.writelines("\n    # Separate training and testing if no feature set reduction step was performed\n")
                         if not reduced_features:
                             f.writelines("        rad_tables_testing = deepcopy(rad_tables_learning)\n")
                             f.writelines("        rad_tables_training = []\n")
@@ -1345,7 +1360,7 @@ class MEDimageLearning:
                         f.writelines("    use_gpu = learner_settings[model_name]['use_gpu']  if 'use_gpu' in learner_settings[model_name] else False\n")
                         f.writelines("    seed = learner_settings[model_name]['seed']\n")
 
-                        f.writelines("\n    # Serperate variable table for training sets (repetitive but double-checking)\n")
+                        f.writelines("\n    # Separate variable table for training sets (repetitive but double-checking)\n")
                         f.writelines("    var_table_train = rad_tables_training.loc[patients_train, :]\n")
 
                         f.writelines("\n    # Training the model\n")
@@ -1375,7 +1390,7 @@ class MEDimageLearning:
                         f.writelines("        [patients_train, patients_test]\n")
                         f.writelines("    )\n")
                         f.writelines("    if holdout_test:\n")
-                        f.writelines("        # --> D. Holdoutset testing phase\n")
+                        f.writelines("        # --> D. Holdout set testing phase\n")
                         f.writelines("        # D.1. Prepare holdout test data\n")
                         f.writelines("        # Loading and pre-processing\n")
                         f.writelines("        rad_tables_holdout = list()\n")

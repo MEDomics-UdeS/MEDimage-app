@@ -208,6 +208,10 @@ class MEDimageExtraction:
             if (content["name"] == "filter") or (content["name"] == "filter_processing"):
                 im_params["imParamFilter"] = content["data"]
 
+                # Update filter type:
+                if "filter_type" in content["data"]:
+                    im_params[scan_type]["filter_type"] = content["data"]["filter_type"]
+
             # INTERPOLATION
             elif (content["name"] == "interpolation"):
                 im_params[scan_type]["interp"] = content["data"]
