@@ -158,8 +158,8 @@ const InterpolationForm = ({ nodeForm, changeNodeForm, data }) => {
       <Form.Group controlId="roi_interp" style={{ paddingTop: "10px" }}>
         <Form.Label>ROI interpolation method :</Form.Label>
         <Form.Control as="select" name="roi_interp" value={nodeForm.roi_interp} onChange={changeNodeForm}>
+          <option value="nearest">Nearest</option>
           <option value="linear">Linear</option>
-          <option value="spline">Spline</option>
           <option value="cubic">Cubic</option>
         </Form.Control>
       </Form.Group>
