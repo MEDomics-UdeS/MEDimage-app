@@ -44,7 +44,7 @@ const Design = ({ id, data, type }) => {
                       Experiment Name
               </Form.Label>
                 <InputText
-                    style={{width: "300px"}}
+                    style={{width: "280px"}}
                     value={data.setupParam.possibleSettings.defaultSettings.expName}
                     placeholder="Ex: Problem_RadiomicsLevel_Modality"
                     onChange={(event) => {
@@ -66,7 +66,7 @@ const Design = ({ id, data, type }) => {
                       Split Type
               </Form.Label>
                 <Dropdown 
-                    style={{width: "300px"}}
+                    style={{width: "280px"}}
                     value={data.setupParam.possibleSettings.defaultSettings.testSets[0]}
                     options={[{ name: 'Random' }, { name: 'Institution' }, { name: 'Cross-Validation' }]}
                     optionLabel="name" 
@@ -98,7 +98,7 @@ const Design = ({ id, data, type }) => {
                       Split Method
               </Form.Label>
                 <Dropdown 
-                    style={{width: "300px"}}
+                    style={{width: "280px"}}
                     value={data.setupParam.possibleSettings.defaultSettings.Random.method}
                     options={[{ name: 'SubSampling' }]}
                     optionLabel="name" 
@@ -122,8 +122,7 @@ const Design = ({ id, data, type }) => {
                       Splits Number
               </Form.Label>
                 <InputNumber
-                    style={{width: "300px"}}
-                    buttonLayout="horizontal"
+                    style={{width: "250px", marginRight: "25px"}}
                     value={data.setupParam.possibleSettings.defaultSettings.Random.nSplits}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.Random.nSplits = event.target.value;
@@ -171,8 +170,7 @@ const Design = ({ id, data, type }) => {
                       Train/Test Proportion
               </Form.Label>
                 <InputNumber
-                    style={{width: "300px"}}
-                    buttonLayout="horizontal"
+                    style={{width: "250px", marginRight: "25px"}}
                     value={data.setupParam.possibleSettings.defaultSettings.Random.testProportion}
                     onValueChange={(event) => {
                         data.setupParam.possibleSettings.defaultSettings.Random.testProportion = event.target.value;
@@ -201,7 +199,6 @@ const Design = ({ id, data, type }) => {
                       Random Seed
               </Form.Label>
                 <InputNumber
-                    style={{width: "300px"}}
                     buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.Random.seed}
                     onValueChange={(event) => {
@@ -234,8 +231,7 @@ const Design = ({ id, data, type }) => {
                       Number of folds
               </Form.Label>
                 <InputNumber
-                    style={{width: "300px"}}
-                    buttonLayout="horizontal"
+                    style={{width: "250px", marginRight: "25px"}}
                     value={data.setupParam.possibleSettings.defaultSettings.cv.nSplits}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.cv.nSplits = event.target.value;
@@ -261,7 +257,7 @@ const Design = ({ id, data, type }) => {
                       Random Seed
               </Form.Label>
                 <InputNumber
-                    style={{width: "300px"}}
+                    style={{width: "280px"}}
                     buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.cv.seed}
                     onValueChange={(event) => {

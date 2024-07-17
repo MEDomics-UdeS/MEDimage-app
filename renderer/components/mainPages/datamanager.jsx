@@ -53,22 +53,29 @@ const DataManager = ({ pageId, configPath = "" }) => {
   const handleDcmFolderChange = (event) => {
     var fileList = event.target.files
     if (fileList.length > 0) {
-      fileList = fileList[0].path
+      // Get the selected file
+      const selectedFile = fileList[0]
+      const filePath = selectedFile.path;
+      const fullPath = selectedFile.webkitRelativePath;
 
-      // The path of the image needs to be the path of the common folder of all the files
-      // If the directory is constructed according to standard DICOM format, the path
-      // of the image is the one containning the folders image and mask
-      if (fileList.indexOf("\\") >= 0) {
-        fileList = fileList.split("\\").slice(0, -1).join("\\")
-      } else if (fileList.indexOf("/") >= 0) {
-        fileList = fileList.split("/").slice(0, -1).join("/")
+      // Split the full path to get the directory parts
+      let mainFolder = ""
+      if (fullPath.indexOf("\\") >= 0) {
+        mainFolder = fullPath.split("\\")[0];
+      } else if (fullPath.indexOf("/") >= 0) {
+        mainFolder = fullPath.split("/")[0];
       } else {
-        fileList = fileList.split("/").slice(0, -1).join("/")
+        mainFolder = fullPath.split("/")[0];
       }
-      setSelectedDcmFolder(fileList)
+      const idxMainFolder = filePath.indexOf(mainFolder);
+
+      let selectedImageFolder = filePath.slice(0, idxMainFolder + mainFolder.length)
+
+      setSelectedDcmFolder(selectedImageFolder)
     }
     else {
       setSelectedDcmFolder(event.target.files.path)
+      console.log("DataManager selectedDcmFolder: ", event.target.files.path);
     }
   };
 
@@ -630,7 +637,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
           <Tooltip target=".save-path"/>
           <Form.Label 
             className="save-path" 
-            data-pr-tooltip="Folder to where the processed data will be saved"
+            data-pr-tooltip="Folder to where the processed data will be saved (cannot be empty)"
             data-pr-position="bottom"
             htmlFor="file">
               Save folder
