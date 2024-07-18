@@ -34,7 +34,7 @@ class ExtractionNode(Node):
             if features_to_extract[0] == "extract_all":
                 features = MEDimage.biomarkers.morph.extract_all(
                     vol=last_feat_vol.data,  # vol_obj.data
-                    mask_int=last_feat_roi.data,  # roi_obj_morph.data,
+                    mask_int=last_feat_roi.data,  # roi_obj_int.data,
                     mask_morph=roi_obj_morph.data,  # roi_obj_morph.data
                     res=pipeline.MEDimg.params.process.scale_non_text,
                     intensity_type=pipeline.MEDimg.params.process.intensity_type
@@ -73,8 +73,8 @@ class ExtractionNode(Node):
             # If all features need to be extracted
             if features_to_extract[0] == "extract_all":
                 features = MEDimage.biomarkers.local_intensity.extract_all(
-                    img_obj=last_feat_vol.data,  # vol_obj
-                    roi_obj=last_feat_roi.data,  # roi_obj_int
+                    img_obj=last_feat_vol.data,  # vol_obj.data
+                    roi_obj=last_feat_roi.data,  # roi_obj_int.data
                     res=pipeline.MEDimg.params.process.scale_non_text,
                     intensity_type=pipeline.MEDimg.params.process.intensity_type
                     # TODO: missing parameter that is automatically set to false
@@ -136,7 +136,7 @@ class ExtractionNode(Node):
     def get_intensity_histogram_features(self, features_to_extract, pipeline):
         try:
             features = {}
-            vol_quant_re = pipeline.latest_node_output["vol_quant_re_ivh"]
+            vol_quant_re = pipeline.latest_node_output["vol_quant_re"]
             
             # If all features need to be extracted
             if features_to_extract[0] == "extract_all":
@@ -198,6 +198,181 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF INTENSITY VOLUME HISTOGRAM FEATURES {str(e)}"}
 
+    def get_glcm_features(self, features_to_extract, pipeline):
+        try:
+            features = {}
+            
+            vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
+            
+            # If all features need to be extracted
+            if features_to_extract[0] == "extract_all":
+                features = MEDimage.biomarkers.glcm.extract_all(
+                    vol=vol_quant_re_texture,
+                    dist_correction=pipeline.MEDimg.params.radiomics.glcm.dist_correction,
+                    merge_method=pipeline.MEDimg.params.radiomics.glcm.merge_method)
+            else:
+                # Extracts co-occurrence matrices from the intensity roi mask prior to features
+                matrices_dict = MEDimage.biomarkers.glcm.get_glcm_matrices(
+                    vol_quant_re_texture,
+                    merge_method=pipeline.MEDimg.params.radiomics.glcm.merge_method,
+                    dist_weight_norm=pipeline.MEDimg.params.radiomics.glcm.dist_correction)
+
+                # If not all features need to be extracted, use the name of each feature to build
+                # extraction code (executed dynamically using exec()).
+                for i in range(len(features_to_extract)):
+                    function_name = "MEDimage.biomarkers.glcm." + str(features_to_extract[i])
+                    function_params = "matrices_dict"
+                    function_call = "result = " + function_name + "(" + function_params + ")"
+                    local_vars = {}
+                    global_vars = {"MEDimage": MEDimage, "matrices_dict": matrices_dict}
+                    exec(function_call, global_vars, local_vars)
+
+                    feature_name_convention = "Fcm_" + str(features_to_extract[i])
+                    features[feature_name_convention] = local_vars.get("result")
+            
+            return features
+
+        except Exception as e:
+            return {"error": f"PROBLEM WITH COMPUTATION OF GLCM FEATURES {str(e)}"}
+
+    
+    def get_glrlm_features(self, features_to_extract, pipeline):
+        try:
+            features = {}
+            
+            vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
+
+            # TODO : temporary code used to replace single feature extraction for user
+            all_features = MEDimage.biomarkers.glrlm.extract_all(
+                vol=vol_quant_re_texture,
+                dist_correction=pipeline.MEDimg.params.radiomics.glrlm.dist_correction,
+                merge_method=pipeline.MEDimg.params.radiomics.glrlm.merge_method)
+
+            # If all features need to be extracted
+            if features_to_extract[0] == "extract_all":
+                features = all_features
+            else:
+                for i in range(len(features_to_extract)):
+                    feature_name_convention = "Frlm_" + str(features_to_extract[i])
+                    features[feature_name_convention] = all_features[feature_name_convention]
+
+            return features
+        
+        except Exception as e:
+            return {"error": f"PROBLEM WITH COMPUTATION OF GLRLM FEATURES {str(e)}"}
+    
+    def get_glszm_features(self, features_to_extract, pipeline):
+        try:
+            features = {}
+            
+            vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
+
+            # TODO : temporary code used to replace single feature extraction for user
+            all_features = MEDimage.biomarkers.glszm.extract_all(vol=vol_quant_re_texture)
+
+            # If all features need to be extracted
+            if features_to_extract[0] == "extract_all":
+                features = all_features
+            else:
+                for i in range(len(features_to_extract)):
+                    feature_name_convention = "Fszm_" + str(features_to_extract[i])
+                    features[feature_name_convention] = all_features[feature_name_convention]
+            
+            return features
+
+        except Exception as e:
+            return {"error": f"PROBLEM WITH COMPUTATION OF GLSZM FEATURES {str(e)}"}
+    
+    def get_gldzm_features(self, features_to_extract, pipeline):
+        try:
+            features = {}
+            
+            vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
+            roi_obj_morph_texture = pipeline.latest_node_output_texture["roi_obj_morph"]
+
+            # TODO : temporary code used to replace single feature extraction for user
+            all_features = MEDimage.biomarkers.gldzm.extract_all(
+                    vol_int=vol_quant_re_texture,
+                    mask_morph=roi_obj_morph_texture.data)
+
+            # If all features need to be extracted
+            if features_to_extract[0] == "extract_all":
+                features = all_features
+            else:
+                for i in range(len(features_to_extract)):
+                    feature_name_convention = "Fdzm_" + str(features_to_extract[i])
+                    features[feature_name_convention] = all_features[feature_name_convention]
+
+            return features
+        
+        except Exception as e:
+            return {"error": f"PROBLEM WITH COMPUTATION OF GLDZM FEATURES {str(e)}"}
+    
+    def get_ngtdm_features(self, features_to_extract, pipeline):
+        try:
+            features = {}
+            
+            vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
+
+            # TODO : temporary code used to replace single feature extraction for user
+            all_features = MEDimage.biomarkers.ngtdm.extract_all(
+                    vol=vol_quant_re_texture,
+                    dist_correction=pipeline.MEDimg.params.radiomics.ngtdm.dist_correction)
+
+            # If all features need to be extracted
+            if features_to_extract[0] == "extract_all":
+                features = all_features
+            else:
+                for i in range(len(features_to_extract)):
+                    feature_name_convention = "Fngt_" + str(features_to_extract[i])
+                    features[feature_name_convention] = all_features[feature_name_convention]
+
+            return features
+
+        except Exception as e:
+            return {"error": f"PROBLEM WITH COMPUTATION OF NGTDM FEATURES {str(e)}"}
+    
+    def get_ngldm_features(self, features_to_extract, pipeline):
+        try:
+            features = {}
+            
+            vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
+            
+            # TODO : temporary code used to replace single feature extraction for user
+            all_features = MEDimage.biomarkers.ngldm.extract_all(vol=vol_quant_re_texture)
+
+            # If all features need to be extracted
+            if features_to_extract[0] == "extract_all":
+                features = all_features
+            else:
+                features = {}
+                for i in range(len(features_to_extract)):
+                    feature_name_convention = "Fngl_" + str(features_to_extract[i])
+                    features[feature_name_convention] = all_features[feature_name_convention]
+
+                """ NOTE : Code to use in prevision of future MEDimage update allowing extraction of single features
+                matrices_dict = MEDimage.biomarkers.ngldm.get_ngldm_matrices(
+                    vol=vol_quant_re_texture)
+                
+                # If only some features need to be extracted, use the name of the feature to build
+                # extraction code (executed dynamically using exec()).
+                features = {}
+                for i in range(len(features_to_extract)):
+                    function_name = "MEDimage.biomarkers.ngldm." + str(features_to_extract[i])
+                    function_params = "matrices_dict"
+                    function_call = "result = " + function_name + "(" + function_params + ")"
+                    local_vars = {}
+                    global_vars = {"MEDimage": MEDimage, "matrices_dict": matrices_dict}
+                    exec(function_call, global_vars, local_vars)
+                    features[str(features_to_extract[i])] = local_vars.get("result")
+                """
+
+            return features
+
+        except Exception as e:
+            return {"error": f"PROBLEM WITH COMPUTATION OF NGLDM FEATURES {str(e)}"}
+
+    
 
     # TODO : refactor : for node in extraction node, run node. 
     def run(self, pipeline: Pipeline):
@@ -206,47 +381,57 @@ class ExtractionNode(Node):
         # Initialize the non-texture features calculation
         pipeline.MEDimg.init_ntf_calculation(last_vol_compute)  # vol_obj
         
+        # Initialize the texture features calculation
+        a = 0
+        n = 0
+        s = 0
+
+        pipeline.MEDimg.init_tf_calculation(
+            algo=a,
+            gl=n,
+            scale=s)
+        
+        # TODO : Features wont always be in the same order
         for node in self.params:
             
             feature_family = self.params[node]["name"]
             features_to_extract = self.params[node]["data"]["features"]
             if feature_family == "morph":
-                print("FOUND MORPH******************************************************************")
                 self.extracted_features[feature_family] = self.get_morph_features(features_to_extract, pipeline)
-                print(self.extracted_features)
                 
             elif feature_family == "local_intensity":
-                print("FOUND LOCAL INTENSITY******************************************************************")
                 self.extracted_features[feature_family] = self.get_local_intensity_features(features_to_extract, pipeline)
-                print(self.extracted_features)
             
             elif feature_family == "stats":
-                print("FOUND STATS******************************************************************")
                 self.extracted_features[feature_family] = self.get_stats_features(features_to_extract, pipeline)
-                print(self.extracted_features)
             
             elif feature_family == "intensity_histogram":
-                print("FOUND INTENSITY HISTOGRAM******************************************************************")
-                self.extracted_features[feature_family] = self.get_intensity_histogram_features(features_to_extract, pipeline)
-                print(self.extracted_features)
-                
+                 self.extracted_features[feature_family] = self.get_intensity_histogram_features(features_to_extract, pipeline)
+                 
             elif feature_family == "int_vol_hist":
-                print("FOUND INTENSITY VOLUME HISTOGRAM******************************************************************")
-                self.extracted_features[feature_family] = self.get_int_vol_hist_features(features_to_extract, pipeline)
-                print(self.extracted_features)
-                
+                 self.extracted_features[feature_family] = self.get_int_vol_hist_features(features_to_extract, pipeline)
+                 
             elif feature_family == "glcm":
-                print("FOUND GLCM******************************************************************")
+                self.extracted_features[feature_family] = self.get_glcm_features(features_to_extract, pipeline)
+
             elif feature_family == "glrlm":
-                print("FOUND GLRLM******************************************************************")
+                self.extracted_features[feature_family] = self.get_glrlm_features(features_to_extract, pipeline)
+            
             elif feature_family == "glszm":
-                print("FOUND GLSZM******************************************************************")
+                self.extracted_features[feature_family] = self.get_glszm_features(features_to_extract, pipeline)
+            
             elif feature_family == "gldzm":
-                print("FOUND GLDZM******************************************************************")
+                self.extracted_features[feature_family] = self.get_gldzm_features(features_to_extract, pipeline)
+                
             elif feature_family == "ngtdm":
-                print("FOUND NGTDM******************************************************************")
+                self.extracted_features[feature_family] = self.get_ngtdm_features(features_to_extract, pipeline)
+                
             elif feature_family == "ngldm":
-                print("FOUND NGLDM******************************************************************")
+                self.extracted_features[feature_family] = self.get_ngldm_features(features_to_extract, pipeline)
+                
             else:
                 print("Feature family : ", feature_family, "is invalid.")
+            
+            print("EXTRACTED FEATURES *********************************************************")
+            print(self.extracted_features)
             

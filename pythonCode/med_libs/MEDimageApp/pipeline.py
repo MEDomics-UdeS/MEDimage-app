@@ -15,7 +15,8 @@ class Pipeline:
             self.flag_texture = True
             
         self.MEDimg = None # MEDimg object of the input image
-        self.latest_node_output = {} # Output of the latest node in the pipeline
+        self.latest_node_output = {} # Output of the latest node in the pipeline (used for non texture features)
+        self.latest_node_output_texture = {} # Output of the latest node in the pipeline (used for texture features)
         self.obj_init_texture = {} # Output of segmentation node to keep initial version of vol_obj_init and roi_obj_init for texture features
         
         self.settings_res = {} # Dictionary to store the settings results of the pipeline
