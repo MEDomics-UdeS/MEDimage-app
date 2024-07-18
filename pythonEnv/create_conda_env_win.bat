@@ -269,5 +269,12 @@ IF %ERRORLEVEL% NEQ 0 (
         )
     )
 
+    REM Adding the virtual environment to Jupyter Notebook...
+    echo Adding the virtual environment to Jupyter Notebook...
+    call python -m ipykernel install --user --name=med_conda_env || (
+        echo An error occurred while adding the virtual environment to Jupyter Notebook.
+        exit /b 1
+    )
+
     echo Done.
 )

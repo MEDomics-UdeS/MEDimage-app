@@ -1,2 +1,3 @@
 medimage-pkg
 jupytext
+ipykernel
