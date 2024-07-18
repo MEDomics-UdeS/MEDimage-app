@@ -61,13 +61,9 @@ const ResultsPaneMEDimage = () => {
       node.data = node.data.internal.settings;
     });
 
-    console.log("newFlow", newFlow)
-
     // extract selected pipelines
     let pipIndexes = generatedPipelines.map((pip) => pip.name.split(" ")[1] - 1)
-    console.log("pipIndexes", pipIndexes)
     let pipsToGenerate = pipIndexes.map((pipIndex) => selectedPipelines[pipIndex])
-    console.log("pipsToGenerate", pipsToGenerate)
     return {
       "nodes": newFlow.nodes,
       "pips": pipsToGenerate,
@@ -108,13 +104,13 @@ const ResultsPaneMEDimage = () => {
                   function (error, stdout, stderr) {
                       console.log('stdout: ' + stdout);
                       console.log('stderr: ' + stderr);
+                      toast.error("Error detected while opening the notebook, check console for more details")
                       if (error !== null) {
                           console.log('exec error: ' + error);
                       }
                   });
-                }
-            catch (error) {
-              console.log("Error detected while opening the notebook", error)
+            } catch (error) {
+              console.log("Error detected while opening the notebook", error);
             }
             
           } else {
@@ -146,7 +142,6 @@ const ResultsPaneMEDimage = () => {
 
     // Else
     try {    
-      console.log("renderAccordions data", data)
       return data.map((pipelines, indexPip) => {
         return (
           <Accordion key={`AccordionPips-${indexPip}`}>
@@ -179,21 +174,12 @@ const ResultsPaneMEDimage = () => {
   };
   
   const renderAccordionTabs = (item, index, isResults) => {
-    console.log("item renderAccordionTabs", item)
-    console.log("index renderAccordionTabs", index)
-    console.log("expNames", expNames)
     return Object.keys(item).map((currentExp, _) => {
-      console.log("currentExp", currentExp)
-      console.log("expNames[index]", expNames[index])
       if (expNames.includes(currentExp)){
-        console.log("went it")
         return Object.keys(item[currentExp]).map((key, dataIdx) => {
-          console.log("item[currentExp]", item[currentExp])
           let values = item[currentExp][key];
-          console.log("values", values)
 
           let keysList = Object.keys(values);
-          console.log("keysList", keysList)
 
           // Add experiment name to the list of keys
           if (expNames.length > 0) {
@@ -271,12 +257,9 @@ const ResultsPaneMEDimage = () => {
       }
       keysList = keysList.reduce((a, b) => a.filter(c => b.includes(c)));
 
-      console.log("keysList 225", keysList)
-
       // Fill values for Data Table
       let keyIndex = 0;
       for (const key of keysList) {
-        console.log("key 225", key)
         values[keyIndex] = []
         for (let index = 0; index < data.length; index++) {
             let item = data[index];
@@ -391,23 +374,18 @@ const ResultsPaneMEDimage = () => {
   const handleClose = () => setShowResultsPane(false)
 
   useEffect(() => {
-    console.log("flowContent", flowContent)
     if (flowContent.nodes) {
-      console.log("flowContent.nodes", flowContent.nodes)
       let experiments = []
       let histograms = []
       flowContent.nodes.map((node) => {
         if (node.type === "Analyze"){
-          console.log("Found analyze node")
           // Images
           if (node.data.internal.results.hasOwnProperty("figures")){
-            console.log("Found figures", node.data.internal.results.figures)
             // Heatmap
             if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
               if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
                 if (node.data.internal.results.figures.heatmap.hasOwnProperty("path")){
                     setHeatMap(node.data.internal.results.figures.heatmap.path)
-                    console.log("pushing heatMaps", node.data.internal.results.figures.heatmap.path)
                 }
               }
             }
@@ -416,14 +394,12 @@ const ResultsPaneMEDimage = () => {
               if (node.data.internal.results.figures.hasOwnProperty("treeplot")){
                 if (node.data.internal.results.figures.treeplot.hasOwnProperty("treeplot")){
                     setTreePlot(node.data.internal.results.figures.treeplot.path)
-                    console.log("pushing treeplot", node.data.internal.results.figures.treeplot.path)
                 }
               }
             }
           }
           // Results - Metrics
           if (node.data.internal.results.hasOwnProperty("results_avg")){
-            console.log("Found results_avg", node.data.internal.results)
             setSelectedResults(node.data.internal.results.results_avg)
             /*node.data.internal.results.results_avg.map((result, index) => {
               console.log("result map", result)
@@ -441,24 +417,14 @@ const ResultsPaneMEDimage = () => {
             })*/
             // Histograms
             try{
-              console.log("BEEN HERE")
               for (let index = 0; index < node.data.internal.results.results_avg.length; index++) {
-                console.log("BEEN HERE 2")
                 Object.entries(node.data.internal.results.results_avg[index]).map((item, _) => {
-                  console.log("BEEN HERE 3")
-                  console.log("item BEEN", item[1])
                   Object.entries(item[1]).map((itemAnalysis, _) => {
-                    console.log("BEEN HERE 4")
-                    console.log("BEEN itemAnalysis", itemAnalysis)
                     Object.entries(itemAnalysis[1]).map((resultAnalysis, _) => {
-                      console.log("BEEN HERE 5")
-                      console.log("BEEN resultAnalysis", resultAnalysis)
                       let result = resultAnalysis[1];
-                      console.log("BEEN histogram test result", result)
                           if (result.hasOwnProperty("histogram")){
                             if (result.histogram.hasOwnProperty("path")){
                               if(!histograms.includes(result.histogram.path)){
-                                console.log("BEENpushing histogram", result.histogram.path)
                                 histograms.push(result.histogram.path)
                               }
                             }
@@ -468,15 +434,12 @@ const ResultsPaneMEDimage = () => {
                 });
               }
             } catch (error) {
-              console.log("Error detected while processing histograms", error)
             }
           }
           if (node.data.internal.results.hasOwnProperty("pips")){
-            console.log("Found pip", node.data.internal.results.pips)
             setSelectedPipelines(node.data.internal.results.pips)
           }
           if (node.data.internal.results.hasOwnProperty("experiments")){
-            console.log("Found experiments", node.data.internal.results.experiments)
             setExpNames(node.data.internal.results.experiments)
           }
         }
@@ -488,10 +451,8 @@ const ResultsPaneMEDimage = () => {
   }, [flowContent])
 
   const getPipelinesName = () => {
-    console.log("expNames", expNames)
     if (selectedPipelines.length > 0){
       return selectedPipelines.map((_, index) => {
-        console.log("option", "pipeline " + index)
         return { name: "pipeline " + (index + 1) };
       });
     }
@@ -500,7 +461,6 @@ const ResultsPaneMEDimage = () => {
 
   return (
     <>
-    {console.log("generated pipelines", generatedPipelines)}
       <Col className=" padding-0 results-Panel">
         <Card>
           <Card.Header className="d-flex justify-content-between align-items-center">
