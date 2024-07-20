@@ -34,8 +34,6 @@ const Analyze = ({ id, data, type }) => {
         setupParam={data.setupParam}
         nodeSpecific={
           <>
-            {/* Show segmentation warning when there is no roisList or the roisList is empty */}
-            {console.log("internal Analyze", data.internal.settings)}
             {
               <Row className="form-group-box">
               <Row className="form-group-box">
@@ -46,10 +44,10 @@ const Analyze = ({ id, data, type }) => {
                   </Form.Label>
                     <div key={"HistogramMeth"} style={{display: 'flex', justifyContent:'flex-start'}}>
                       <Checkbox
-                        onChange={(event) => {
+                        style={{marginTop: '2px'}}
+                        onChange={() => {
                           // check if the file is already in the list if yes remove it
                           if (data.internal.settings.histogram) {
-                            console.log("remove")
                             data.internal.settings.histogram = false;
                           } else {
                             data.internal.settings.histogram = true;
@@ -58,14 +56,14 @@ const Analyze = ({ id, data, type }) => {
                         }}
                         checked={data.internal.settings.histogram}
                       />
-                      <label htmlFor={"HistogramMeth"} className="ml-2">Histogram</label>
+                      <label htmlFor={"HistogramMeth"} className="ms-1 mt-1">Histogram</label>
                     </div>
                     <div key={"HeatMapMeth"} style={{display: 'flex', justifyContent:'flex-start'}}>
                       <Checkbox
+                        style={{marginTop: '2px'}}
                         onChange={(event) => {
                           // check if the file is already in the list if yes remove it
                           if (data.internal.settings.heatmap) {
-                            console.log("remove")
                             data.internal.settings.heatmap = false;
                           } else {
                             data.internal.settings.heatmap = true;
@@ -74,44 +72,27 @@ const Analyze = ({ id, data, type }) => {
                         }}
                         checked={data.internal.settings.heatmap}
                       />
-                      <label htmlFor={"HeatMapMeth"} className="ml-2">Heatmap</label>
+                      <label htmlFor={"HeatMapMeth"} className="ms-1 mt-1">Heatmap</label>
                     </div>
-                    <div key={"ImpTreeMeth"} style={{display: 'flex', justifyContent:'flex-start'}}>
-                      <Checkbox
-                        onChange={(event) => {
-                          // check if the file is already in the list if yes remove it
-                          if (data.internal.settings.tree) {
-                            console.log("remove")
-                            data.internal.settings.tree = false;
-                          } else {
-                            data.internal.settings.tree = true;
-                          }
-                          setReload(!reload);
-                        }}
-                        checked={data.internal.settings.tree}
-                      />
-                      <label htmlFor={"ImpTreeMeth"} className="ml-2">Importance Tree</label>
-                    </div>
-                </Form.Group>
-
-                  {/* P-value yes or no */}
-                  <Form.Group controlId="findOptimalLvl">
-                  <Tooltip target=".findOptimalLvl"/>
-                  <Form.Label
-                      className="findOptimalLvl">
-                          Find Optimal Level
-                  </Form.Label>
-                    <br></br>
-                    <InputSwitch 
-                        checked={data.setupParam.possibleSettings.defaultSettings.optimalLevel}
-                        onChange={(event) => {
-                            data.setupParam.possibleSettings.defaultSettings.optimalLevel = event.target.value;
-                            data.internal.settings.optimalLevel = event.target.value;
+                    {(data.internal.settings.heatmap) && (
+                      <div key={"ImpTreeMeth"} style={{display: 'flex', justifyContent:'flex-start', marginTop: '1px'}}>
+                        <Checkbox
+                          style={{marginTop: '2px'}}
+                          onChange={(event) => {
+                            // check if the file is already in the list if yes remove it
+                            if (data.internal.settings.tree) {
+                              data.internal.settings.tree = false;
+                            } else {
+                              data.internal.settings.tree = true;
+                            }
                             setReload(!reload);
-                        }}
-                    />
+                          }}
+                          checked={data.internal.settings.tree}
+                        />
+                        <label htmlFor={"ImpTreeMeth"} className="ms-1 mt-1">Importance Tree</label>
+                      </div>)}
+                      <br></br>
                   </Form.Group>
-
                 </Row>
                 
                 {/*Histogram method parameters*/}
