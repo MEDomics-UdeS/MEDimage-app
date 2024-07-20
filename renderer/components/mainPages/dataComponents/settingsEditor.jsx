@@ -604,9 +604,10 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
                 name="ndims"
                 type="number"
                 value={params.wavelet.ndims}
-                onChange={(event) =>
-                changeFilterForm(event.target.name, event.target.value)
-                }
+                onChange={(event) =>{
+                    params.wavelet.ndims = event.target.value;
+                    setActiveIndex(!activeIndex);
+                }}
             />
             </Col>
         </Form.Group>
@@ -699,9 +700,10 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
                 type="number"
                 name="level"
                 value={params.wavelet.level}
-                onChange={(event) =>
-                changeFilterForm(event.target.name, event.target.value)
-                }
+                onChange={(event) => {
+                    params.wavelet.level = event.target.value;
+                    setActiveIndex(!activeIndex);
+                }}
             />
             </Col>
         </Form.Group>
@@ -713,9 +715,10 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
                 as="select"
                 name="rot_invariance"
                 value={params.wavelet.rot_invariance}
-                onChange={(event) =>
-                changeFilterForm(event.target.name, event.target.value)
-                }
+                onChange={(event) => {
+                    params.wavelet.rot_invariance = event.target.value;
+                    setActiveIndex(!activeIndex);
+                }}
             >
                 <option value="false">False</option>
                 <option value="true">True</option>
@@ -730,9 +733,10 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
                 as="select"
                 name="padding"
                 value={params.wavelet.padding}
-                onChange={(event) =>
-                changeFilterForm(event.target.name, event.target.value)
-                }
+                onChange={(event) => {
+                    params.wavelet.padding = event.target.value;
+                    setActiveIndex(!activeIndex);
+                }}
             >
                 <option value="constant">Constant</option>
                 <option value="edge">Edge</option>
@@ -756,9 +760,10 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
                 type="text"
                 name="name_save"
                 value={params.wavelet.name_save}
-                onChange={(event) =>
-                changeFilterForm(event.target.name, event.target.value)
-                }
+                onChange={(event) => {
+                    params.wavelet.name_save = event.target.value;
+                    setActiveIndex(!activeIndex);
+                }}
             />
             </Col>
         </Form.Group>
