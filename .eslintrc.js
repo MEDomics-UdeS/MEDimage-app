@@ -10,7 +10,7 @@ module.exports = {
   },
   plugins: ["react"],
   rules: {
-    camelcase: ["error", {"allow": ["aa_bb"]}],
+    "camelcase": "off",
     "quote-props": ["error", "consistent"],
     "react/prop-types": ["off"],
     "no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
