@@ -22,5 +22,6 @@ module.exports = {
     "@next/next/no-img-element": "off",
     "react/no-direct-mutation-state": "off",
     "no-unused-vars": "off",
+    "no-extra-semi": "off",
   },
 }

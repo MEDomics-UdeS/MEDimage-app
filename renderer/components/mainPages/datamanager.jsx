@@ -500,7 +500,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
   useEffect(() => {
     if (!refreshEnabledPreChecks ) {
       setRefreshEnabledPreChecks(false);
-    };
+    }
   }, [refreshEnabledPreChecks]); // The empty dependency array ensures this effect runs only once when the component mounts
 
   /**

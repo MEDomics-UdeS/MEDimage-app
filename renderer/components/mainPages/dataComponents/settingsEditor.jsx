@@ -1163,7 +1163,7 @@ function RenderParamsPanel (activeIndex, setActiveIndex, setShowEdit, ModSetting
                             else{
                                 ModSettings.reSeg.range[0] = oldValueMin;
                             }
-                        };
+                        }
                         setActiveIndex(!activeIndex);
                     }}
                 />
@@ -1195,7 +1195,7 @@ function RenderParamsPanel (activeIndex, setActiveIndex, setShowEdit, ModSetting
                             } else {
                                 ModSettings.reSeg.range[1] = oldValueMax;
                             }
-                        };
+                        }
                         setActiveIndex(!activeIndex);
                     }}
                 />
