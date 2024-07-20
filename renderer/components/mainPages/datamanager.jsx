@@ -184,9 +184,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
         const isDirectory = fs.statSync(fullPath).isDirectory();
   
         if (isDirectory) {
-          if (fullPath.split('/').at(-1).split('-').length > 1) {
-            
-          }
+          if (fullPath.split('/').at(-1).split('-').length > 1) {;}
           else {
           folderCount++; // Increment the count for the immediate subfolder
           }
