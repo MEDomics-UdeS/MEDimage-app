@@ -62,11 +62,10 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
   const [resultsFolder, setResultsFolder] = useState([])   // resultsFolder is used to store the path to the machine learning results
   const [experiments, setExperiments] = useState([]) // experiments is used to store the experiments to be done in the learning experiment
   const pageId = "learningMEDimage" // pageId is used to identify the page in the backend
-  const { updateFlowResults, setIsResults, isResults } = useContext(FlowResultsContext)
-  const delayMS = 400   // delay in ms between each request of the progress bar
+  const { setIsResults, isResults } = useContext(FlowResultsContext)
   const { groupNodeId, changeSubFlow, updateNode } = useContext(FlowFunctionsContext)
   const { port } = useContext(WorkspaceContext)
-  const { error, setError, showError, setShowError } = useContext(ErrorRequestContext) // used to get the flow infos
+  const { setError, setShowError } = useContext(ErrorRequestContext) // used to get the flow infos
   const op = useRef(null);
   const [selectedModalities, setSelectModalities] = useState([]);
 
@@ -419,7 +418,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
    * Handles merge between the already existing data of an extraction node and the response dictionnary from the backend
    * TODO : Should not have to be used after refactoring of backend
    */
-  const handleExtractionResults = (oldNodeData, response) => {
+  /*const handleExtractionResults = (oldNodeData, response) => {
     // Get the results that were in the node
     let oldResults = oldNodeData
     let newResults = oldResults
@@ -463,7 +462,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
       }
     }
     return newResults
-  }
+  }*/
 
   /**
    * @param {String} id id of the node to execute
@@ -542,7 +541,6 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
    */
   function isFolderExists(folderPath) {
     try {
-      let resultFiles = 0;
       const folders = fs.readdirSync(folderPath);
       console.log("isFolderExists found files", folders);
       return true;
@@ -558,7 +556,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
   const sum = (arr) => arr.reduce((a, b) => a + b, 0);
 
   // Function to fetch and update data (your front-end function)
-  const fetchProgress = () => {
+  /*const fetchProgress = () => {
     let resultsFolderTemp = resultsFolder;
     let experimentsTemp = experiments;
     let nSplitsTemp = nSplits;
@@ -602,7 +600,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
       }
       indexExp++;
     }
-  }
+  }*/
 
   /*useEffect(() => {
     if (isProgressUpdating) {
@@ -881,7 +879,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
    * @description
    * Load a workflow from a json file
    */
-  const onLoadDeafult = useCallback(() => {
+  /*const onLoadDeafult = useCallback(() => {
     // Ask confirmation from the user if the canvas is not empty,
     // since the workflow will be replaced
     let confirmation = true
@@ -921,13 +919,13 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
       // Call the async function
       restoreFlow()
     }
-  }, [setNodes, setViewport, nodes])
+  }, [setNodes, setViewport, nodes])*/
 
   /**
    * @description
    * Export the settings of the workflow as a json file for batch extraction
   */
- const onExport = useCallback(() => {
+ /*const onExport = useCallback(() => {
   if (reactFlowInstance && nodes.length > 0) {
     const flow = JSON.parse(JSON.stringify(reactFlowInstance.toObject()))
     flow.nodes.forEach((node) => {
@@ -939,11 +937,11 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
     })
     console.log("flow", flow)
     processBatchSettings(flow, selectedModalities, "extraction_settings.json")
-    //downloadFile(flow, "experiment.json")
+
   } else {
     // Warn the user if there is no workflow to save
     toast.warn("No workflow to export!")
-  }}, [reactFlowInstance, nodes])
+  }}, [reactFlowInstance, nodes])*/
 
   /**
    * @description
