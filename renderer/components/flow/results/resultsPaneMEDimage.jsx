@@ -36,7 +36,7 @@ const ResultsPaneMEDimage = () => {
   const [showMetrics, setShowMetrics] = useState(true)
   const [histogramImages, setHistogramImages] = useState([])
   const [heatMap, setHeatMap] = useState()
-  const [treePlot, setTreePlot] = useState("")
+  const [treePlots, setTreePlots] = useState("")
   const { port } = useContext(WorkspaceContext)
 
   const op = useRef(null);
@@ -47,7 +47,7 @@ const ResultsPaneMEDimage = () => {
     setSelectedPipelines([])
     setHistogramImages([])
     setHeatMap("")
-    setTreePlot("")
+    setTreePlots("")
   }
 
   /*
@@ -156,7 +156,10 @@ const ResultsPaneMEDimage = () => {
                       {/*Histograms*/}
                       <Accordion key={`AccordionTab-Histograms-${index+indexPip}`}>
                         <AccordionTab disabled={!isResults} key={`AccordionTab-Figures-${index+indexPip}`} header={"Analysis Plots"}>
-                            <Image key={indexPip+index} src={histogramImages[indexPip+index]} alt="Image" width="300" preview/>
+                          {(histogramImages.length > 0) ? (
+                            <Image key={indexPip+index} src={histogramImages[indexPip+index]} alt="Image" width="300" preview/>) :
+                            (<div style={{ color: 'red' }}>No histograms generated.</div>)
+                          }
                         </AccordionTab>
                       </Accordion>
 
@@ -291,9 +294,6 @@ const ResultsPaneMEDimage = () => {
 
           /*const item = data[index];
           if (Object.keys(item[expNames[index]][key]).length > 1){
-            console.log("keyIndex ", keyIndex)
-            console.log("key ", key)
-            console.log("item[expNames[index]][key]", item[expNames[index]][key])
             values[keyIndex][index] = item[expNames[index]][key];
             MetricsKeysList = Object.keys(item[expNames[index]][key]);*/
         
@@ -340,9 +340,9 @@ const ResultsPaneMEDimage = () => {
                   <div style={{ color: 'red' }}>No heatmap generated.</div>
                 </Panel>
               )}
-              {(treePlot === undefined || treePlot === "") && (
+              {(treePlots === undefined || treePlots === "" || treePlots.length < 0) && (
                 <Panel header="Tree Plot" toggleable>
-                  <div style={{ color: 'red' }}>No tree plot generated.</div>
+                  <div style={{ color: 'red' }}>No tree plots generated.</div>
                 </Panel>
               )}
               {(heatMap !== undefined && heatMap !== "") && (
@@ -350,10 +350,14 @@ const ResultsPaneMEDimage = () => {
                   <Image key={"Heatmap"} src={heatMap} alt="Image" width="500" preview/>
                 </Panel>
               )}
-              {(treePlot !== undefined && treePlot !== "") && (
-                <Panel header="Tree Plot" toggleable>
-                  <Image key={"treePlot"} src={treePlot} alt="Image" width="500" preview/>
-                </Panel>
+              {(treePlots !== undefined && treePlots !== "" && treePlots.length > 0) && (
+                <Panel header="Tree Plots" toggleable>
+                  {treePlots.map((treePlots, index) => {
+                    return (
+                        <Image key={"treePlots" + index} src={treePlots} alt="Image" width="500" preview/>
+                    );
+                  })}
+                </Panel>                
               )}
             </AccordionTab>
         </Accordion>
@@ -375,8 +379,9 @@ const ResultsPaneMEDimage = () => {
 
   useEffect(() => {
     if (flowContent.nodes) {
-      let experiments = []
       let histograms = []
+      let treePlotsPaths = ""
+      let pathHeatMap = ""
       flowContent.nodes.map((node) => {
         if (node.type === "Analyze"){
           // Images
@@ -385,17 +390,13 @@ const ResultsPaneMEDimage = () => {
             if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
               if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
                 if (node.data.internal.results.figures.heatmap.hasOwnProperty("path")){
-                    setHeatMap(node.data.internal.results.figures.heatmap.path)
+                    pathHeatMap = node.data.internal.results.figures.heatmap.path
                 }
               }
             }
             // Tree Plot
-            if (node.data.internal.results.figures.hasOwnProperty("treeplot")){
-              if (node.data.internal.results.figures.hasOwnProperty("treeplot")){
-                if (node.data.internal.results.figures.treeplot.hasOwnProperty("treeplot")){
-                    setTreePlot(node.data.internal.results.figures.treeplot.path)
-                }
-              }
+            if (node.data.internal.results.figures.hasOwnProperty("treeplots")){
+              treePlotsPaths = node.data.internal.results.figures.treeplots
             }
           }
           // Results - Metrics
@@ -444,9 +445,9 @@ const ResultsPaneMEDimage = () => {
           }
         }
       })
-      if (histograms.length > 0){
-        setHistogramImages(histograms)
-      }
+      setHeatMap(pathHeatMap)
+      setHistogramImages(histograms)
+      setTreePlots(treePlotsPaths)
     }
   }, [flowContent])
 
