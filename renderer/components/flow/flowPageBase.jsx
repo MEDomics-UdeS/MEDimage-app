@@ -21,7 +21,7 @@ import { loadJsonPath } from "../../utilities/fileManagementUtils"
  * @description This component is the base for all the flow pages. It contains the sidebar, the flow and the results pane.
  *
  */
-const FlowPageBaseWithFlowInfos = ({ children, workflowType, id, LearningMEDimage=false, ExtraPages=null, reload, setReload }) => {
+const FlowPageBaseWithFlowInfos = ({ children, workflowType, id}) => {
   // here is the use of the context to update the flowInfos
   const [isDragging, setIsDragging] = useState(false)
   const { updateFlowInfos, showAvailableNodes, setSceneName } = useContext(FlowInfosContext)

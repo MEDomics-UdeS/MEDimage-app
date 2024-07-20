@@ -28,7 +28,7 @@ const ViewButton = ({ id, data, type }) => {
 
     // Construction of form data to send to /extraction_MEDimage/view. If the node is input, the name of the file is needed
     let formData
-    if (data.internal.settings.hasOwnProperty("filepath")) {
+    if (Object.prototype.hasOwnProperty.call(data.internal.settings, "filepath")) {
       formData = {
         id: id,
         name: type,

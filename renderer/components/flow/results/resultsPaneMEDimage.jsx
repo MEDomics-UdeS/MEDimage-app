@@ -26,7 +26,7 @@ import { FlowResultsContext } from "../context/flowResultsContext"
  *
  */
 const ResultsPaneMEDimage = () => {
-  const { selectedResultsId, setSelectedResultsId, flowResults, showResultsPane, setShowResultsPane, isResults } = useContext(FlowResultsContext)
+  const { setShowResultsPane, isResults } = useContext(FlowResultsContext)
   const [selectedResults, setSelectedResults] = useState([])
   const [selectedPipelines, setSelectedPipelines] = useState([])
   const [generatedPipelines, setGeneratedPipelines] = useState([])
@@ -41,14 +41,14 @@ const ResultsPaneMEDimage = () => {
 
   const op = useRef(null);
 
-  const cleanResults = () => {
+  /*const cleanResults = () => {
     setSelectedResults([])
     setExpNames([])
     setSelectedPipelines([])
     setHistogramImages([])
     setHeatMap("")
     setTreePlots("")
-  }
+  }*/
 
   /*
   * @Description: This function is used to process the flow data
@@ -186,7 +186,7 @@ const ResultsPaneMEDimage = () => {
 
           // Add experiment name to the list of keys
           if (expNames.length > 0) {
-            if (!values.hasOwnProperty("Experiment")) {
+            if (!Object.prototype.hasOwnProperty.call(values, "Experiment")) {
               values["Experiment"] = currentExp;
             }
             if (keysList.includes("Experiment")){
@@ -198,7 +198,7 @@ const ResultsPaneMEDimage = () => {
           // If no metrics are found, display a warning
           if (!values || keysList.length === 0 || (expNames.length > 0 && keysList.length === 1)){
             return (
-              <Accordion>
+              <Accordion key={`Accordion-${index}-${dataIdx}`}>
                 <AccordionTab key={`AccordionTab-${index}-${dataIdx}`} header={key}>
                   <div style={{ color: 'red' }}>Warning: Values are empty or undefined.</div>
                 </AccordionTab>
@@ -208,7 +208,7 @@ const ResultsPaneMEDimage = () => {
           
           // Display the metrics in a table
           return (
-            <Accordion>
+            <Accordion key={`Accordion-${dataIdx+index+1}`}>
               <AccordionTab disabled={!isResults} key={`AccordionTab-${dataIdx+index+1}`} header={key}>
                 <DataTable value={[values]}>
                   {keysList.map((key1, columnIndex) => (
@@ -278,7 +278,7 @@ const ResultsPaneMEDimage = () => {
                       MetricsKeysList = Object.keys(item[key1][key2][key]);
 
                       // Add experiment name to the list of keys
-                      if (!values.hasOwnProperty("Experiment")) {
+                      if (!Object.prototype.hasOwnProperty.call(values, "Experiment")) {
                         values[keyIndex][index]["Experiment"] = key1 + "_" + key2;
                       }
                       if (MetricsKeysList.includes("Experiment")){
@@ -387,20 +387,18 @@ const ResultsPaneMEDimage = () => {
           // Images
           if (node.data.internal.results.hasOwnProperty("figures")){
             // Heatmap
-            if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
-              if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
-                if (node.data.internal.results.figures.heatmap.hasOwnProperty("path")){
-                    pathHeatMap = node.data.internal.results.figures.heatmap.path
-                }
+            if (Object.prototype.hasOwnProperty.call(node.data.internal.results.figures, "heatmap")){
+              if (Object.prototype.hasOwnProperty.call(node.data.internal.results.figures.heatmap, "path")){
+                  pathHeatMap = node.data.internal.results.figures.heatmap.path
               }
             }
             // Tree Plot
-            if (node.data.internal.results.figures.hasOwnProperty("treeplots")){
+            if (Object.prototype.hasOwnProperty.call(node.data.internal.results.figures, "treeplots")){
               treePlotsPaths = node.data.internal.results.figures.treeplots
             }
           }
           // Results - Metrics
-          if (node.data.internal.results.hasOwnProperty("results_avg")){
+          if (Object.prototype.hasOwnProperty.call(node.data.internal.results, "results_avg")){
             setSelectedResults(node.data.internal.results.results_avg)
             /*node.data.internal.results.results_avg.map((result, index) => {
               console.log("result map", result)
@@ -423,8 +421,8 @@ const ResultsPaneMEDimage = () => {
                   Object.entries(item[1]).map((itemAnalysis, _) => {
                     Object.entries(itemAnalysis[1]).map((resultAnalysis, _) => {
                       let result = resultAnalysis[1];
-                          if (result.hasOwnProperty("histogram")){
-                            if (result.histogram.hasOwnProperty("path")){
+                          if (Object.prototype.hasOwnProperty.call(result, "histogram")){
+                            if (Object.prototype.hasOwnProperty.call(result.histogram, "path")){
                               if(!histograms.includes(result.histogram.path)){
                                 histograms.push(result.histogram.path)
                               }
@@ -437,10 +435,10 @@ const ResultsPaneMEDimage = () => {
             } catch (error) {
             }
           }
-          if (node.data.internal.results.hasOwnProperty("pips")){
+          if (Object.prototype.hasOwnProperty.call(node.data.internal.results, "pips")){
             setSelectedPipelines(node.data.internal.results.pips)
           }
-          if (node.data.internal.results.hasOwnProperty("experiments")){
+          if (Object.prototype.hasOwnProperty.call(node.data.internal.results, "experiments")){
             setExpNames(node.data.internal.results.experiments)
           }
         }

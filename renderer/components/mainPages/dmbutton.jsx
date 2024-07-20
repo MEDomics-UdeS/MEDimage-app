@@ -1,6 +1,5 @@
-import React, {useState, useEffect} from "react"
-import Card from "react-bootstrap/Card";
-import { Button, Container } from "react-bootstrap";
+import React from "react"
+import { Button } from "react-bootstrap";
 
 const DataManagerButton = ({ reload, setReload }) => {
 
@@ -10,16 +9,7 @@ const DataManagerButton = ({ reload, setReload }) => {
 
   return (
     <>
-        {/* <div>
-        {/*DataManager*/}
-        {/* <Card className="box-button-card"> */}
-          {/* <Card.Body> */} 
-            <Button className="box-button" onClick={handleClick}>
-            DataManager
-            </Button>
-          {/* </Card.Body>
-        </Card>
-        </div> */}
+      <Button className="box-button" onClick={handleClick}>DataManager</Button>
     </>
   )
 }
