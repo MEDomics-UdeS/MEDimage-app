@@ -780,7 +780,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
  * @param {string} pathSettings path to the settings file
  * @returns {JSX.Element} optional, a settings edior panel
  */
-const renderParamsPanel = (activeIndex, setActiveIndex, setShowEdit, ModSettings, imParamFilter, pathSettings) => {
+function RenderParamsPanel (activeIndex, setActiveIndex, setShowEdit, ModSettings, imParamFilter, pathSettings) {
     const toastPrime = useRef(null);
     const [oldValueMin, setoldValueMin] = useState(ModSettings.reSeg.range[0]);
     const [oldValueMax, setoldValueMax] = useState(ModSettings.reSeg.range[1]);
@@ -1529,13 +1529,13 @@ const SettingsEditor = ({ showEdit, setShowEdit, settings, pathSettings}) => {
         <br></br>
             <TabView>
             <TabPanel header="MR-scan">
-                {renderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamMR, settings.imParamFilter, pathSettings)}
+                {RenderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamMR, settings.imParamFilter, pathSettings)}
             </TabPanel>
             <TabPanel header="CT-scan">
-                {renderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamCT, settings.imParamFilter, pathSettings)}
+                {RenderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamCT, settings.imParamFilter, pathSettings)}
             </TabPanel>
             <TabPanel header="PET-scan">
-                {renderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamPET, settings.imParamFilter, pathSettings)}
+                {RenderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamPET, settings.imParamFilter, pathSettings)}
             </TabPanel>
             </TabView>
             {/* SAVE BUTTON */}

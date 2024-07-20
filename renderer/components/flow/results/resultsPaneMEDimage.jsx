@@ -385,7 +385,7 @@ const ResultsPaneMEDimage = () => {
       flowContent.nodes.map((node) => {
         if (node.type === "Analyze"){
           // Images
-          if (node.data.internal.results.hasOwnProperty("figures")){
+          if (Object.prototype.hasOwnProperty.call(node.data.internal.results, "figures")){
             // Heatmap
             if (Object.prototype.hasOwnProperty.call(node.data.internal.results.figures, "heatmap")){
               if (Object.prototype.hasOwnProperty.call(node.data.internal.results.figures.heatmap, "path")){
@@ -433,6 +433,7 @@ const ResultsPaneMEDimage = () => {
                 });
               }
             } catch (error) {
+              toast.error("Error detected while processing histograms", error)
             }
           }
           if (Object.prototype.hasOwnProperty.call(node.data.internal.results, "pips")){
