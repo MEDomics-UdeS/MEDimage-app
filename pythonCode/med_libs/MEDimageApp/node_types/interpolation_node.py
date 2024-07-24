@@ -86,3 +86,7 @@ class InterpolationNode(Node):
         
         # 3- Update settings results of the pipeline
         pipeline.settings_res['interpolation'] = self.params
+        
+        # Update the output of the node
+        self.output = {"vol": vol_obj.data,
+                       "roi": roi_obj_morph.data}

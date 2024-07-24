@@ -9,7 +9,6 @@ class ROIExtractionNode(Node):
         
     def run(self, pipeline: Pipeline):
         print("************************ RUNNING ROI EXTRACTION ***************************")
-        
         # 1- Compute ROI extraction for NON TEXTURE FEATURES
         ## 1.1- Get the latest volume and roi output of the pipeline
         vol_obj = pipeline.latest_node_output["vol"] # comes from interpolation or filter node
@@ -37,6 +36,9 @@ class ROIExtractionNode(Node):
         
         ## 2.3 Update the latest output object of the pipeline
         pipeline.latest_node_output_texture["vol_int_re"] = vol_int_re_texture
-
-        # 3- Update settings results of pipeline
-        pipeline.settings_res["roi_extraction"] = vol_int_re        
+        
+        # Update the output of the node
+        self.output = {"vol": vol_int_re,
+                       "roi": roi_obj_int.data,
+                       "vol_texture": vol_obj_texture,
+                       "roi_texture": roi_obj_int_texture.data}

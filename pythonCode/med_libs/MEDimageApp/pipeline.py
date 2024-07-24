@@ -6,24 +6,20 @@ import MEDimage
 
 JSON_SETTINGS_PATH = Path(os.path.join(os.path.dirname(os.path.abspath(__file__)))) / 'settings/settings_frame.json'
 class Pipeline:
-    def __init__(self, nodes: List[Node], pipeline_id: int):
+    def __init__(self, nodes: List[Node], pipeline_id: int, pipeline_name: str):
         self.nodes = nodes # List of nodes object in the pipeline
         self.pipeline_id = pipeline_id # ID of the pipeline
-    
-        self.flag_texture = False # Flag to check if the pipeline includes texture features
-        if nodes[-1].name and nodes[-1].name == "extraction" and nodes[-1].includes_texture_features():
-            self.flag_texture = True
+        self.pipeline_name = pipeline_name # Name of the pipeline
             
         self.MEDimg = None # MEDimg object of the input image
         self.latest_node_output = {} # Output of the latest node in the pipeline (used for non texture features)
         self.latest_node_output_texture = {} # Output of the latest node in the pipeline (used for texture features)
-        self.obj_init_texture = {} # Output of segmentation node to keep initial version of vol_obj_init and roi_obj_init for texture features
         
         self.settings_res = {} # Dictionary to store the settings results of the pipeline
         self.scan_res = {} # Dictionary to store the scan results (radiomics)
     
-        # Loading default settings from MEDimageApp json file as im_params
-        self.im_params = MEDimage.utils.json_utils.load_json(JSON_SETTINGS_PATH)
+        
+        self.im_params = MEDimage.utils.json_utils.load_json(JSON_SETTINGS_PATH) # Loading default settings from MEDimageApp json file as im_params
 
 
     def get_previous_node_output(self, node: Node):
@@ -75,8 +71,35 @@ class Pipeline:
                 self.im_params[scan_type]["discretisation"] = node.params
 
     
-    def run(self, node_id: str = "all"):
+    def run(self, set_progress, node_id: str = "all"):
+        # The pipeline is starting, set the progress to 0%
+        set_progress(now=0.0, label=f"Starting pipeline : " + self.pipeline_name)
+        
+        # Number of nodes in the pipeline
+        number_nodes = len(self.nodes)
+        # Number of the current node 
+        node_number = 1.0 
+
         for node in self.nodes:
+            # Run the node
             node.run(self)
+            # Update the progress bar
+            set_progress(now=node_number * 100 / number_nodes, label=f"Pipeline " + self.pipeline_name + " | Running node : " + node.name)
+            # Increment the node number
+            node_number += 1.0
+            
             if node.id == node_id:
                 break
+        
+        # Create the results dictionnary
+        results = {"features": self.scan_res, 
+                   "settings": self.settings_res}
+        
+        # Reset the latest node output
+        self.latest_node_output = {}
+        self.latest_node_output_texture = {}
+        
+        # The pipeline is done executing, set the progress to 100%
+        set_progress(now=100.0, label=f"Ending pipeline : " + self.pipeline_name)
+        
+        return results

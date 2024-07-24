@@ -10,6 +10,7 @@ class ExtractionNode(Node):
         
         self.extracted_features = {}
     
+    
     # Check if the node includes any texture features
     def includes_texture_features(self):
         texture_features_families = ["glcm", "gldzm", "glrlm", "glszm", "ngldm", "ngtdm"]
@@ -62,6 +63,7 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF MORPHOLOGICAL FEATURES {str(e)}"}
     
+    
     # Local intensity features extraction    
     def get_local_intensity_features(self, features_to_extract, pipeline):
         try:
@@ -101,6 +103,7 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF LOCAL INTENSITY FEATURES {str(e)}"}
     
+    
     # Statistical features extraction    
     def get_stats_features(self, features_to_extract, pipeline):
         try:
@@ -132,6 +135,7 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF STATISTICAL FEATURES {str(e)}"}
 
+
     # Intensity histogram features extraction    
     def get_intensity_histogram_features(self, features_to_extract, pipeline):
         try:
@@ -160,6 +164,7 @@ class ExtractionNode(Node):
 
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF INTENSITY HISTOGRAM FEATURES {str(e)}"}
+
 
     # Intensity volume histogram features extraction
     def get_int_vol_hist_features(self, features_to_extract, pipeline):
@@ -197,6 +202,7 @@ class ExtractionNode(Node):
         
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF INTENSITY VOLUME HISTOGRAM FEATURES {str(e)}"}
+
 
     def get_glcm_features(self, features_to_extract, pipeline):
         try:
@@ -261,6 +267,7 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF GLRLM FEATURES {str(e)}"}
     
+
     def get_glszm_features(self, features_to_extract, pipeline):
         try:
             features = {}
@@ -283,6 +290,7 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF GLSZM FEATURES {str(e)}"}
     
+
     def get_gldzm_features(self, features_to_extract, pipeline):
         try:
             features = {}
@@ -308,6 +316,7 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF GLDZM FEATURES {str(e)}"}
     
+
     def get_ngtdm_features(self, features_to_extract, pipeline):
         try:
             features = {}
@@ -332,6 +341,7 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF NGTDM FEATURES {str(e)}"}
     
+
     def get_ngldm_features(self, features_to_extract, pipeline):
         try:
             features = {}
@@ -371,11 +381,11 @@ class ExtractionNode(Node):
 
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF NGLDM FEATURES {str(e)}"}
-
     
 
     # TODO : refactor : for node in extraction node, run node. 
     def run(self, pipeline: Pipeline):
+        print("************************ RUNNING EXTRACTION ***************************")
         last_vol_compute = pipeline.latest_node_output["vol"]        
         
         # Initialize the non-texture features calculation
@@ -432,6 +442,6 @@ class ExtractionNode(Node):
             else:
                 print("Feature family : ", feature_family, "is invalid.")
             
-            print("EXTRACTED FEATURES *********************************************************")
-            print(self.extracted_features)
+            pipeline.scan_res = self.extracted_features
+
             

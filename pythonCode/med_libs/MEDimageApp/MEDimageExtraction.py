@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-pp = pprint.PrettyPrinter(indent=4, compact=True, width=40, sort_dicts=False)  # allow pretty print of datatypes in console
+pp = pprint.PrettyPrinter(indent=2, compact=True, width=40, sort_dicts=False)  # allow pretty print of datatypes in console
 
 import MEDimage
 import ray
@@ -27,13 +27,13 @@ class ExtractionWorkflow:
     def __init__(self, json_config: dict) -> None:
         self.pipelines = self.get_pipelines(json_config)
 
-    # TEMPORARY DEBUG FUNCTION TO PRINT PIPELINES
+    # Temps debug function to fix pipelines
     def print_pipelines(self):
         for pipeline in self.pipelines:
             print("Pipeline:")
             for node in pipeline.nodes:
                 print(node.id)
-            print("\n")
+            print("\n")    
     
     def generate_pipelines(self, node_id, drawflow_scene, pipelines, nodes_list):
         # Get the home module from the drawflow scene
@@ -58,10 +58,14 @@ class ExtractionWorkflow:
         else:
             # If there are no outputs it is a end node, so we create a pipeline from the nodes_list
             new_pipeline_id = len(pipelines) + 1
-            pipelines.append(Pipeline(nodes_list, new_pipeline_id))
-        
-
-    # A pipeline is considered to start from an input node.        
+            
+            # Create pipeline name from the node names according to old naming convention
+            new_pipeline_name = "pip"
+            for node in nodes_list:
+                new_pipeline_name += "/" + node.id
+                
+            pipelines.append(Pipeline(nodes_list, new_pipeline_id, new_pipeline_name))
+      
     def get_pipelines(self, json_config):
         # In the json config, get the drawflow scene
         drawflow_scene = json_config['drawflow']
@@ -78,21 +82,39 @@ class ExtractionWorkflow:
         # Return the generated pipelines
         return pipelines
     
-    def run_all_pipelines(self):
+    def run_pipelines(self, set_progress, node_id="all"):
+        results = {}
+        
+        # Go over each pipeline
         for pipeline in self.pipelines:
-            pipeline.run("all")
+            # Run the pipeline
+            res = pipeline.run(set_progress, node_id)
+            
+            # Get the filepath associated with the pipeline
+            filepath = res["settings"]["segmentation"]["filepath"]
+            
+            if filepath and filepath != "":
+                if filepath not in results:
+                    results[filepath] = {}
+                    
+                # Store the pipeline results in the results dictionary under the right filename and pipeline name    
+                results[filepath][pipeline.pipeline_name] = res
+            
+        return results
     
-    def run_pipelines_to_node(self, node_id="all"):
+    def get_node_output(self, node_id):
         for pipeline in self.pipelines:
-            if pipeline.contains_node(node_id):
-                pipeline.run(node_id)
+            for node in pipeline.nodes:
+                if node.id == node_id:
+                    return node, pipeline
+        return None, None
+
 
 class MEDimageExtraction:
     def __init__(self, json_config: dict) -> None:
         self.json_config = json_config # JSON config sent from the front end in the form of a dictionary
-        self.medscan_obj = {} # Dictionary to store the MEDscan objects in the form {"filename": "MEDscan object"}
         
-        self.pipelines = []
+        self.medscan_obj = {} # Dictionary to store the MEDscan objects in the form {"filename": "MEDscan object"}
         self._progress = {'currentLabel': '', 'now': 0.0}
         self.nb_runs = 0
         self.runs = {}
@@ -129,42 +151,6 @@ class MEDimageExtraction:
         else:
             print("Node different to extraction not allowed")
             return []
-
-    def __get_last_output_from_pip(self, pip: list, output_name: str, nodes_to_parse: list) -> object:
-        """
-        Get the last output from a pipeline
-
-        Args:
-            pip (list): Pipeline
-            output_name (str): Name of the output to get
-            nodes_to_parse (list): Nodes to parse
-
-        Returns:
-            object: Last output found
-        """
-        # Init variables
-        found = False
-        i = 1
-        # Loop stop if current node parsed is the fisrt of the pip
-        while (i <= len(list(pip))):
-            last_node_found = list(pip)[-i]  # return node's id
-
-            # Current parse node not in the list.
-            if (pip[last_node_found]["type"] not in nodes_to_parse):
-                i += 1
-                
-            # If the element is a scalar (single value or string)
-            elif np.isscalar(pip[last_node_found]["output"][output_name]):
-                if pip[last_node_found]["output"][output_name] == "empty":
-                    i += 1
-
-            # Ouput found
-            else:
-                found = True
-                last_output_found = deepcopy(pip[last_node_found]["output"][output_name])
-                return last_output_found
-
-        if not found: print("Last output not updated")
     
     def __sort_features_categories(self, features_ids: list) -> list:
         """
@@ -184,1108 +170,46 @@ class MEDimageExtraction:
         # Generate the sorted list based on the order in features_order
         return [features_ids_dict[name] for name in features_order if name in features_ids_dict]
 
-    def __update_pip_settings(self, pip: list, im_params: dict, scan_type: str) -> dict:
-        """
-        Updates the extraction parameters of the pipeline
-
-        Args:
-            pip (list): Pipeline
-            im_params (dict): Extraction parameters
-            scan_type (str): Type of scan
-
-        Returns:
-            dict: Updated extraction parameters
-        """
-        if scan_type == "PTscan":
-            scan_type = "imParamPET"
-        else:
-            scan_type = "imParam" + scan_type[:-4]
-
-        for node in pip:
-            content = get_node_content(node, self.json_config)
-
-            # FILTERING
-            if (content["name"] == "filter") or (content["name"] == "filter_processing"):
-                im_params["imParamFilter"] = content["data"]
-
-            # INTERPOLATION
-            elif (content["name"] == "interpolation"):
-                im_params[scan_type]["interp"] = content["data"]
-
-            # RE-SEGMENTATION
-            elif (content["name"] == "re_segmentation"):
-                im_params[scan_type]["reSeg"] = content["data"]
-
-            # DISCRETIZATION
-            elif (content["name"] == "discretization"):
-                im_params[scan_type]["discretisation"] = content["data"]
-
-        return im_params
-
-    def generate_all_pipelines(self, id: str, node_content, pip) -> list:
-        """
-        Generates all possible pipelines from the nodes of the scene
-
-        Args:
-            id (str): id of the node
-            node_content (dict): Content of the node
-            pip (list): Current pipeline
-
-        Returns:
-            list: list of all pipelines
-        """
-        # -------------------------------------------------- NODE ADD ---------------------------------------------------
-        pip.append(id)  # Current node added to pip
-
-        # Specific cases with processing submodule jumps
-        if (node_content["name"] == "processing"):
-            id_next_node = str(
-                int(node_content["id"] + 1))  # Retrieve id of the input_processing node (present in submodule)
-            pip.append(id_next_node)  # add second processing into pip
-            node_content = get_node_content(id_next_node, self.json_config)  # node content updated
-
-        if (node_content["name"] == "output_processing"):
-            id_next_node = str(
-                node_content["data"]["parent_node"])  # Retrieve id of parent processing node of out_processing node
-            pip.append(id_next_node)
-            node_content = get_node_content(id_next_node, self.json_config)  # node content updated
-
-        # ---------------------------------------------- NEXT NODES COMPUTE ----------------------------------------------
-        # NO OUPUT CONNECTION
-        if not "output_1" in node_content["outputs"]:  # if no ouput connection
-            self.pipelines.append(pip)
-            return pip
-
-        # ONE OUPUT CONNECTION
-        elif len(node_content["outputs"]["output_1"]["connections"]) == 1:
-            out_node_id = node_content["outputs"]["output_1"]["connections"][0]["node"]
-            out_node_content = get_node_content(out_node_id, self.json_config)
-            pip = self.generate_all_pipelines(out_node_id, out_node_content, pip)
-
-        # MORE ONE OUPUT CONNECTION
-        else:
-            connections = node_content["outputs"]["output_1"]["connections"]  # output connections of last node added to pip
-            tab_pip = []
-            buff = deepcopy(pip)
-
-            for counter, connection in enumerate(connections):
-                tab_pip.append(deepcopy(buff))  # duplicate current pip from connections number
-                out_node_id = connection["node"]  # Retrieve output connection of current node
-                out_node_content = get_node_content(out_node_id, self.json_config)  # Retrieve content of node connected of the current node output
-                tab_pip[counter] = self.generate_all_pipelines(out_node_id, out_node_content, tab_pip[counter])
-                pip = tab_pip[counter]
-
-        return pip
-    
-    def generate_pipelines_from_node(self, id: str, node_content, pip):
-        # -------------------------------------------------- NODE ADD ---------------------------------------------------
-        pip.append(id)  # Current node added to pip
-        print("current pip", pip)
-
-        # Specific cases with processing submodule jumps
-        if (node_content["name"] == "input_processing"):
-            id_next_node = str(
-                int(node_content["id"] - 1))  # Retrieve id of the input_processing node (present in submodule)
-            pip.append(id_next_node)  # add second processing into pip
-            node_content = get_node_content(id_next_node, self.json_config)  # node content updated
-
-        # ---------------------------------------------- NEXT NODES COMPUTE ----------------------------------------------
-        # NO INPUT CONNECTION (input node reached)
-        if not "input_1" in node_content["inputs"]:  # if no ouput connection
-            pip.reverse()
-            self.pipelines.append(pip)
-            return pip
-
-        # ONE INPUT CONNECTION
-        elif len(node_content["inputs"]["input_1"]["connections"]) == 1:
-            in_node_id = node_content["inputs"]["input_1"]["connections"][0]["node"]
-            in_node_content = get_node_content(in_node_id, self.json_config)
-            pip = self.generate_pipelines_from_node(in_node_id, in_node_content, pip)
-
-        # MORE ONE INPUT CONNECTION
-        else:
-            print("MULTI input connections : ", len(node_content["inputs"]["input_1"]["connections"]))
-            connections = node_content["inputs"]["input_1"]["connections"]  # input connections of last node added to pip
-            tab_pip = []
-            buff = deepcopy(pip)
-
-            for counter, connection in enumerate(connections):
-                tab_pip.append(deepcopy(buff))  # duplicate current pip from connections number
-                in_node_id = connection["node"]  # Retrieve input connection of current node
-                in_node_content = get_node_content(in_node_id, self.json_config)  # Retrieve content of node connected of the current node input
-                tab_pip[counter] = self.generate_pipelines_from_node(in_node_id, in_node_content, tab_pip[counter])
-                pip = tab_pip[counter]
-
-        return pip
-
-    def execute_pips(self):
-        # Init RUNS dict for store instances and logs (xxx_obj)
-        self.nb_runs += 1
-        pips_obj = {}
-
-        # Init results dict for result response (xxx_res)
-        pips_res = {}
-        scan_res = {}
-        filename_loaded = ""
-
-        # ------------------------------------------ PIP EXECUTION ------------------------------------------
-        for idx_pip, pip in enumerate(self.pipelines):
-
-            print("\n\n!!!!!!!!!!!!!!!!!! New pipeline execution !!!!!!!!!!!!!!!!!! \n --> Pip : ", pip)
-
-            # Loading default settings from MEDimageApp json file as im_params
-            im_params = MEDimage.utils.json_utils.load_json(JSON_SETTINGS_PATH)
-
-            # Init object and variables for new pipeline
-            pip_obj = {}
-            pip_name_obj = ""
-            pip_res = {}
-            pip_name_res = "pip"
-            features_res = {}
-            settings_res = {}
-
-            # CODE FRAGMENT TO INCLUDE TEXTURE FEATURES
-            flag_texture = False
-            features_list = []
-
-            # If the pipeline has an extraction node, it must be the last node
-            # Check if the last node is an extraction node
-            if pip[-1:]:
-                last_node_content = get_node_content(pip[-1], self.json_config)
-                if last_node_content["name"] == "extraction":
-                    all_texture_features = ["glcm", "gldzm", "glrlm", "glszm", "ngldm", "ngtdm"]
-                    # Get IDs of nodes contained into feature node
-                    features_id = self.__get_features_list(last_node_content)
-                    for id in features_id:
-                        feature_content = get_node_content(id, self.json_config)
-                        features_list.append(feature_content["name"])
-                        if feature_content["name"] in all_texture_features:
-                            flag_texture = True
-
-            # Variables to keep segmentation return matrices if there is a texture feature to extract
-            vol_obj_init_texture = None
-            roi_obj_init_texture = None
-
-            # ------------------------------------------ NODE EXECUTION ------------------------------------------
-            for node in pip:
-                content = get_node_content(node, self.json_config)
-                print("\n\n\n///////////////// CURRENT NODE :", content["name"], "-", node, " /////////////////")
-
-                # Update RUNS dict for store instances and logs (xxx_obj)
-                update_pip = True
-                pip_name_obj += node
-                id_obj = {}
-                output_obj = {}
-                id_obj["type"] = content["name"]
-                id_obj["settings"] = content["data"]
-
-                # Update results dict for result response (xxx_res)
-                pip_name_res += "/" + node
-                nodes_needing_last_output = [
-                    "filter", "interpolation", "re_segmentation", "roi_extraction", 
-                    "filter_processing", "discretization", "extraction"
-                ]
-
-                # ------------------------------ GET LAST VOL and ROI computed ------------------------------------------
-                if (content["name"] in nodes_needing_last_output):
-                    last_vol_compute = self.__get_last_output_from_pip(
-                        pip_obj, "vol",
-                        ["segmentation", "filter", "interpolation",
-                        "re_segmentation", "filter_processing",
-                         "roi_extraction", "discretization"]
-                    )
-                    last_roi_compute = self.__get_last_output_from_pip(
-                        pip_obj, "roi",
-                        ["segmentation", "filter", "interpolation",
-                        "re_segmentation", "filter_processing",
-                        "roi_extraction", "discretization"]
-                    )
-
-                # ------------------------------------------ HOME ------------------------------------------
-                # INPUT
-                if (content["name"] == "input"):
-                    # Update progress
-                    self.set_progress(now=0.0, label=f"Pip {idx_pip + 1} | Loading input")
-                    
-                    scan_res, filename_loaded, MEDimg = self.run_input(filename_loaded, pip, im_params, content, id_obj, output_obj, scan_res)
-
-                    # Update progress
-                    self.set_progress(now=8.5/len(self.pipelines))
-
-                # SEGMENTATION
-                elif (content["name"] == "segmentation"):
-                    # Update progress
-                    self.set_progress(now=8.5/len(self.pipelines), label=f"Pip {idx_pip + 1} | Segmentation")
-                    
-                    vol_obj_init_texture,roi_obj_init_texture, update_pip, output_obj, id_obj, settings_res = self.run_segmentation(MEDimg, content, id_obj, output_obj, settings_res, flag_texture)
-                    
-                    # Update progress
-                    self.set_progress(now=17.0/len(self.pipelines))
-
-                # ------------------------------------------PROCESSING------------------------------------------
-                # INTERPOLATION
-                elif (content["name"] == "interpolation"):
-                    # Update progress
-                    self.set_progress(now=17.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Interpolation")
-
-                    update_pip, output_obj, id_obj, settings_res = self.run_interpolation(last_vol_compute, MEDimg, last_roi_compute, output_obj, id_obj, settings_res, content)
-
-                    # Update progress
-                    self.set_progress(now=25.5/len(self.pipelines))
-
-                # FILTER
-                elif (content["name"] == "filter"):
-                    # Update progress
-                    self.set_progress(now=25.5/len(self.pipelines), label=f"Pip {idx_pip + 1} | Filtering")
-
-                    MEDimg, update_pip, output_obj, id_obj, settings_res = self.run_filter(MEDimg, content, last_vol_compute, output_obj, id_obj, settings_res)
-
-                    # Update progress
-                    self.set_progress(now=35/len(self.pipelines))
-
-                # RE-SEGMENTATION
-                elif (content["name"] == "re_segmentation"):
-                    # Update progress
-                    self.set_progress(now=35/len(self.pipelines), label=f"Pip {idx_pip + 1} | Re-segmentation")
-
-                    update_pip, output_obj, id_obj, settings_res = self.run_reseg(last_roi_compute, last_vol_compute, MEDimg, content, output_obj, id_obj, settings_res)
-
-                    # Update progress
-                    self.set_progress(now=42.5/len(self.pipelines))
-
-                # ROI_EXTRACTION
-                elif (content["name"] == "roi_extraction"):
-                    # Update progress
-                    self.set_progress(now=42.5/len(self.pipelines), label=f"Pip {idx_pip + 1} | ROI extraction")
-
-                    vol_int_re, update_pip, output_obj, id_obj = self.run_roiextract(last_vol_compute, last_roi_compute, output_obj, id_obj)
-
-                    # Update progress
-                    self.set_progress(now=50/len(self.pipelines))
-
-                # DISCRETIZATION
-                elif (content["name"] == "discretization"):
-                    # Update progress
-                    self.set_progress(now=50/len(self.pipelines), label=f"Pip {idx_pip + 1} | Discretization")
-
-                    wd, update_pip, output_obj, id_obj, settings_res = self.run_discretization(MEDimg, last_vol_compute, output_obj, id_obj, settings_res, content)
-
-                    # Update progress
-                    self.set_progress(now=60.0/len(self.pipelines))
-
-                # EXTRACTION
-                elif (content["name"] == "extraction"):
-                    # Update progress
-                    self.set_progress(now=60.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Extraction")
-
-                    update_pip, features_res, output_obj, id_obj = self.run_extraction(MEDimg, flag_texture, vol_obj_init_texture, roi_obj_init_texture, content, pip_obj, idx_pip, vol_int_re, features_res, output_obj, id_obj, last_vol_compute)
-
-                # NODE NOT FOUND
-                else:
-                    print("Node not implemented yet:", content["name"])
-
-                # Add relevant nodes
-                if (update_pip):
-                    pip_obj[content["id"]] = id_obj
-
-            # Update final progress
-            self.set_progress(now=100.0, label="Done!")
-
-            # Pip features and settings update
-            pip_res["features"] = features_res
-            pip_res["settings"] = settings_res
-            scan_res[pip_name_res] = pip_res
-
-            pips_res[filename_loaded] = scan_res  # pips response update
-            pips_obj[pip_name_obj] = pip_obj  # pips object update
-        
-        # Update RUNS dict
-        #print("FINISHED ALL")
-        self.runs[self.nb_runs] = pips_obj
-
-        #print("RUNS DICT : ", self.runs)
-        
-        # Pickle dump runs
-        with open(os.path.join(UPLOAD_FOLDER, "runs.pkl"), 'wb') as f:
-            #print("\n**************PICKLE DUMP RUNS")
-            pickle.dump(self.runs, f)
-        
-        return pips_res
-
-    def run_input(self, filename_loaded, pip, im_params, content, id_obj, output_obj, scan_res={}):
-        print("\n********INPUT execution********")
-
-        # If new input computed
-        if (filename_loaded != content["data"]["filepath"]):
-            scan_res = {}
-            filename_loaded = content["data"]["filepath"]
-
-        # Load MEDscan instance from file
-        with open(UPLOAD_FOLDER / filename_loaded, 'rb') as f:
-            MEDimg = pickle.load(f)
-            MEDimg = MEDimage.MEDscan(MEDimg)
-
-        scan_type = MEDimg.type
-        im_params = self.__update_pip_settings(pip, im_params, scan_type)
-        MEDimage.MEDscan.init_params(MEDimg, im_params)
-
-        # Update output infos for RUNS
-        update_pip = True
-        output_obj["MEDimg"] = MEDimg
-        id_obj["output"] = output_obj
-
-        # Remove dicom header from MEDimg object as it causes errors in get_3d_view()
-        # TODO: check if dicom header is needed in the future
-        id_obj["output"]["MEDimg"].dicomH = None
-
-        return scan_res, filename_loaded, MEDimg
-    
-    def run_segmentation(self, MEDimg, content, id_obj, output_obj, settings_res, flag_texture=False):
-        print("\n********SEGMENTATION execution********")
-        
-        # Get ROI (region of interest)
-        # Safety check
-        if not content["data"]["rois_data"]:
-            return {"error": "ERROR on segmentation. No ROI name provided."}
-
-        vol_obj_init, roi_obj_init = MEDimage.processing.get_roi_from_indexes(
-            MEDimg,
-            name_roi=content["data"]["rois_data"],
-            # retrieve name_roi from segmentation rois_data. pip[0] match the input id of current pip.
-            box_string="full"
-        )
-
-        # ADDED CODE FRAGMENT FOR TEXTURE FEATURES
-        # If there are some texture features to compute later, keep initial version of vol_obj_init
-        # and roi_obj_init
-        if flag_texture:
-            vol_obj_init_texture = copy.deepcopy(vol_obj_init)
-            roi_obj_init_texture = copy.deepcopy(roi_obj_init)
-        else:
-            vol_obj_init_texture = None
-            roi_obj_init_texture = None
-
-        # Update output infos
-        update_pip = True
-        output_obj["vol"] = vol_obj_init
-        output_obj["roi"] = roi_obj_init
-        id_obj["output"] = output_obj
-
-        # Update settings infos pour json response
-        settings_res[content["name"]] = content["data"]
-        
-        return vol_obj_init_texture,roi_obj_init_texture, update_pip, output_obj, id_obj, settings_res
-        
-    def run_interpolation(self, last_vol_compute, MEDimg, last_roi_compute, output_obj, id_obj, settings_res, content):
-        print("\n********INTERPOLATION execution********")
-        # Intensity Mask
-        vol_obj = MEDimage.processing.interp_volume(
-            vol_obj_s=last_vol_compute,  # vol_obj_init,
-            medscan=MEDimg,
-            vox_dim=MEDimg.params.process.scale_non_text,
-            interp_met=MEDimg.params.process.vol_interp,
-            round_val=MEDimg.params.process.gl_round,
-            image_type='image',
-            roi_obj_s=last_roi_compute,  # roi_obj_init
-            box_string="full"
-        )
-        # Morphological Mask
-        roi_obj_morph = MEDimage.processing.interp_volume(
-            vol_obj_s=last_roi_compute,  # roi_obj_init,
-            medscan=MEDimg,
-            vox_dim=MEDimg.params.process.scale_non_text,
-            interp_met=MEDimg.params.process.roi_interp,
-            round_val=MEDimg.params.process.roi_pv,
-            image_type='roi',
-            roi_obj_s=last_roi_compute,  # roi_obj_init
-            box_string="full"
-        )
-
-        # Update output infos
-        update_pip = True
-        output_obj["vol"] = vol_obj
-        output_obj["roi"] = roi_obj_morph
-        output_obj["roi_morph"] = roi_obj_morph
-        id_obj["output"] = output_obj
-
-        # Update settings infos pour json response
-        settings_res[content["name"]] = content["data"]
-        return update_pip, output_obj, id_obj, settings_res
-
-    def run_filter(self, MEDimg, content, last_vol_compute, output_obj, id_obj, settings_res):
-        print("\n********FILTER execution********")
-        
-        # Apply filter to the imaging volume
-        MEDimg.params.filter.filter_type = content["data"]["filter_type"] 
-        vol_obj_filter = MEDimage.filters.apply_filter(MEDimg, last_vol_compute)  # vol_obj_init
-
-        # Update output infos
-        update_pip = True
-        output_obj["vol"] = vol_obj_filter
-        output_obj["roi"] = "empty"
-        id_obj["output"] = output_obj
-        
-        # Update settings infos pour json response
-        settings_res[content["name"]] = content["data"]
-        
-        return MEDimg, update_pip, output_obj, id_obj, settings_res
-
-    def run_reseg(self, last_roi_compute, last_vol_compute, MEDimg, content, output_obj, id_obj, settings_res):
-        print("\n********RE-SEGMENTATION execution********")
-        
-        # Intensity mask range re-segmentation
-        roi_obj_int = deepcopy(last_roi_compute)  # roi_obj_morph
-        roi_obj_int.data = MEDimage.processing.range_re_seg(
-            vol=last_vol_compute.data,  # vol_obj
-            roi=roi_obj_int.data,
-            im_range=MEDimg.params.process.im_range
-        )
-
-        # Intensity mask outlier re-segmentation
-        roi_obj_int.data = np.logical_and(
-            MEDimage.processing.outlier_re_seg(
-                vol=last_vol_compute.data,  # vol_obj
-                roi=roi_obj_int.data,
-                outliers=MEDimg.params.process.outliers
-            ),
-            roi_obj_int.data
-        ).astype(int)
-
-        # Update output infos
-        update_pip = True
-        output_obj["vol"] = "empty"
-        output_obj["roi"] = roi_obj_int
-        id_obj["output"] = output_obj
-
-        # Update settings infos pour json response
-        # If re-segmentation is not serialized, change inf to string
-        if np.isinf(MEDimg.params.process.im_range[1]):
-            content["data"]['range'][1] = "inf"
-        if np.isinf(MEDimg.params.process.im_range[0]):
-            content["data"]['range'][0] = "inf"
-        settings_res[content["name"]] = content["data"]
-        
-        return update_pip, output_obj, id_obj, settings_res
-
-    def run_roiextract(self, last_vol_compute, last_roi_compute, output_obj, id_obj):
-        print("\n********ROI EXTRACTION execution********")
-        
-        # ROI Extraction :
-        vol_int_re = MEDimage.processing.roi_extract(
-            vol=last_vol_compute.data,  # vol_obj
-            roi=last_roi_compute.data  # roi_obj_int
-        )
-
-        # Update output infos
-        update_pip = True
-        output_obj["vol"] = vol_int_re
-        output_obj["roi"] = "empty"
-        id_obj["output"] = output_obj
-        
-        return vol_int_re, update_pip, output_obj, id_obj
-    
-    def run_discretization(self, MEDimg, last_vol_compute, output_obj, id_obj, settings_res, content):
-        print("\n********DISCRETIZATION execution********")
-
-        # Intensity histogram equalization of the imaging volume
-        if MEDimg.params.process.ivh and 'type' in MEDimg.params.process.ivh and 'val' in MEDimg.params.process.ivh:
-            if MEDimg.params.process.ivh['type'] and MEDimg.params.process.ivh['val']:
-                vol_quant_re, wd = MEDimage.processing.discretize(
-                    vol_re=last_vol_compute,  # vol_int_re
-                    discr_type=MEDimg.params.process.ivh['type'],
-                    n_q=MEDimg.params.process.ivh['val'],
-                    user_set_min_val=MEDimg.params.process.user_set_min_value,
-                    ivh=True
-                )
-        else:
-            vol_quant_re = last_vol_compute
-            wd = 1
-
-        # Update output infos
-        update_pip = True
-        output_obj["vol"] = vol_quant_re  # temp : to change after new implementation of discretization node
-        output_obj["roi"] = "empty"
-        id_obj["output"] = output_obj
-
-        # Update settings infos for json response
-        settings_res[content["name"]] = content["data"]
-        
-        return wd, update_pip, output_obj, id_obj, settings_res
-
-    def run_extraction(self, MEDimg, flag_texture, vol_obj_init_texture, roi_obj_init_texture, content, pip_obj, idx_pip, vol_int_re, features_res, output_obj, id_obj, last_vol_compute):
-        print("\n********EXTRACTION execution********")
-         # Preparation of computation :
-        MEDimg.init_ntf_calculation(last_vol_compute)  # vol_obj
-
-        # ----------------- CODE FRAGMENT ADDED FOR TEXTURE FEATURES -----------------------------------------
-        # THIS IS A PATCH : we prepare texture feature for extraction AS IF all the nodes are placed correctly
-        # the pipeline.
-        if flag_texture:
-            # TODO : Verifier si on doit bien mettre zero pour scale_text!
-            # Interpolation
-            # Intensity Mask
-            vol_obj_texture = MEDimage.processing.interp_volume(
-                vol_obj_s=vol_obj_init_texture,
-                vox_dim=MEDimg.params.process.scale_text[0],
-                interp_met=MEDimg.params.process.vol_interp,
-                round_val=MEDimg.params.process.gl_round,
-                image_type='image',
-                roi_obj_s=roi_obj_init_texture,
-                box_string=MEDimg.params.process.box_string
-            )
-            # Morphological Mask
-            roi_obj_morph_texture = MEDimage.processing.interp_volume(
-                vol_obj_s=roi_obj_init_texture,
-                vox_dim=MEDimg.params.process.scale_text[0],
-                interp_met=MEDimg.params.process.roi_interp,
-                round_val=MEDimg.params.process.roi_pv,
-                image_type='roi',
-                roi_obj_s=roi_obj_init_texture,
-                box_string=MEDimg.params.process.box_string
-            )
-
-            # update progress
-            self.set_progress(now=65.0/len(self.pipelines))
-
-            # Re-segmentation
-            # Intensity mask range re-segmentation
-            roi_obj_int_texture = deepcopy(roi_obj_morph_texture)
-            roi_obj_int_texture.data = MEDimage.processing.range_re_seg(
-                vol=vol_obj_texture.data,
-                roi=roi_obj_int_texture.data,
-                im_range=MEDimg.params.process.im_range
-            )
-            # Intensity mask outlier re-segmentation
-            roi_obj_int_texture.data = np.logical_and(
-                MEDimage.processing.outlier_re_seg(
-                    vol=vol_obj_texture.data,
-                    roi=roi_obj_int_texture.data,
-                    outliers=MEDimg.params.process.outliers
-                ),
-                roi_obj_int_texture.data
-            ).astype(int)
-
-            # Image filtering
-            if MEDimg.params.filter.filter_type:
-                vol_obj_texture = MEDimage.filters.apply_filter(MEDimg, vol_obj_texture)
-
-            a = 0
-            n = 0
-            s = 0
-
-            # Preparation of computation :
-            MEDimg.init_tf_calculation(
-                algo=a,
-                gl=n,
-                scale=s)
-
-            # ROI Extraction :
-            vol_int_re_texture = MEDimage.processing.roi_extract(
-                vol=vol_obj_texture.data,
-                roi=roi_obj_int_texture.data)
-
-            # Discretisation :
-            vol_quant_re_texture, _texture = MEDimage.processing.discretize(
-                vol_re=vol_int_re_texture,
-                discr_type=MEDimg.params.process.algo[a],
-                n_q=MEDimg.params.process.gray_levels[a][n],
-                user_set_min_val=MEDimg.params.process.user_set_min_value
-            )
-
-            # Update progress
-            self.set_progress(now=70.0/len(self.pipelines))
-
-        # update progress
-        self.set_progress(now=70.0/len(self.pipelines))
-            
-        # Get IDs of nodes contained into feature node and extract all features selected in node
-        features_id = self.__get_features_list(content)
-        features_id = self.__sort_features_categories(features_id)
-        for id in features_id:
-            feature_content = get_node_content(id, self.json_config)
-            feature_name = feature_content["name"]
-
-            # Get list of all features to extract
-            features_to_extract = feature_content["data"]["features"]
-            # Initialize features to put in dictionnary
-            features = None
-
-            # ---------------------------------- NON TEXTURE FEATURES -----------------------------------------
-            # MORPH
-            if feature_name == "morph":
-
-                nodes_allowed = ["interpolation", "re_segmentation", "filter_processing"]
-                if self.__min_node_required(pip_obj, nodes_allowed):
-                    last_feat_vol = self.__get_last_output_from_pip(pip_obj, "vol", nodes_allowed)
-                    last_feat_roi = self.__get_last_output_from_pip(pip_obj, "roi", nodes_allowed)
-                else:
-                    error = "ERROR on " + feature_content["name"] + \
-                        " extraction. Minimum one node required from this list :", nodes_allowed
-                    return error
-
-                # Morphological features extraction
-                try:
-                    # update progress
-                    self.set_progress(now=70.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Morphological features extraction")
-
-                    # Create an empty list to store the keys that match the condition
-                    roi_morph = []
-                    # Iterate through the outer dictionary items
-                    for key, inner_dict in pip_obj.items():
-                        if 'type' in inner_dict and inner_dict['type'] == 'interpolation':
-                            # Append the key to the list if the condition is met
-                            roi_morph = inner_dict['output']['roi_morph']
-                    
-                    # If all features need to be extracted
-                    if features_to_extract[0] == "extract_all":
-                        features = MEDimage.biomarkers.morph.extract_all(
-                            vol=last_feat_vol.data,  # vol_obj.data
-                            mask_int=last_feat_roi.data,  # roi_obj_morph.data,
-                            mask_morph=roi_morph.data,  # roi_obj_morph.data,
-                            res=MEDimg.params.process.scale_non_text,
-                            intensity_type=MEDimg.params.process.intensity_type
-                        )
-
-                        # update progress
-                        self.set_progress(now=72.0/len(self.pipelines))
-
-                    else:
-                        # If only some features need to be extracted, use the name of the feature to build
-                        # extraction code (executed dynamically using exec()).
-                        features = {}
-                        for i in range(len(features_to_extract)):
-                            # TODO : Would a for loop be more efficient than calling exec for each feature?
-                            function_name = "MEDimage.biomarkers.morph." + str(features_to_extract[i])
-                            function_params = "vol=last_feat_vol.data, mask_int=last_feat_roi.data, " \
-                                            "mask_morph=last_feat_roi.data, res=MEDimg.params.process.scale_non_text"
-                            function_call = "result = " + function_name + "(" + function_params + ")"
-                            local_vars = {}
-                            global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol,
-                                        "last_feat_roi": last_feat_roi, "MEDimg": MEDimg}
-                            exec(function_call, global_vars, local_vars)
-
-                            feature_name_convention = "F" + feature_name + "_" + str(features_to_extract[i])
-                            features[feature_name_convention] = local_vars.get("result")
-
-                except Exception as e:
-                    return {"error": f"PROBLEM WITH COMPUTATION OF MORPHOLOGICAL FEATURES {str(e)}"}
-
-            # LOCAL INTENSITY
-            elif feature_name == "local_intensity":
-                nodes_allowed = ["interpolation", "re_segmentation", "filter_processing"]
-                if self.__min_node_required(pip_obj, nodes_allowed):
-                    last_feat_vol = self.__get_last_output_from_pip(pip_obj, "vol", nodes_allowed)
-                    last_feat_roi = self.__get_last_output_from_pip(pip_obj, "roi", nodes_allowed)
-                else:
-                    print("ERROR on " + feature_content["name"],
-                        " extraction. Minimum one node required from this list :", nodes_allowed)
-
-                # Local intensity features extraction
-                try:
-                    # update progress
-                    self.set_progress(now=72.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Local intensity features extraction")
-
-                    # If all features need to be extracted
-                    if features_to_extract[0] == "extract_all":
-                        features = MEDimage.biomarkers.local_intensity.extract_all(
-                            img_obj=last_feat_vol.data,  # vol_obj
-                            roi_obj=last_feat_roi.data,  # roi_obj_int
-                            res=MEDimg.params.process.scale_non_text,
-                            intensity_type=MEDimg.params.process.intensity_type
-                            # TODO: missing parameter that is automatically set to false
-                        )
-                    else:
-                        # If only some features need to be extracted, use the name of the feature to build
-                        # extraction code (executed dynamically using exec()).
-                        features = {}
-                        for i in range(len(features_to_extract)):
-                            function_name = "MEDimage.biomarkers.local_intensity." + str(features_to_extract[i])
-                            function_params = "img_obj=last_feat_vol.data, roi_obj=last_feat_roi.data, " \
-                                            "res=MEDimg.params.process.scale_non_text "
-                            function_call = "result = " + function_name + "(" + function_params + ")"
-                            local_vars = {}
-                            global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol,
-                                        "last_feat_roi": last_feat_roi, "MEDimg": MEDimg}
-                            exec(function_call, global_vars, local_vars)
-
-                            feature_name_convention = "Floc_" + str(features_to_extract[i])
-                            features[feature_name_convention] = local_vars.get("result")
-                    
-                    # update progress
-                    self.set_progress(now=74.0/len(self.pipelines))
-                except Exception as e:
-                    return {"error": f"PROBLEM WITH COMPUTATION OF LOCAL INTENSITY FEATURES {str(e)}"}
-
-            # STATS
-            elif feature_name == "stats":
-                if self.__min_node_required(pip_obj, ["roi_extraction"]):
-                    last_feat_vol = self.__get_last_output_from_pip(pip_obj, "vol", ["roi_extraction"])
-                else:
-                    print("ERROR on ", feature_content["name"], 
-                        " extraction. Minimum one node required from this list :", ["roi_extraction"])
-
-                # Statistical features extraction
-                try:
-                    # update progress
-                    self.set_progress(now=74.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Statistical features extraction")
-
-                    # If all features need to be extracted
-                    if features_to_extract[0] == "extract_all":
-                        features = MEDimage.biomarkers.stats.extract_all(
-                            vol=last_feat_vol,  # vol_int_re
-                            intensity_type=MEDimg.params.process.intensity_type
-                        )
-                    else:
-                        # If only some features need to be extracted, use the name of the feature to build
-                        # extraction code (executed dynamically using exec()).
-                        features = {}
-                        for i in range(len(features_to_extract)):
-                            function_name = "MEDimage.biomarkers.stats." + str(features_to_extract[i])
-                            function_params = "vol=last_feat_vol"
-                            function_call = "result = " + function_name + "(" + function_params + ")"
-                            local_vars = {}
-                            global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol}
-                            exec(function_call, global_vars, local_vars)
-
-                            feature_name_convention = "Fstat_" + str(features_to_extract[i])
-                            features[feature_name_convention] = local_vars.get("result")
-                    
-                    # update progress
-                    self.set_progress(now=76.0/len(self.pipelines))
-                    
-                except Exception as e:
-                    return {"error": f"PROBLEM WITH COMPUTATION OF STATISTICAL FEATURES {str(e)}"}
-
-            # IH
-            elif feature_name == "intensity_histogram":
-                # DISCRETIZATION
-                if self.__min_node_required(pip_obj, ["discretization"]):
-                    last_vol_compute = self.__get_last_output_from_pip(pip_obj, "vol", ["roi_extraction"])
-                    last_feat_vol, _ = MEDimage.processing.discretize(
-                        vol_re=last_vol_compute,  # vol_int_re
-                        discr_type=MEDimg.params.process.ih['type'],
-                        n_q=MEDimg.params.process.ih['val'],
-                        user_set_min_val=MEDimg.params.process.user_set_min_value
-                    )
-
-                elif self.__min_node_required(pip_obj, ["roi_extraction", "discretization"]):
-                    last_feat_vol = self.__get_last_output_from_pip(pip_obj, "vol", ["roi_extraction", "discretization"])
-
-                else:
-                    print("ERROR on ", feature_content["name"],
-                        " extraction. Minimum one node required from this list :", ["roi_extraction", "discretization"])
-
-                # Intensity histogram features extraction
-                try:
-                    # update progress
-                    self.set_progress(now=76.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Intensity histogram features extraction")
-
-                    # If all features need to be extracted
-                    if features_to_extract[0] == "extract_all":
-                        features = MEDimage.biomarkers.intensity_histogram.extract_all(vol=last_feat_vol)
-                    else:
-                        # If only some features need to be extracted, use the name of the feature to build
-                        # extraction code (executed dynamically using exec()).
-                        features = {}
-                        for i in range(len(features_to_extract)):
-                            function_name = "MEDimage.biomarkers.intensity_histogram." + str(
-                                features_to_extract[i])
-                            function_params = "vol=last_feat_vol"
-                            function_call = "result = " + function_name + "(" + function_params + ")"
-                            local_vars = {}
-                            global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol}
-                            exec(function_call, global_vars, local_vars)
-
-                            feature_name_convention = "Fih_" + str(features_to_extract[i])
-                            features[feature_name_convention] = local_vars.get("result")
-                    
-                    # update progress
-                    self.set_progress(now=78.0/len(self.pipelines))
-                except Exception as e:
-                    return {"error": f"PROBLEM WITH COMPUTATION OF INTENSITY HISTOGRAM FEATURES {str(e)}"}
-
-            # IVH
-            elif feature_name == "int_vol_hist":
-                if self.__min_node_required(pip_obj, ["discretization"]):
-                    last_vol_compute = self.__get_last_output_from_pip(pip_obj, "vol", ["roi_extraction"])
-
-                    # Intensity histogram equalization of the imaging volume
-                    if MEDimg.params.process.ivh and 'type' in MEDimg.params.process.ivh and 'val' in MEDimg.params.process.ivh:
-                        if MEDimg.params.process.ivh['type'] and MEDimg.params.process.ivh['val']:
-                            last_feat_vol, wd = MEDimage.processing.discretize(
-                                vol_re=last_vol_compute,  # vol_int_re
-                                discr_type=MEDimg.params.process.ivh['type'],
-                                n_q=MEDimg.params.process.ivh['val'],
-                                user_set_min_val=MEDimg.params.process.user_set_min_value,
-                                ivh=True
-                            )
-
-                elif self.__min_node_required(pip_obj, ["roi_extraction", "discretization"]):
-                    last_feat_vol = self.__get_last_output_from_pip(pip_obj, "vol", ["roi_extraction", "discretization"])
-                    wd = 1
-
-                else:
-                    print("ERROR on ", feature_content["name"],
-                        " extraction. Minimum one node required from this list :", ["roi_extraction", "discretization"])
-
-                # Intensity volume histogram features extraction
-                try:
-                    # update progress
-                    self.set_progress(now=78.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | Intensity volume histogram features extraction")
-
-                    # If all features need to be extracted
-                    if features_to_extract[0] == "extract_all":
-                        features = MEDimage.biomarkers.int_vol_hist.extract_all(
-                            medscan=MEDimg,
-                            vol=last_feat_vol,  # vol_quant_re
-                            vol_int_re=vol_int_re,
-                            wd=wd  # TODO: Missing user_set_range argument?
-                        )
-                    else:
-                        # If only some features need to be extracted, use the name of the feature to build
-                        # extraction code (executed dynamically using exec()).
-                        features = {}
-                        for i in range(len(features_to_extract)):
-                            function_name = "MEDimage.biomarkers.int_vol_hist." + str(features_to_extract[i])
-                            function_params = "medscan=MEDimg, vol=last_feat_vol, vol_int_re=vol_int_re, wd=wd"
-                            function_call = "result = " + function_name + "(" + function_params + ")"
-                            local_vars = {}
-                            global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol,
-                                        "vol_int_re": vol_int_re, "MEDimg": MEDimg, "wd": wd}
-                            exec(function_call, global_vars, local_vars)
-
-                            feature_name_convention = "F" + feature_name + "_" + str(features_to_extract[i])
-                            features[feature_name_convention] = local_vars.get("result")
-                    
-                    # update progress
-                    self.set_progress(now=80.0/len(self.pipelines))
-
-                except Exception as e:
-                    return {"error": f"PROBLEM WITH COMPUTATION OF INTENSITY VOLUME HISTOGRAM FEATURES {str(e)}"}
-
-            # ------------------------------------- TEXTURE FEATURES ------------------------------------------
-            # GLCM
-            elif feature_name == "glcm":
-                try:
-                    # update progress
-                    self.set_progress(now=80.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | GLCM features extraction")
-                    # If all features need to be extracted
-                    if features_to_extract[0] == "extract_all":
-                        features = MEDimage.biomarkers.glcm.extract_all(
-                            vol=vol_quant_re_texture,
-                            dist_correction=MEDimg.params.radiomics.glcm.dist_correction,
-                            merge_method=MEDimg.params.radiomics.glcm.merge_method)
-                    else:
-                        # Extracts co-occurrence matrices from the intensity roi mask prior to features
-                        matrices_dict = MEDimage.biomarkers.glcm.get_glcm_matrices(
-                            vol_quant_re_texture,
-                            merge_method=MEDimg.params.radiomics.glcm.merge_method,
-                            dist_weight_norm=MEDimg.params.radiomics.glcm.dist_correction)
-
-                        # If not all features need to be extracted, use the name of each feature to build
-                        # extraction code (executed dynamically using exec()).
-                        features = {}
-                        for i in range(len(features_to_extract)):
-                            function_name = "MEDimage.biomarkers.glcm." + str(features_to_extract[i])
-                            function_params = "matrices_dict"
-                            function_call = "result = " + function_name + "(" + function_params + ")"
-                            local_vars = {}
-                            global_vars = {"MEDimage": MEDimage, "matrices_dict": matrices_dict}
-                            exec(function_call, global_vars, local_vars)
-
-                            feature_name_convention = "Fcm_" + str(features_to_extract[i])
-                            features[feature_name_convention] = local_vars.get("result")
-
-                    # update progress
-                    self.set_progress(now=83.0/len(self.pipelines))
-
-                except Exception as e:
-                    return {"error": f"PROBLEM WITH COMPUTATION OF GLCM FEATURES {str(e)}"}
-
-            # GLRLM
-            elif feature_name == "glrlm":
-                try:
-                    # update progress
-                    self.set_progress(now=83.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | GLRLM features extraction")
-
-                    # TODO : temporary code used to replace single feature extraction for user
-                    all_features = MEDimage.biomarkers.glrlm.extract_all(
-                        vol=vol_quant_re_texture,
-                        dist_correction=MEDimg.params.radiomics.glrlm.dist_correction,
-                        merge_method=MEDimg.params.radiomics.glrlm.merge_method)
-
-                    # If all features need to be extracted
-                    if features_to_extract[0] == "extract_all":
-                        features = all_features
-                    else:
-                        features = {}
-                        for i in range(len(features_to_extract)):
-                            feature_name_convention = "Frlm_" + str(features_to_extract[i])
-                            features[feature_name_convention] = all_features[feature_name_convention]
-
-                    # update progress
-                    self.set_progress(now=86.0/len(self.pipelines))
-                except Exception as e:
-                    return {"error": f"PROBLEM WITH COMPUTATION OF GLRLM FEATURES {str(e)}"}
-
-            # GLSZM
-            elif feature_name == "glszm":
-                try:
-                    # update progress
-                    self.set_progress(now=86.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | GLSZM features extraction")
-
-                    # TODO : temporary code used to replace single feature extraction for user
-                    all_features = MEDimage.biomarkers.glszm.extract_all(vol=vol_quant_re_texture)
-
-                    # If all features need to be extracted
-                    if features_to_extract[0] == "extract_all":
-                        features = all_features
-                    else:
-                        features = {}
-                        for i in range(len(features_to_extract)):
-                            feature_name_convention = "Fszm_" + str(features_to_extract[i])
-                            features[feature_name_convention] = all_features[feature_name_convention]
-
-                    # update progress
-                    self.set_progress(now=89.0/len(self.pipelines))
-                except Exception as e:
-                    return {"error": f"PROBLEM WITH COMPUTATION OF GLSZM FEATURES {str(e)}"}
-
-            # GLDZM
-            elif feature_name == "gldzm":
-                try:
-                    # update progress
-                    self.set_progress(now=92.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | GLDZM features extraction")
-
-                    # TODO : temporary code used to replace single feature extraction for user
-                    all_features = MEDimage.biomarkers.gldzm.extract_all(
-                            vol_int=vol_quant_re_texture,
-                            mask_morph=roi_obj_morph_texture.data)
-
-                    # If all features need to be extracted
-                    if features_to_extract[0] == "extract_all":
-                        features = all_features
-                    else:
-                        features = {}
-                        for i in range(len(features_to_extract)):
-                            feature_name_convention = "Fdzm_" + str(features_to_extract[i])
-                            features[feature_name_convention] = all_features[feature_name_convention]
-
-                    # update progress
-                    self.set_progress(now=95.0/len(self.pipelines))
-                except Exception as e:
-                    return {"error": f"PROBLEM WITH COMPUTATION OF GLDZM FEATURES {str(e)}"}
-
-            # NGTDM
-            elif feature_name == "ngtdm":
-                try:
-                    # update progress
-                    self.set_progress(now=95.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | NGTDM features extraction")
-
-                    # TODO : temporary code used to replace single feature extraction for user
-                    all_features = MEDimage.biomarkers.ngtdm.extract_all(
-                            vol=vol_quant_re_texture,
-                            dist_correction=MEDimg.params.radiomics.ngtdm.dist_correction)
-
-                    # If all features need to be extracted
-                    if features_to_extract[0] == "extract_all":
-                        features = all_features
-                    else:
-                        features = {}
-                        for i in range(len(features_to_extract)):
-                            feature_name_convention = "Fngt_" + str(features_to_extract[i])
-                            features[feature_name_convention] = all_features[feature_name_convention]
-
-                    # update progress
-                    self.set_progress(now=98.0/len(self.pipelines))
-
-                except Exception as e:
-                    return {"error": f"PROBLEM WITH COMPUTATION OF NGTDM FEATURES {str(e)}"}
-
-            # NGLDM
-            elif feature_name == "ngldm":
-                try:
-                    # update progress
-                    self.set_progress(now=98.0/len(self.pipelines), label=f"Pip {idx_pip + 1} | NGLDM features extraction")
-
-                    # TODO : temporary code used to replace single feature extraction for user
-                    all_features = MEDimage.biomarkers.ngldm.extract_all(vol=vol_quant_re_texture)
-
-                    # If all features need to be extracted
-                    if features_to_extract[0] == "extract_all":
-                        features = all_features
-                    else:
-                        features = {}
-                        for i in range(len(features_to_extract)):
-                            feature_name_convention = "Fngl_" + str(features_to_extract[i])
-                            features[feature_name_convention] = all_features[feature_name_convention]
-
-                        """ NOTE : Code to use in prevision of future MEDimage update allowing extraction of single features
-                        matrices_dict = MEDimage.biomarkers.ngldm.get_ngldm_matrices(
-                            vol=vol_quant_re_texture)
-                        
-                        # If only some features need to be extracted, use the name of the feature to build
-                        # extraction code (executed dynamically using exec()).
-                        features = {}
-                        for i in range(len(features_to_extract)):
-                            function_name = "MEDimage.biomarkers.ngldm." + str(features_to_extract[i])
-                            function_params = "matrices_dict"
-                            function_call = "result = " + function_name + "(" + function_params + ")"
-                            local_vars = {}
-                            global_vars = {"MEDimage": MEDimage, "matrices_dict": matrices_dict}
-                            exec(function_call, global_vars, local_vars)
-                            features[str(features_to_extract[i])] = local_vars.get("result")
-                        """
-
-                    # update progress
-                    self.set_progress(now=100.0/len(self.pipelines))
-
-                except Exception as e:
-                    return {"error": f"PROBLEM WITH COMPUTATION OF NGLDM FEATURES {str(e)}"}
-
-            # FEATURE NOT FOUND
-            else:
-                print("Feature : ", feature_name, " is not a valid feature name.")
-
-            # Add feature to dictionnary
-            if features is not None:
-                features = self.__format_features(features)
-                features_res[feature_name] = features  # UP response
-                output_obj[feature_name] = features  # UP runs
-
-        # Update output infos of extraction node
-        update_pip = True
-        id_obj["output"] = output_obj
-        return update_pip, features_res, output_obj, id_obj
-
     def get_3d_view(self):
         """
         Plots the 3D view of the volume and the ROI.
         """
         try:
-            if "name" not in self.json_config:
-                return {"error": "Wrong dict sent to server: name key is missing in the json_config. Must send node content dict."}
-            if "file_loaded" in self.json_config and self.json_config["file_loaded"] != "":
-                file_path = os.path.join(UPLOAD_FOLDER, self.json_config["file_loaded"])
+            # Verify if the extraction workflow object exists and load it
+            if "extractionWorkflow.pkl" in os.listdir(UPLOAD_FOLDER):
+                with open(os.path.join(UPLOAD_FOLDER, "extractionWorkflow.pkl"), 'rb') as f:
+                    extraction_workflow = pickle.load(f)
             else:
-                return {"error": "No file loaded. Please load a file before trying to visualize it."}
-
-            # Load and store MEDimage instance from file loaded
-            with open(file_path, 'rb') as f:
-                medscan = pickle.load(f)
-                medscan = MEDimage.MEDscan(medscan)
-            self.medscan_obj[self.json_config["file_loaded"]] = medscan
-
-            # Upload runs
-            if "runs.pkl" in os.listdir(UPLOAD_FOLDER):
-                with open(os.path.join(UPLOAD_FOLDER, "runs.pkl"), 'rb') as f:
-                    self.runs = pickle.load(f)
+                return {"error": "No extraction workflow found. Please run the extraction workflow before trying to visualize it."}
             
-            # View 3D image
-            print("\n 3D view of the volume and the ROI")
-            image_viewer(self.medscan_obj, self.json_config, self.runs)
+            # Get the output of the node where the 3D view button was clicked
+            node, pipeline = extraction_workflow.get_node_output(self.json_config["id"])
+            
+            # If the node is an input node, and is not yet in the extraction workflow, use the file name to load the MEDimage object directly
+            if node is None and self.json_config["name"] == "input" and "file_loaded" in self.json_config and self.json_config["file_loaded"] != "":
+                # Load the MEDimg object from the input file
+                with open(UPLOAD_FOLDER / self.json_config["file_loaded"], 'rb') as f:
+                    MEDimg = pickle.load(f)
+                MEDimg = MEDimage.MEDscan(MEDimg)
+                
+                # Remove dicom header from MEDimg object as it causes errors in get_3d_view()
+                # TODO: check if dicom header is needed in the future
+                MEDimg.dicomH = None
+                
+                # View 3D image
+                image_viewer(MEDimg.data.volume.array, "Input image : " + self.json_config["file_loaded"])
+            else:
+                node_output = node.output
 
-            # All set
+                # Figure name for the 3D view
+                fig_name = "Pipeline name: " + pipeline.pipeline_name + "<br>" + \
+                        "Node id: " + node.id + "<br>" + \
+                        "Node type: " + node.name + "\n" 
+                
+                # View 3D image
+                image_viewer(node_output["vol"], fig_name, node_output["roi"])
+
+            # Return success message
             return {"success": "3D view successfully plotted."}
         
         except Exception as e:
@@ -1293,20 +217,21 @@ class MEDimageExtraction:
     
     def get_upload(self):
         try:
-            up_file_infos = {}
-            # check if the post request has the file part
+            # Check if the post request has the necessary informations
             if 'file' not in self.json_config and self.json_config['file'] != "":
                 return {"error": "No file found in the configuration dict."}
             elif 'type' not in self.json_config and self.json_config['type'] != "":
                 return {"error": "No type found in the configuration dict."}
-
-            # TODO : temporary fix to create tmp folder if it doesn't exist
-            # Should probably be done in the workspace
+            
+            # Initialize the dictionary to store the file informations
+            up_file_infos = {}
+            
+            # Check if the UPLOAD_FOLDER exists, if not create it
             if not os.path.isdir(UPLOAD_FOLDER): 
                 os.makedirs(UPLOAD_FOLDER) 
 
-            file = self.json_config["file"]
-            file_type = self.json_config["type"]
+            file = self.json_config["file"] # Path of the file
+            file_type = self.json_config["type"] # Type of file (folder or file)
 
             # If the file is a folder, process the DICOM scan
             if file_type == "folder":
@@ -1327,17 +252,17 @@ class MEDimageExtraction:
                 filename = os.path.basename(file)
                 file_path = os.path.join(UPLOAD_FOLDER, filename)
 
+                # If the file is a .npy object and therefore has been processed by MEDimage, copy it to the UPLOAD_FOLDER
                 if file_type == "file":
                     shutil.copy2(file, file_path)
 
-                # Load and store MEDimage instance from file loaded into medscan_obj
+                # Load the MEDimage pickle object to get the list of ROIs associated
                 with open(file_path, 'rb') as f:
                     medscan = pickle.load(f)
                 medscan = MEDimage.MEDscan(medscan)
-                self.medscan_obj[filename] = medscan
-                
-                # Return infos of instance loaded
                 rois_list = medscan.data.ROI.roi_names
+                
+                # Return informations of instance loaded
                 up_file_infos["name"] = filename
                 up_file_infos["rois_list"] = rois_list
                 return up_file_infos
@@ -1348,41 +273,35 @@ class MEDimageExtraction:
     
     def run(self) -> dict:
         try:
-            pip = []
-            if "json_scene" in self.json_config:
-                if "id" not in self.json_config:
-                    return {"error": "The id of the node where the run button was clicked is missing."}
-                start_id = self.json_config["id"]  # id of node where run button was clicked
-                self.json_config = self.json_config["json_scene"]
-            pip = self.generate_pipelines_from_node(str(start_id), get_node_content(start_id, self.json_config), pip)
+            # TODO : Import extraction workflow if it exists
+            # Compare the current json config with the extraction workflow object
+            # If the json config is different from the extraction workflow object, update the extraction workflow object
+            # If the json config is the same as the extraction workflow object, use the extraction workflow object
+            
+            node_id = self.json_config["id"] # id of the node where the run button was clicked
+            extraction_workflow = ExtractionWorkflow(self.json_config["json_scene"])
+            results = extraction_workflow.run_pipelines(self.set_progress, node_id)
+            
+            # Pickle extraction_workflow objet and put it in the UPLOAD_FOLDER
+            with open(os.path.join(UPLOAD_FOLDER, "extractionWorkflow.pkl"), 'wb') as f:
+                pickle.dump(extraction_workflow, f)
+                       
+            return convert_np_to_py(results)
 
-            print("The pipelines found ending with node ", start_id, " are ")
-            json_res = self.execute_pips()
-
-            return json_res
         except Exception as e:
             return {"error": str(e)}
     
     def run_all(self) -> dict:
         try:
-            ################################ TESTING REFACTOR ################################
+            # TODO : Import extraction workflow if it exists
             extraction_workflow = ExtractionWorkflow(self.json_config)
-            extraction_workflow.print_pipelines()
-            extraction_workflow.run_all_pipelines()
-            ##################################################################################
+            results = extraction_workflow.run_pipelines(self.set_progress)
             
-            drawflow_scene = self.json_config['drawflow']
+            # Pickle extraction_workflow objet and put it in the UPLOAD_FOLDER
+            with open(os.path.join(UPLOAD_FOLDER, "extractionWorkflow.pkl"), 'wb') as f:
+                pickle.dump(extraction_workflow, f)
             
-            for module in drawflow_scene:  # We scan all module in scene
-                for node_id in drawflow_scene[module]['data']:  # We scan all node of each module in scene
-                    node_content = drawflow_scene[module]['data'][node_id]  # Getting node content
-                    if node_content["name"] == "input":  # If the node name is input, it is the start of a pipeline
-                        self.generate_all_pipelines(str(node_content["id"]), node_content, [])
-
-            print("\n The pipelines found in the current drawflow scene are : ", self.pipelines)
-            json_res = self.execute_pips()
-
-            return json_res  # return pipeline results in the form of a dict
+            return convert_np_to_py(results)
             
         except Exception as e:
             return {"error": str(e)}

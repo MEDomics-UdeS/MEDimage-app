@@ -34,3 +34,9 @@ class FilterNode(Node):
         # 3- Update settings results of the pipeline
         pipeline.settings_res["filter"] = self.params
         
+        # Update the output of the node
+        self.output = {"vol": vol_obj_filter.data,
+                       "roi": pipeline.latest_node_output["roi"].data,
+                       "vol_texture": vol_obj_filter_texture.data,
+                       "roi_texture": pipeline.latest_node_output_texture["roi"].data}
+        
