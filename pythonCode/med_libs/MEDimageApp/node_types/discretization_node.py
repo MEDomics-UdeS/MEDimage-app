@@ -9,7 +9,6 @@ class DiscretizationNode(Node):
         
     def run(self, pipeline: Pipeline):
         print("************************ RUNNING DISCRETIZATION ***************************")
-        
         # 1- Discretization for NON TEXTURE FEATURES
         # Only a roi_extraction_node can be before a discretization_node, so vol_int_re must be in the pipeline
         if pipeline.latest_node_output["vol_int_re"] is not None:
@@ -55,3 +54,14 @@ class DiscretizationNode(Node):
         )
         
         pipeline.latest_node_output_texture["vol_quant_re"] = vol_quant_re_texture
+        
+        # 3- Update settings results of the pipeline
+        pipeline.settings_res['discretization'] = self.params
+        
+        # Update the output of the node
+        self.output = {"vol": vol_quant_re,
+                       "roi": pipeline.latest_node_output["roi"].data,
+                       "vol_ivh": vol_quand_re_ivh,
+                       "roi_ivh": pipeline.latest_node_output["roi"].data,
+                       "vol_texture": vol_quant_re_texture,
+                       "roi_texture": pipeline.latest_node_output_texture["roi"].data}

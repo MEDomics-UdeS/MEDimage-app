@@ -14,7 +14,6 @@ class InputNode(Node):
         
     def run(self, pipeline: Pipeline):
         print("************************ RUNNING INPUT ***************************")
-        
         # Load the MEDimg object from the input file
         with open(UPLOAD_FOLDER / self.filepath, 'rb') as f:
             MEDimg = pickle.load(f)
@@ -39,3 +38,7 @@ class InputNode(Node):
         
         # Place the result in the pipeline
         pipeline.MEDimg = MEDimg
+        
+        # Update the output of the node
+        self.output = {"vol": MEDimg.data.volume.array,
+                       "roi": None}

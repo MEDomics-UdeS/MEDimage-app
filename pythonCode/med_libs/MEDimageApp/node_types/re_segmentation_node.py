@@ -11,7 +11,6 @@ class ReSegmentationNode(Node):
         
     def run(self, pipeline: Pipeline):
         print("************************ RUNNING RE-SEGMENTATION ***************************")
-        
         # 1- Compute re-segmentation for NON TEXTURE FEATURES
         ## 1.1- Get the latest volume output of the pipeline (should be the one from interpolation node)
         vol_obj = pipeline.latest_node_output["vol"]
@@ -79,3 +78,9 @@ class ReSegmentationNode(Node):
         if np.isinf(pipeline.MEDimg.params.process.im_range[0]):
             self.params['range'][0] = "inf"      
         pipeline.settings_res["re_segmentation"] = self.params
+        
+        # Update the output of the node
+        self.output = {"vol": vol_obj.data,
+                       "roi": roi_obj_int.data,
+                       "vol_texture": vol_obj_texture.data,
+                       "roi_texture": roi_obj_int_texture.data}
