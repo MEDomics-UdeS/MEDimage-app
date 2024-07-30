@@ -1,8 +1,24 @@
 from abc import ABC, abstractmethod
 
+from pythonCode.med_libs.MEDimageApp.pipeline import Pipeline
+
 class Node(ABC):
+    """
+    Abstract class representing a node in a pipeline. 
+    Each node can be executed, provided that the necessary data is available
+    in it's pipeline. A same node can be part of multiple pipelines.
+    """
     @abstractmethod
-    def __init__(self, params: dict):
+    def __init__(self, params: dict) -> None:
+        """
+        Abstract constructor of the Node class.
+
+        Args:
+            params (dict): Dictionary containing the parameters of the node.
+            
+        Returns:
+            None.
+        """
         # A node must have a name and an id
         self.name = params["name"]
         self.id = params["id"]
@@ -10,18 +26,37 @@ class Node(ABC):
         # The parameters associated with the node are stored in the params attribute unformatted
         self.params = params['data']
     
-        # The output of the node is stored in the output_obj attribute
+        # The output of the node is stored in the output attribute
         self.output = {}
     
     @abstractmethod
-    def run(self, pipeline):
+    def run(self, pipeline: Pipeline) -> None:
+        """
+        Abstract method to run the node. The node is executed and the output is stored in the output attribute.
+
+        Args:
+            pipeline (Pipeline): Pipeline object containing the node.
+            
+        Returns:
+            None.
+        """
         pass
     
     # TODO : Refactor with factory pattern
     @staticmethod
-    def create_node(node_data: dict):
-        print('Creating node with ID: ' + str(node_data['id']))
-        print(node_data)
+    def create_node(node_data: dict) -> "Node":
+        """
+        Factory method to create a node object from a dictionary containing the node data.
+        
+        Args:
+            node_data (dict): Dictionary containing the node data.
+
+        Raises:
+            ValueError: If the node type is unknown.
+
+        Returns:
+            Node: An instance of a subclass of Node.
+        """
         node_type = node_data["name"]
         if node_type == 'input':
             from .node_types.input_node import InputNode

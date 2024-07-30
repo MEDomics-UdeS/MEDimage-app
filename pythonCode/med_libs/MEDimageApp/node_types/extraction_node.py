@@ -1,29 +1,42 @@
-from copy import deepcopy
-import numpy as np
-from ..node import Node
 import MEDimage
+from ..node import Node
 from ..pipeline import Pipeline
 
 class ExtractionNode(Node):
-    def __init__(self, params: dict):
+    """
+    Subclass of Node that implements the extraction of radiomic features.
+    """
+    def __init__(self, params: dict) -> None:
         super().__init__(params)
         
-        self.extracted_features = {}
+        self.extracted_features = {}  # Dictionary to store the extracted features
     
-    
-    # Check if the node includes any texture features
-    def includes_texture_features(self):
-        texture_features_families = ["glcm", "gldzm", "glrlm", "glszm", "ngldm", "ngtdm"]
-        for node in self.params:
+    def __sort_features_by_categories(self) -> None:
+        """
+        Sorts the extracted features keys (features families) to always be in the same order.
+       
+        Args:
+            None. 
 
-            if self.params[node]["name"] in texture_features_families:
-                return True
+        Returns:
+            None.
+        """
+        
+        features_order = ["morph", "local_intensity", "stats", "intensity_histogram", "int_vol_hist", "glcm", "glrlm", "glszm", "gldzm", "ngtdm", "ngldm"]
+        
+        self.extracted_features = {features: self.extracted_features[features] for features in features_order if features in self.extracted_features}
+    
+    def get_morph_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
+        """
+        Extraction of morphological features.
 
-        return False
-    
-    
-    # Morphological features extraction    
-    def get_morph_features(self, features_to_extract, pipeline):
+        Args:
+            features_to_extract (list[str]): List of the morphological features to extract.
+            pipeline (Pipeline): Pipeline object containing the node.
+
+        Returns:
+            dict: Dictionary containing the extracted morphological features.
+        """
         try:
             features = {}
 
@@ -63,9 +76,17 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF MORPHOLOGICAL FEATURES {str(e)}"}
     
-    
-    # Local intensity features extraction    
-    def get_local_intensity_features(self, features_to_extract, pipeline):
+    def get_local_intensity_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
+        """
+        Extraction of local intensity features.
+
+        Args:
+            features_to_extract (list[str]): List of the local intensity features to extract.
+            pipeline (Pipeline): Pipeline object containing the node.
+
+        Returns:
+            dict: Dictionary containing the extracted local intensity features.
+        """
         try:
             features = {}
             
@@ -103,9 +124,17 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF LOCAL INTENSITY FEATURES {str(e)}"}
     
-    
-    # Statistical features extraction    
-    def get_stats_features(self, features_to_extract, pipeline):
+    def get_stats_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
+        """
+        Extraction of statistical features.
+
+        Args:
+            features_to_extract (list[str]): List of the statistical features to extract.
+            pipeline (Pipeline): Pipeline object containing the node.
+
+        Returns:
+            dict: Dictionary containing the extracted statistical features.
+        """
         try:
             last_feat_vol = pipeline.latest_node_output["vol"]
             
@@ -135,9 +164,17 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF STATISTICAL FEATURES {str(e)}"}
 
+    def get_intensity_histogram_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
+        """
+        Extraction of intensity histogram features.
 
-    # Intensity histogram features extraction    
-    def get_intensity_histogram_features(self, features_to_extract, pipeline):
+        Args:
+            features_to_extract (list[str]): List of the intensity histogram features to extract.
+            pipeline (Pipeline): Pipeline object containing the node.
+
+        Returns:
+            dict: Dictionary containing the extracted intensity histogram features.
+        """
         try:
             features = {}
             vol_quant_re = pipeline.latest_node_output["vol_quant_re"]
@@ -165,9 +202,17 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF INTENSITY HISTOGRAM FEATURES {str(e)}"}
 
+    def get_int_vol_hist_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
+        """
+        Extraction of intensity volume histogram features.
 
-    # Intensity volume histogram features extraction
-    def get_int_vol_hist_features(self, features_to_extract, pipeline):
+        Args:
+            features_to_extract (list[str]): List of the intensity volume histogram features to extract.
+            pipeline (Pipeline): Pipeline object containing the node.
+
+        Returns:
+            dict: Dictionary containing the extracted intensity volume histogram features.
+        """
         try:
             features = {}
             
@@ -203,8 +248,17 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF INTENSITY VOLUME HISTOGRAM FEATURES {str(e)}"}
 
+    def get_glcm_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
+        """
+        Extraction of glcm features.
 
-    def get_glcm_features(self, features_to_extract, pipeline):
+        Args:
+            features_to_extract (list[str]): List of the glcm features to extract.
+            pipeline (Pipeline): Pipeline object containing the node.
+
+        Returns:
+            dict: Dictionary containing the extracted glcm features.
+        """
         try:
             features = {}
             
@@ -240,9 +294,18 @@ class ExtractionNode(Node):
 
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF GLCM FEATURES {str(e)}"}
-
     
-    def get_glrlm_features(self, features_to_extract, pipeline):
+    def get_glrlm_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
+        """
+        Extraction of glrlm features.
+
+        Args:
+            features_to_extract (list[str]): List of the glrlm features to extract.
+            pipeline (Pipeline): Pipeline object containing the node.
+
+        Returns:
+            dict: Dictionary containing the extracted glrlm features.
+        """
         try:
             features = {}
             
@@ -267,8 +330,17 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF GLRLM FEATURES {str(e)}"}
     
+    def get_glszm_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
+        """
+        Extraction of glszm features.
 
-    def get_glszm_features(self, features_to_extract, pipeline):
+        Args:
+            features_to_extract (list[str]): List of the glszm features to extract.
+            pipeline (Pipeline): Pipeline object containing the node.
+
+        Returns:
+            dict: Dictionary containing the extracted glszm features.
+        """
         try:
             features = {}
             
@@ -290,8 +362,17 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF GLSZM FEATURES {str(e)}"}
     
+    def get_gldzm_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
+        """
+        Extraction of gldzm features.
 
-    def get_gldzm_features(self, features_to_extract, pipeline):
+        Args:
+            features_to_extract (list[str]): List of the gldzm features to extract.
+            pipeline (Pipeline): Pipeline object containing the node.
+
+        Returns:
+            dict: Dictionary containing the extracted gldzm features.
+        """
         try:
             features = {}
             
@@ -316,8 +397,17 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF GLDZM FEATURES {str(e)}"}
     
+    def get_ngtdm_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
+        """
+        Extraction of ngtdm features.
 
-    def get_ngtdm_features(self, features_to_extract, pipeline):
+        Args:
+            features_to_extract (list[str]): List of the ngtdm features to extract.
+            pipeline (Pipeline): Pipeline object containing the node.
+
+        Returns:
+            dict: Dictionary containing the extracted ngtdm features.
+        """
         try:
             features = {}
             
@@ -341,8 +431,17 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF NGTDM FEATURES {str(e)}"}
     
+    def get_ngldm_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
+        """
+        Extraction of ngldm features.
 
-    def get_ngldm_features(self, features_to_extract, pipeline):
+        Args:
+            features_to_extract (list[str]): List of the ngldm features to extract.
+            pipeline (Pipeline): Pipeline object containing the node.
+
+        Returns:
+            dict: Dictionary containing the extracted ngldm features.
+        """
         try:
             features = {}
             
@@ -382,9 +481,8 @@ class ExtractionNode(Node):
         except Exception as e:
             return {"error": f"PROBLEM WITH COMPUTATION OF NGLDM FEATURES {str(e)}"}
     
-
     # TODO : refactor : for node in extraction node, run node. 
-    def run(self, pipeline: Pipeline):
+    def run(self, pipeline: Pipeline) -> None:
         print("************************ RUNNING EXTRACTION ***************************")
         last_vol_compute = pipeline.latest_node_output["vol"]        
         
@@ -401,11 +499,10 @@ class ExtractionNode(Node):
             gl=n,
             scale=s)
         
-        # TODO : Features wont always be in the same order
-        for node in self.params:
-            
+        for node in self.params:    
             feature_family = self.params[node]["name"]
             features_to_extract = self.params[node]["data"]["features"]
+            
             if feature_family == "morph":
                 self.extracted_features[feature_family] = self.get_morph_features(features_to_extract, pipeline)
                 
@@ -442,6 +539,8 @@ class ExtractionNode(Node):
             else:
                 print("Feature family : ", feature_family, "is invalid.")
             
-            pipeline.scan_res = self.extracted_features
-
+            # Sort the extracted features by categories
+            self.__sort_features_by_categories()
             
+            # Place the scan results in the pipeline
+            pipeline.scan_res = self.extracted_features

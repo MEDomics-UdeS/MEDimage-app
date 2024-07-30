@@ -1,12 +1,15 @@
-from ..node import Node
 import MEDimage
+from ..node import Node
 from ..pipeline import Pipeline
 
 class FilterNode(Node):
-    def __init__(self, params: dict):
+    """
+    Subclass of Node that implements the filtering of a volume.
+    """
+    def __init__(self, params: dict) -> None:
         super().__init__(params)
         
-    def run(self, pipeline: Pipeline):
+    def run(self, pipeline: Pipeline) -> None:
         print("************************ RUNNING FILTER ***************************")
         # 0- Set the correct filter type in the MEDimg object
         pipeline.MEDimg.params.filter.filter_type = self.params["filter_type"]
@@ -34,9 +37,8 @@ class FilterNode(Node):
         # 3- Update settings results of the pipeline
         pipeline.settings_res["filter"] = self.params
         
-        # Update the output of the node
+        # 4- Update the output of the node
         self.output = {"vol": vol_obj_filter.data,
                        "roi": pipeline.latest_node_output["roi"].data,
                        "vol_texture": vol_obj_filter_texture.data,
                        "roi_texture": pipeline.latest_node_output_texture["roi"].data}
-        

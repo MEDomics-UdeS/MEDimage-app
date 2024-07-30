@@ -1,18 +1,22 @@
 import pickle
-from ..node import Node
-from ..MEDimageExtraction import UPLOAD_FOLDER
+
 import MEDimage
+from ..MEDimageExtraction import UPLOAD_FOLDER
+from ..node import Node
 from ..pipeline import Pipeline
 
 class InputNode(Node):
-    def __init__(self, params: dict):
+    """
+    Subclass of Node that implements the uploading of a pickled MEDimage object.
+    """
+    def __init__(self, params: dict) -> None:
         super().__init__(params)
         
-        self.filepath = params['data']['filepath'] # TODO : Check if the filepath is empty!!!
+        self.filepath = params['data']['filepath']  # TODO : Check if the filepath is empty!
 
-        self.scan_type = None # Scan type formatted of the image
+        self.scan_type = None  # Formatted scan type of the image
         
-    def run(self, pipeline: Pipeline):
+    def run(self, pipeline: Pipeline) -> None:
         print("************************ RUNNING INPUT ***************************")
         # Load the MEDimg object from the input file
         with open(UPLOAD_FOLDER / self.filepath, 'rb') as f:
