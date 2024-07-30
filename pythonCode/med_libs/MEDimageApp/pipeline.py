@@ -93,6 +93,13 @@ class Pipeline:
 
             elif (node.name == "discretization"):
                 self.im_params[scan_type]["discretisation"] = node.params
+            
+            elif (node.name == "extraction"):
+                for feature_node in node.params:
+                    feature_name = node.params[feature_node]["name"]
+                    if feature_name in ["glcm", "glrlm"]:
+                        self.im_params[scan_type][feature_name]["dist_correction"] = node.params[feature_node]["data"]["dist_correction"]
+                        self.im_params[scan_type][feature_name]["merge_method"] = node.params[feature_node]["data"]["merge_method"]
     
     def run(self, set_progress: dict, node_id: str = "all") -> dict:
         """
