@@ -1,11 +1,13 @@
-from ..node import Node
 import MEDimage
+from ..node import Node
 from ..pipeline import Pipeline
 
 class ROIExtractionNode(Node):
+    """
+    Subclass of Node that implements the ROI extraction of a volume.
+    """
     def __init__(self, params: dict):
         super().__init__(params)
-        
         
     def run(self, pipeline: Pipeline):
         print("************************ RUNNING ROI EXTRACTION ***************************")

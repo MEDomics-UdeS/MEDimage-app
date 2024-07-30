@@ -1,13 +1,15 @@
-import copy
-from ..node import Node
 import MEDimage
+from ..node import Node
 from ..pipeline import Pipeline
 
 class SegmentationNode(Node):
+    """
+    Subclass of Node that implements the segmentation of a volume.
+    """
     def __init__(self, params: dict):
         super().__init__(params)
         
-        self.selected_rois = self.params['rois_data'] # TODO : Check if rois_data is empty!!!
+        self.selected_rois = self.params['rois_data']  # TODO : Check if rois_data is empty!
         
     def run(self, pipeline: Pipeline):
         print("************************ RUNNING SEGMENTATION ***************************")

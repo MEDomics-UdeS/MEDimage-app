@@ -1,13 +1,17 @@
 from copy import deepcopy
-from ..node import Node
+
 import MEDimage
+from ..node import Node
 from ..pipeline import Pipeline
 
 class InterpolationNode(Node):
-    def __init__(self, params: dict):
+    """
+    Subclass of Node that implements the interpolation of a volume.
+    """
+    def __init__(self, params: dict) -> None:
         super().__init__(params)
         
-    def run(self, pipeline: Pipeline):
+    def run(self, pipeline: Pipeline) -> None:
         print("************************ RUNNING INTERPOLATION ***************************")
         # 0- Get the latest output of the pipeline and the MEDimg object
         MEDimg = pipeline.MEDimg
@@ -87,6 +91,6 @@ class InterpolationNode(Node):
         # 3- Update settings results of the pipeline
         pipeline.settings_res['interpolation'] = self.params
         
-        # Update the output of the node
+        # 4- Update the output of the node
         self.output = {"vol": vol_obj.data,
                        "roi": roi_obj_morph.data}

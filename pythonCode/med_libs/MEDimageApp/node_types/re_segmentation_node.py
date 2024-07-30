@@ -6,10 +6,13 @@ import MEDimage
 from ..pipeline import Pipeline
 
 class ReSegmentationNode(Node):
-    def __init__(self, params: dict):
+    """
+    Subclass of Node that implements the re-segmentation of a volume.
+    """
+    def __init__(self, params: dict) -> None:
         super().__init__(params)
         
-    def run(self, pipeline: Pipeline):
+    def run(self, pipeline: Pipeline) -> None:
         print("************************ RUNNING RE-SEGMENTATION ***************************")
         # 1- Compute re-segmentation for NON TEXTURE FEATURES
         ## 1.1- Get the latest volume output of the pipeline (should be the one from interpolation node)
@@ -79,7 +82,7 @@ class ReSegmentationNode(Node):
             self.params['range'][0] = "inf"      
         pipeline.settings_res["re_segmentation"] = self.params
         
-        # Update the output of the node
+        # 4- Update the output of the node
         self.output = {"vol": vol_obj.data,
                        "roi": roi_obj_int.data,
                        "vol_texture": vol_obj_texture.data,

@@ -1,13 +1,17 @@
-from ..node import Node
-import MEDimage
-from ..pipeline import Pipeline
 from copy import deepcopy
 
+import MEDimage
+from ..node import Node
+from ..pipeline import Pipeline
+
 class DiscretizationNode(Node):
-    def __init__(self, params: dict):
+    """
+    Subclass of Node that implements the discretization of a volume.
+    """
+    def __init__(self, params: dict) -> None:
         super().__init__(params)
         
-    def run(self, pipeline: Pipeline):
+    def run(self, pipeline: Pipeline) -> None:
         print("************************ RUNNING DISCRETIZATION ***************************")
         # 1- Discretization for NON TEXTURE FEATURES
         # Only a roi_extraction_node can be before a discretization_node, so vol_int_re must be in the pipeline
@@ -58,7 +62,7 @@ class DiscretizationNode(Node):
         # 3- Update settings results of the pipeline
         pipeline.settings_res['discretization'] = self.params
         
-        # Update the output of the node
+        # 4- Update the output of the node
         self.output = {"vol": vol_quant_re,
                        "roi": pipeline.latest_node_output["roi"].data,
                        "vol_ivh": vol_quand_re_ivh,
