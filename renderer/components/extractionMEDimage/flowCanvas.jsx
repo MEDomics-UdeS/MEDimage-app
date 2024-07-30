@@ -353,6 +353,13 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
 
     // Initialize settings in node data to put the parameters selected by the user
     let featuresNodeDefaultSettings = { features: ["extract_all"] }
+    if (["GLCM", "GLRLM"].includes(newNode.name)) {
+      featuresNodeDefaultSettings = {
+        features: ["extract_all"],
+        dist_correction: "false",
+        merge_method: "vol_merge"
+      }
+    }
     newNode.data.internal.settings = newNode.type === "featuresNode" ? featuresNodeDefaultSettings : newNode.data.setupParam.possibleSettings.defaultSettings
 
     newNode.data.internal.subflowId = !associatedNode ? groupNodeId.id : associatedNode
