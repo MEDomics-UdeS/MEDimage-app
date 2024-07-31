@@ -592,14 +592,14 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
           // Activate progress if node is extraction node
           if (nodeName === "extraction") {
             // Start progress bar
-            setProgress({now: 0, currentLabel: progress.currentLabel})
+            setProgress({ now: 0, currentLabel: progress.currentLabel })
             setIsProgressUpdating(true)
           }
 
           // Activate progress if node is extraction node
           if (nodeName === "extraction") {
             // Start progress bar
-            setProgress({now: 0, currentLabel: progress.currentLabel})
+            setProgress({ now: 0, currentLabel: progress.currentLabel })
             setIsProgressUpdating(true)
           }
 
@@ -619,15 +619,15 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
               }
               setShowError(true)
 
+              // Update progress
+              if (nodeName === "extraction") {
                 // Update progress
-                if (nodeName === "extraction") {
-                  // Update progress
-                  setIsProgressUpdating(false)
-                  setProgress({
-                    now: 0,
-                    currentLabel: ""
-                  })
-                }
+                setIsProgressUpdating(false)
+                setProgress({
+                  now: 0,
+                  currentLabel: ""
+                })
+              }
             } else {
               toast.success("Node executed successfully")
               console.log("Response from backend is: ", response)
@@ -706,6 +706,13 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
 
     // Transform the flow instance to a dictionnary compatible with the backend
     let newFlow = transformFlowInstance()
+
+    // If there is nothing in the flow, cancel the run
+    if (Object.keys(newFlow["drawflow"]["Home"]["data"]).length === 0) {
+      toast.warn("No workflow to run")
+      return
+    }
+
     console.log("Flow dictionnary sent to back end is : ")
     console.log(newFlow)
 
