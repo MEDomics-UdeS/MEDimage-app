@@ -54,8 +54,13 @@ class ExtractionWorkflow:
 
         # Add the node associated with node_id to the nodes_list
         if home_module[node_id]['name'] == 'extraction':
-            # It the node is an extraction node, the node data is in a separate module
-            node_data = workflow['extraction-' + str(node_id)]
+            # If the node is an extraction node, the node data is in a separate module
+            # If there is no module associated with the node, no feature nodes are associated
+            # with it, the node data is empty
+            if 'extraction-' + str(node_id) not in workflow:
+                node_data = {"data": {}}
+            else:
+                node_data = workflow['extraction-' + str(node_id)]
             node_data['name'] = 'extraction'
             node_data['id'] = node_id
         else:
