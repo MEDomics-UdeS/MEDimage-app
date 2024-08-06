@@ -27,6 +27,18 @@ class Node(ABC):
         # The output of the node is stored in the output attribute
         self.output = {}
     
+    def __eq__(self, node: "Node") -> bool:
+        """
+        Abstract method to compare two nodes. Two nodes are equal if they have the same id.
+
+        Args:
+            node (Node): Node to compare with.
+            
+        Returns:
+            bool: True if the nodes are equal, False otherwise.
+        """
+        return self.id == node.id
+    
     @abstractmethod
     def run(self, pipeline: "Pipeline") -> None:
         """

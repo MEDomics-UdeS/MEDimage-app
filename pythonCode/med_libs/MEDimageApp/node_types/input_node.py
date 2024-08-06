@@ -12,7 +12,10 @@ class InputNode(Node):
     def __init__(self, params: dict) -> None:
         super().__init__(params)
         
-        self.filepath = params['data']['filepath']  # TODO : Check if the filepath is empty!
+        # Check if the filepath is empty
+        if params["data"]["filepath"] == "":
+            raise ValueError("No file uploaded in input node : " + self.id)
+        self.filepath = params["data"]["filepath"]
 
         self.scan_type = None  # Formatted scan type of the image
         
@@ -30,7 +33,7 @@ class InputNode(Node):
         else:
             scan_type = "imParam" + scan_type[:-4]
         self.scan_type = scan_type
-
+        
         # Update the im_params of the pipeline with the scan type
         pipeline.update_im_params()
         # Update the MEDimg object with the pipeline im_params

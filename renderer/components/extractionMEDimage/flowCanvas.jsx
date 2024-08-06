@@ -733,10 +733,6 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
           now: 0,
           currentLabel: ""
         })
-        setProgress({
-          now: 0,
-          currentLabel: ""
-        })
 
         // check if error has message or not
         if (response.error.message) {
