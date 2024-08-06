@@ -270,6 +270,9 @@ class MEDimageExtraction:
             # If the node is an input node in the extraction workflow, use it's output to plot the 3D view
             elif node is not None and node.name == "input":
                 image_viewer(node.output["vol"], "Input image : " + node.filepath)
+            # If there is no node or there is no output for the node, it hasn't run yet
+            elif node is None or node.output is None:
+                return {"error": "No volume was computed for this node. Please run the node first."}
             # For any other node in the extraction workflow, the output should have a volume and a ROI to plot the 3D view
             else:
                 node_output = node.output
