@@ -66,7 +66,13 @@ class ExtractionWorkflow:
         else:
             node_data = home_module[node_id]
         
-        nodes_list.append(Node.create_node(node_data))
+        try:
+            # Create the node object from the node data
+            new_node = Node.create_node(node_data)
+        except ValueError:
+            raise
+        
+        nodes_list.append(new_node)
         
         # If the node has output nodes, generate the pipelines starting from the output nodes
         output_nodes = home_module[node_id]['outputs']
@@ -101,10 +107,11 @@ class ExtractionWorkflow:
         # In the drawflow scene, there is one Home module and zero or more extraction modules
         home_module = drawflow_scene['Home']['data']
         
-        # Pass over all nodes in the home module. If the node doesnt have any inputs, it is the start of a pipeline
+        # Pass over all nodes in the home module. If the node doesnt have any inputs, is an input node, 
+        # and has an uploaded file, it is the start of a pipeline
         pipelines = []
         for node_id in home_module:
-            if not home_module[node_id]['inputs'] and home_module[node_id]['name'] == 'input':
+            if not home_module[node_id]['inputs'] and home_module[node_id]['name'] == 'input' and home_module[node_id]['data']['filepath'] != "":
                 self.__generate_pipelines(node_id, drawflow_scene, pipelines, []) # Generate the pipelines starting from an input node
         
         # Return the generated pipelines
@@ -122,7 +129,7 @@ class ExtractionWorkflow:
             None.
         """
         for pipeline in self.pipelines:
-            print("Pipeline " + pipeline.id + ": ")
+            print("Pipeline " + str(pipeline.id) + ": ")
             for node in pipeline.nodes:
                 print(node.id)
             print("\n")  
@@ -141,15 +148,20 @@ class ExtractionWorkflow:
             dict: Dictionary of the results of the pipelines execution, with the filename as key and 
                   the pipeline name as sub key.
         """
+        # Initialize the results dictionary
         results = {}
         
+        # Get the pipelines containing the node associated with node_id
+        node_pipelines = [pipeline for pipeline in self.pipelines if node_id == "all" or pipeline.contains_node(node_id)]
+        
         # Go over each pipeline
-        for pipeline in self.pipelines:
+        for pipeline in node_pipelines:
+            
             # Run the pipeline
             res = pipeline.run(set_progress, node_id)
             
             # Get the filepath associated with the pipeline
-            filepath = res["settings"]["segmentation"]["filepath"]
+            filepath = pipeline.nodes[0].filepath  # A pipeline starts with an input node, the filepath is stored in the input node
             
             if filepath and filepath != "":
                 if filepath not in results:
@@ -157,24 +169,56 @@ class ExtractionWorkflow:
                     
                 # Store the pipeline results in the results dictionary under the right filename and pipeline name    
                 results[filepath][pipeline.pipeline_name] = res
-            
+        
         return results
     
     def get_node_pipeline(self, node_id: str) -> tuple[Node, Pipeline]:
         """
-        From a node id, returns de node object and the pipeline object it belongs to.
+        From a node id, returns de node object and the first pipeline object it belongs to.
 
         Args:
             node_id (str): Id of the node to find.
 
         Returns:
-            Tuple (Node, Pipeline): The node object and the pipeline object it belongs to.
+            Tuple (Node, Pipeline): The node object and the first pipeline object it belongs to.
         """
         for pipeline in self.pipelines:
             for node in pipeline.nodes:
                 if node.id == node_id:
                     return (node, pipeline)
         return (None, None)
+    
+    def update_workflow(self, new_workflow: "ExtractionWorkflow") -> None:
+        """
+        Updates the extraction workflow with a new one.
+        
+        Args:
+            new_workflow (ExtractionWorkflow): The new extraction workflow to update with.
+        
+        Returns:
+            None.
+        """
+        # Initialize the new pipelines list
+        pipelines = []
+        
+        # Go over the pipelines of the new workflow
+        for pipeline in new_workflow.pipelines:
+            
+            # If the pipeline is in the new workflow, but not in the current one, add it
+            if pipeline not in self.pipelines:
+                pipelines.append(pipeline)
+            
+            # The pipeline is already in the current workflow, update its parameters using new_workflow
+            elif pipeline in self.pipelines:
+                # Find the existing pipeline in self.pipelines
+                for old_pipeline in self.pipelines:
+                    if old_pipeline == pipeline:
+                        old_pipeline.update_pipeline(pipeline)
+                        pipelines.append(old_pipeline)
+                        break
+                
+        # Update the pipelines attribute
+        self.pipelines = pipelines
 
 
 class MEDimageExtraction:
@@ -182,25 +226,8 @@ class MEDimageExtraction:
         self.json_config = json_config  # JSON config sent from the front end in the form of a dictionary
         self._progress = {'currentLabel': '', 'now': 0.0} # Progress of a pipeline execution.
         
-        self.medscan_obj = {}  # Dictionary to store the MEDscan objects in the form {"filename": "MEDscan object"}
         self.nb_runs = 0
         self.runs = {}
-    
-    def __format_features(self, features_dict: dict):
-        for key, value in features_dict.items():
-            if (type(value) is list):
-                features_dict[key] = value
-            else:
-                features_dict[key] = np.float64(value)
-        return features_dict
-    
-    def __min_node_required(self, pip, node_list):
-        found = False
-        for node in pip:
-            if pip[node]["type"] in node_list:
-                found = True
-
-        return found
 
     def get_3d_view(self) -> dict:
         """
@@ -224,18 +251,26 @@ class MEDimageExtraction:
             node, pipeline = extraction_workflow.get_node_pipeline(self.json_config["id"])
             
             # If the node is an input node, and is not yet in the extraction workflow, use the file name to load the MEDimage object directly
-            if node is None and self.json_config["name"] == "input" and "file_loaded" in self.json_config and self.json_config["file_loaded"] != "":
-                # Load the MEDimg object from the input file
-                with open(UPLOAD_FOLDER / self.json_config["file_loaded"], 'rb') as f:
-                    MEDimg = pickle.load(f)
-                MEDimg = MEDimage.MEDscan(MEDimg)
-                
-                # Remove dicom header from MEDimg object as it causes errors in get_3d_view()
-                # TODO: check if dicom header is needed in the future
-                MEDimg.dicomH = None
-                
-                # View 3D image
-                image_viewer(MEDimg.data.volume.array, "Input image : " + self.json_config["file_loaded"])
+            if node is None and self.json_config["name"] == "input" and "file_loaded" in self.json_config:
+                if self.json_config["file_loaded"] != "":
+                    # Load the MEDimg object from the input file
+                    with open(UPLOAD_FOLDER / self.json_config["file_loaded"], 'rb') as f:
+                        MEDimg = pickle.load(f)
+                    MEDimg = MEDimage.MEDscan(MEDimg)
+                    
+                    # Remove dicom header from MEDimg object as it causes errors in get_3d_view()
+                    # TODO: check if dicom header is needed in the future
+                    MEDimg.dicomH = None
+                    
+                    # View 3D image
+                    image_viewer(MEDimg.data.volume.array, "Input image : " + self.json_config["file_loaded"])
+                else:
+                    # In case the view button is clicked without uploading a file first
+                    return {"error": "No file uploaded in input node."}
+            # If the node is an input node in the extraction workflow, use it's output to plot the 3D view
+            elif node is not None and node.name == "input":
+                image_viewer(node.output["vol"], "Input image : " + node.filepath)
+            # For any other node in the extraction workflow, the output should have a volume and a ROI to plot the 3D view
             else:
                 node_output = node.output
 
@@ -243,6 +278,10 @@ class MEDimageExtraction:
                 fig_name = "Pipeline name: " + pipeline.pipeline_name + "<br>" + \
                         "Node id: " + node.id + "<br>" + \
                         "Node type: " + node.name + "\n" 
+                
+                # In case the view button was clicked without running the node first
+                if node_output["vol"] is None or node_output["roi"] is None:
+                    return {"error": "No volume or ROI found in node output."}
                 
                 # View 3D image
                 image_viewer(node_output["vol"], fig_name, node_output["roi"])
@@ -333,13 +372,23 @@ class MEDimageExtraction:
             dict: Dictionary with the results of the pipeline(s) execution.
         """
         try:
-            # TODO : Import extraction workflow if it exists
-            # Compare the current json config with the extraction workflow object
-            # If the json config is different from the extraction workflow object, update the extraction workflow object
-            # If the json config is the same as the extraction workflow object, use the extraction workflow object
+            # Get the id of the node where the run button was clicked
+            node_id = self.json_config["id"]
+
+            # Create a new extraction workflow object from the json_scene
+            new_extraction_workflow = ExtractionWorkflow(self.json_config["json_scene"])
             
-            node_id = self.json_config["id"] # id of the node where the run button was clicked
-            extraction_workflow = ExtractionWorkflow(self.json_config["json_scene"])
+            # Check if an extraction workflow already exists and retrieve it
+            if "extractionWorkflow.pkl" in os.listdir(UPLOAD_FOLDER):
+                with open(os.path.join(UPLOAD_FOLDER, "extractionWorkflow.pkl"), 'rb') as f:
+                    extraction_workflow = pickle.load(f)
+                    
+                # Compare the new extraction workflow with the old one and update it
+                extraction_workflow.update_workflow(new_extraction_workflow)
+            else:
+                extraction_workflow = new_extraction_workflow
+            
+            # Run the extraction workflow up to the node associated with node_id
             results = extraction_workflow.run_pipelines(self.set_progress, node_id)
             
             # Pickle extraction_workflow objet and put it in the UPLOAD_FOLDER
@@ -363,8 +412,20 @@ class MEDimageExtraction:
             dict: Dictionary with the results of the pipeline(s) execution.
         """
         try:
-            # TODO : Import extraction workflow if it exists
-            extraction_workflow = ExtractionWorkflow(self.json_config)
+           # Create a new extraction workflow object from the json_scene
+            new_extraction_workflow = ExtractionWorkflow(self.json_config)
+            
+            # Check if an extraction workflow already exists and retrieve it
+            if "extractionWorkflow.pkl" in os.listdir(UPLOAD_FOLDER):
+                with open(os.path.join(UPLOAD_FOLDER, "extractionWorkflow.pkl"), 'rb') as f:
+                    extraction_workflow = pickle.load(f)
+                    
+                # Compare the new extraction workflow with the old one and update it
+                extraction_workflow.update_workflow(new_extraction_workflow)
+            else:
+                extraction_workflow = new_extraction_workflow
+                
+            # Run the entire workflow
             results = extraction_workflow.run_pipelines(self.set_progress)
             
             # Pickle extraction_workflow objet and put it in the UPLOAD_FOLDER

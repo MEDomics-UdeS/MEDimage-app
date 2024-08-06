@@ -38,6 +38,31 @@ class Pipeline:
         # Dictionary that contains the parameters of the image processing pipeline in the format used by MEDimage.
         self.im_params = MEDimage.utils.json_utils.load_json(JSON_SETTINGS_PATH)  # Loading default settings from MEDimageApp json file as im_params
 
+    def __eq__(self, pipeline: "Pipeline") -> bool:
+        """
+        Compares two pipelines. Two pipelines are equal if they have the same id and
+        the same list of nodes.
+
+        Args:
+            pipeline (Pipeline): Pipeline to compare with.
+
+        Returns:
+            bool: True if the pipelines are equal, False otherwise.
+        """
+        return self.nodes == pipeline.nodes
+
+    def contains_node(self, node_id: str) -> bool:
+        """
+        Checks if the pipeline contains a node with the given id.
+
+        Args:
+            node_id (str): Id of the node to check for.
+
+        Returns:
+            bool: True if the node is in the pipeline, False otherwise.
+        """
+        return any(node.id == node_id for node in self.nodes)
+
     def get_previous_node_output(self, node: Node) -> dict:
         """ 
         Given a node, return the output of the previous node in the pipeline.
@@ -101,6 +126,19 @@ class Pipeline:
                         self.im_params[scan_type][feature_name]["dist_correction"] = node.params[feature_node]["data"]["dist_correction"]
                         self.im_params[scan_type][feature_name]["merge_method"] = node.params[feature_node]["data"]["merge_method"]
     
+    def update_pipeline(self, new_pipeline: "Pipeline") -> None:
+        """ 
+        Update the current pipeline with the new pipeline.
+        
+        Args:
+            new_pipeline (Pipeline): Pipeline to update with.
+            
+        Returns:
+            None.
+        """
+        for i in range(len(self.nodes)):
+            self.nodes[i].params = new_pipeline.nodes[i].params
+    
     def run(self, set_progress: dict, node_id: str = "all") -> dict:
         """
         Runs the pipeline up to the node associated with node_id and collects the results
@@ -130,11 +168,11 @@ class Pipeline:
             set_progress(now=node_number * 100 / number_nodes, label=f"Pipeline " + self.pipeline_name + " | Running node : " + node.name)
             # Increment the node number
             node_number += 1.0
-            
+
             if node.id == node_id:
                 break
         
-        # Create the results dictionnary
+        # Create the results dictionary
         results = {"features": self.scan_res, 
                    "settings": self.settings_res}
         
