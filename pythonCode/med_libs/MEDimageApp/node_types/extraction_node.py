@@ -10,6 +10,30 @@ class ExtractionNode(Node):
         super().__init__(params)
         
         self.extracted_features = {}  # Dictionary to store the extracted features
+
+    def __manage_exception(self, e: Exception) -> dict:
+        """
+        Manages exceptions that occur during the extraction of features.
+
+        Args:
+            e (Exception): Exception that occurred during the extraction of features.
+
+        Returns:
+            dict: Dictionary containing the error message.
+        """
+        # Get the string representation of the exception
+        string_exception = str(e)
+        
+        if "vol_quant_re" in string_exception:
+            return {"Error": f"A discretization node needs to be in the pipeline to compute these features."}
+        
+        if "roi_obj_morph" in string_exception:
+            return {"Error": f"An interpolation node needs to be in the pipeline to compute these features."}
+        
+        if "vol_int_re" in string_exception:
+            return {"Error": f"A ROI extraction node needs to be in the pipeline to compute these features."}
+        
+        return {"Error": f"Problem with computation of features {string_exception}"}
     
     def __sort_features_by_categories(self) -> None:
         """
@@ -42,6 +66,9 @@ class ExtractionNode(Node):
 
             last_feat_vol = pipeline.latest_node_output["vol"]
             last_feat_roi = pipeline.latest_node_output["roi"]
+            
+            if "roi_obj_morph" not in pipeline.latest_node_output_texture or pipeline.latest_node_output_texture["roi_obj_morph"] is None:
+                raise Exception("roi_obj_morph")
             roi_obj_morph = pipeline.latest_node_output["roi_obj_morph"]
 
             # If all features need to be extracted
@@ -74,7 +101,7 @@ class ExtractionNode(Node):
             return features
 
         except Exception as e:
-            return {"error": f"PROBLEM WITH COMPUTATION OF MORPHOLOGICAL FEATURES {str(e)}"}
+            return self.__manage_exception(e)
     
     def get_local_intensity_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
         """
@@ -122,7 +149,7 @@ class ExtractionNode(Node):
             return features
             
         except Exception as e:
-            return {"error": f"PROBLEM WITH COMPUTATION OF LOCAL INTENSITY FEATURES {str(e)}"}
+            return self.__manage_exception(e)
     
     def get_stats_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
         """
@@ -162,7 +189,7 @@ class ExtractionNode(Node):
             return features
             
         except Exception as e:
-            return {"error": f"PROBLEM WITH COMPUTATION OF STATISTICAL FEATURES {str(e)}"}
+            return self.__manage_exception(e)
 
     def get_intensity_histogram_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
         """
@@ -177,6 +204,9 @@ class ExtractionNode(Node):
         """
         try:
             features = {}
+            
+            if "vol_quant_re" not in pipeline.latest_node_output or pipeline.latest_node_output["vol_quant_re"] is None:
+                raise Exception("vol_quant_re")
             vol_quant_re = pipeline.latest_node_output["vol_quant_re"]
             
             # If all features need to be extracted
@@ -200,7 +230,7 @@ class ExtractionNode(Node):
             return features
 
         except Exception as e:
-            return {"error": f"PROBLEM WITH COMPUTATION OF INTENSITY HISTOGRAM FEATURES {str(e)}"}
+            return self.__manage_exception(e)
 
     def get_int_vol_hist_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
         """
@@ -216,9 +246,15 @@ class ExtractionNode(Node):
         try:
             features = {}
             
-            wd = pipeline.latest_node_output["wd"]
+            if "vol_quant_re_ivh" not in pipeline.latest_node_output or pipeline.latest_node_output["vol_quant_re_ivh"] is None:
+                raise Exception("vol_quant_re")
             last_feat_vol = pipeline.latest_node_output["vol_quant_re_ivh"]
+            
+            if "vol_int_re" not in pipeline.latest_node_output or pipeline.latest_node_output["vol_int_re"] is None:
+                raise Exception("vol_int_re")
             vol_int_re = pipeline.latest_node_output["vol_int_re"]
+            
+            wd = pipeline.latest_node_output["wd"]
             
             # If all features need to be extracted
             if features_to_extract[0] == "extract_all":
@@ -246,7 +282,7 @@ class ExtractionNode(Node):
             return features
         
         except Exception as e:
-            return {"error": f"PROBLEM WITH COMPUTATION OF INTENSITY VOLUME HISTOGRAM FEATURES {str(e)}"}
+            return self.__manage_exception(e)
 
     def get_glcm_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
         """
@@ -262,6 +298,8 @@ class ExtractionNode(Node):
         try:
             features = {}
             
+            if "vol_quant_re" not in pipeline.latest_node_output_texture or pipeline.latest_node_output_texture["vol_quant_re"] is None:
+                raise Exception("vol_quant_re")
             vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
             
             # If all features need to be extracted
@@ -293,7 +331,7 @@ class ExtractionNode(Node):
             return features
 
         except Exception as e:
-            return {"error": f"PROBLEM WITH COMPUTATION OF GLCM FEATURES {str(e)}"}
+            return self.__manage_exception(e)
     
     def get_glrlm_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
         """
@@ -309,6 +347,8 @@ class ExtractionNode(Node):
         try:
             features = {}
             
+            if "vol_quant_re" not in pipeline.latest_node_output_texture or pipeline.latest_node_output_texture["vol_quant_re"] is None:
+                raise Exception("vol_quant_re")
             vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
 
             # TODO : temporary code used to replace single feature extraction for user
@@ -328,7 +368,7 @@ class ExtractionNode(Node):
             return features
         
         except Exception as e:
-            return {"error": f"PROBLEM WITH COMPUTATION OF GLRLM FEATURES {str(e)}"}
+            return self.__manage_exception(e)
     
     def get_glszm_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
         """
@@ -344,6 +384,8 @@ class ExtractionNode(Node):
         try:
             features = {}
             
+            if "vol_quant_re" not in pipeline.latest_node_output_texture or pipeline.latest_node_output_texture["vol_quant_re"] is None:
+                raise Exception("vol_quant_re")
             vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
 
             # TODO : temporary code used to replace single feature extraction for user
@@ -360,7 +402,7 @@ class ExtractionNode(Node):
             return features
 
         except Exception as e:
-            return {"error": f"PROBLEM WITH COMPUTATION OF GLSZM FEATURES {str(e)}"}
+            return self.__manage_exception(e)
     
     def get_gldzm_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
         """
@@ -376,7 +418,12 @@ class ExtractionNode(Node):
         try:
             features = {}
             
+            if "vol_quant_re" not in pipeline.latest_node_output_texture or pipeline.latest_node_output_texture["vol_quant_re"] is None:
+                raise Exception("vol_quant_re")
             vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
+            
+            if "roi_obj_morph" not in pipeline.latest_node_output_texture or pipeline.latest_node_output_texture["roi_obj_morph"] is None:
+                raise Exception("roi_obj_morph")
             roi_obj_morph_texture = pipeline.latest_node_output_texture["roi_obj_morph"]
 
             # TODO : temporary code used to replace single feature extraction for user
@@ -395,7 +442,7 @@ class ExtractionNode(Node):
             return features
         
         except Exception as e:
-            return {"error": f"PROBLEM WITH COMPUTATION OF GLDZM FEATURES {str(e)}"}
+            return self.__manage_exception(e)
     
     def get_ngtdm_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
         """
@@ -411,6 +458,8 @@ class ExtractionNode(Node):
         try:
             features = {}
             
+            if "vol_quant_re" not in pipeline.latest_node_output_texture or pipeline.latest_node_output_texture["vol_quant_re"] is None:
+                raise Exception("vol_quant_re")
             vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
 
             # TODO : temporary code used to replace single feature extraction for user
@@ -429,7 +478,7 @@ class ExtractionNode(Node):
             return features
 
         except Exception as e:
-            return {"error": f"PROBLEM WITH COMPUTATION OF NGTDM FEATURES {str(e)}"}
+            return self.__manage_exception(e)
     
     def get_ngldm_features(self, features_to_extract: list[str], pipeline: Pipeline) -> dict:
         """
@@ -445,6 +494,8 @@ class ExtractionNode(Node):
         try:
             features = {}
             
+            if "vol_quant_re" not in pipeline.latest_node_output_texture or pipeline.latest_node_output_texture["vol_quant_re"] is None:
+                raise Exception("vol_quant_re")
             vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
             
             # TODO : temporary code used to replace single feature extraction for user
@@ -479,7 +530,7 @@ class ExtractionNode(Node):
             return features
 
         except Exception as e:
-            return {"error": f"PROBLEM WITH COMPUTATION OF NGLDM FEATURES {str(e)}"}
+            return self.__manage_exception(e)
     
     # TODO : refactor : for node in extraction node, run node. 
     def run(self, pipeline: Pipeline) -> None:
