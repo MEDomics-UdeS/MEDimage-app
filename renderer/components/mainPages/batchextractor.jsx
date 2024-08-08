@@ -259,7 +259,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
           // fill nodes data
           if (saveFolder !== '') {
             fillNodesData(saveFolder);
-          };
+          }
         }
       });
   };

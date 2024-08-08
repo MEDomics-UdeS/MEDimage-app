@@ -604,9 +604,10 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
                 name="ndims"
                 type="number"
                 value={params.wavelet.ndims}
-                onChange={(event) =>
-                changeFilterForm(event.target.name, event.target.value)
-                }
+                onChange={(event) =>{
+                    params.wavelet.ndims = event.target.value;
+                    setActiveIndex(!activeIndex);
+                }}
             />
             </Col>
         </Form.Group>
@@ -699,9 +700,10 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
                 type="number"
                 name="level"
                 value={params.wavelet.level}
-                onChange={(event) =>
-                changeFilterForm(event.target.name, event.target.value)
-                }
+                onChange={(event) => {
+                    params.wavelet.level = event.target.value;
+                    setActiveIndex(!activeIndex);
+                }}
             />
             </Col>
         </Form.Group>
@@ -713,9 +715,10 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
                 as="select"
                 name="rot_invariance"
                 value={params.wavelet.rot_invariance}
-                onChange={(event) =>
-                changeFilterForm(event.target.name, event.target.value)
-                }
+                onChange={(event) => {
+                    params.wavelet.rot_invariance = event.target.value;
+                    setActiveIndex(!activeIndex);
+                }}
             >
                 <option value="false">False</option>
                 <option value="true">True</option>
@@ -730,9 +733,10 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
                 as="select"
                 name="padding"
                 value={params.wavelet.padding}
-                onChange={(event) =>
-                changeFilterForm(event.target.name, event.target.value)
-                }
+                onChange={(event) => {
+                    params.wavelet.padding = event.target.value;
+                    setActiveIndex(!activeIndex);
+                }}
             >
                 <option value="constant">Constant</option>
                 <option value="edge">Edge</option>
@@ -756,9 +760,10 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
                 type="text"
                 name="name_save"
                 value={params.wavelet.name_save}
-                onChange={(event) =>
-                changeFilterForm(event.target.name, event.target.value)
-                }
+                onChange={(event) => {
+                    params.wavelet.name_save = event.target.value;
+                    setActiveIndex(!activeIndex);
+                }}
             />
             </Col>
         </Form.Group>
@@ -775,7 +780,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
  * @param {string} pathSettings path to the settings file
  * @returns {JSX.Element} optional, a settings edior panel
  */
-const renderParamsPanel = (activeIndex, setActiveIndex, setShowEdit, ModSettings, imParamFilter, pathSettings) => {
+function RenderParamsPanel (activeIndex, setActiveIndex, setShowEdit, ModSettings, imParamFilter, pathSettings) {
     const toastPrime = useRef(null);
     const [oldValueMin, setoldValueMin] = useState(ModSettings.reSeg.range[0]);
     const [oldValueMax, setoldValueMax] = useState(ModSettings.reSeg.range[1]);
@@ -1158,7 +1163,7 @@ const renderParamsPanel = (activeIndex, setActiveIndex, setShowEdit, ModSettings
                             else{
                                 ModSettings.reSeg.range[0] = oldValueMin;
                             }
-                        };
+                        }
                         setActiveIndex(!activeIndex);
                     }}
                 />
@@ -1190,7 +1195,7 @@ const renderParamsPanel = (activeIndex, setActiveIndex, setShowEdit, ModSettings
                             } else {
                                 ModSettings.reSeg.range[1] = oldValueMax;
                             }
-                        };
+                        }
                         setActiveIndex(!activeIndex);
                     }}
                 />
@@ -1524,13 +1529,13 @@ const SettingsEditor = ({ showEdit, setShowEdit, settings, pathSettings}) => {
         <br></br>
             <TabView>
             <TabPanel header="MR-scan">
-                {renderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamMR, settings.imParamFilter, pathSettings)}
+                {RenderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamMR, settings.imParamFilter, pathSettings)}
             </TabPanel>
             <TabPanel header="CT-scan">
-                {renderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamCT, settings.imParamFilter, pathSettings)}
+                {RenderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamCT, settings.imParamFilter, pathSettings)}
             </TabPanel>
             <TabPanel header="PET-scan">
-                {renderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamPET, settings.imParamFilter, pathSettings)}
+                {RenderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamPET, settings.imParamFilter, pathSettings)}
             </TabPanel>
             </TabView>
             {/* SAVE BUTTON */}

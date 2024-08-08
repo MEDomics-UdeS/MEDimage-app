@@ -184,9 +184,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
         const isDirectory = fs.statSync(fullPath).isDirectory();
   
         if (isDirectory) {
-          if (fullPath.split('/').at(-1).split('-').length > 1) {
-            
-          }
+          if (fullPath.split('/').at(-1).split('-').length > 1) {;}
           else {
           folderCount++; // Increment the count for the immediate subfolder
           }
@@ -502,7 +500,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
   useEffect(() => {
     if (!refreshEnabledPreChecks ) {
       setRefreshEnabledPreChecks(false);
-    };
+    }
   }, [refreshEnabledPreChecks]); // The empty dependency array ensures this effect runs only once when the component mounts
 
   /**
