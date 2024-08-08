@@ -169,7 +169,7 @@ class ExtractionNode(Node):
             if features_to_extract[0] == "extract_all":
                 features = MEDimage.biomarkers.stats.extract_all(
                     vol=last_feat_vol.data,  # vol_int_re
-                    intensity_type=pipeline.MEDimg.params.process.intensity_type
+                    intensity_type=pipeline.MEDimg.params.process.intensity_type # Only definite type is accepted for calculating features
                 )
             else:
                 # If only some features need to be extracted, use the name of the feature to build

@@ -277,14 +277,15 @@ class MEDimageExtraction:
             else:
                 node_output = node.output
 
+                # In case the view button was clicked without running the node first
+                # Or the volume couldn't be computed
+                if "vol" not in node_output or node_output["vol"] is None or "roi" not in node_output or node_output["roi"] is None:
+                    return {"error": "No volume or ROI found in node output."}
+
                 # Figure name for the 3D view
                 fig_name = "Pipeline name: " + pipeline.pipeline_name + "<br>" + \
                         "Node id: " + node.id + "<br>" + \
                         "Node type: " + node.name + "\n" 
-                
-                # In case the view button was clicked without running the node first
-                if node_output["vol"] is None or node_output["roi"] is None:
-                    return {"error": "No volume or ROI found in node output."}
                 
                 # View 3D image
                 image_viewer(node_output["vol"], fig_name, node_output["roi"])
