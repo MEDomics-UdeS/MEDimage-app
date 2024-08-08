@@ -10,7 +10,7 @@ module.exports = {
   },
   plugins: ["react"],
   rules: {
-    camelcase: ["error"],
+    "camelcase": "off",
     "quote-props": ["error", "consistent"],
     "react/prop-types": ["off"],
     "no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
@@ -21,5 +21,7 @@ module.exports = {
     "jsx-a11y/role-supports-aria-props": "off",
     "@next/next/no-img-element": "off",
     "react/no-direct-mutation-state": "off",
+    "no-unused-vars": "off",
+    "no-extra-semi": "off",
   },
 }

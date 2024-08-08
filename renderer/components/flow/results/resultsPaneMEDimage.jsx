@@ -26,7 +26,7 @@ import { FlowResultsContext } from "../context/flowResultsContext"
  *
  */
 const ResultsPaneMEDimage = () => {
-  const { selectedResultsId, setSelectedResultsId, flowResults, showResultsPane, setShowResultsPane, isResults } = useContext(FlowResultsContext)
+  const { setShowResultsPane, isResults } = useContext(FlowResultsContext)
   const [selectedResults, setSelectedResults] = useState([])
   const [selectedPipelines, setSelectedPipelines] = useState([])
   const [generatedPipelines, setGeneratedPipelines] = useState([])
@@ -36,19 +36,19 @@ const ResultsPaneMEDimage = () => {
   const [showMetrics, setShowMetrics] = useState(true)
   const [histogramImages, setHistogramImages] = useState([])
   const [heatMap, setHeatMap] = useState()
-  const [treePlot, setTreePlot] = useState("")
+  const [treePlots, setTreePlots] = useState("")
   const { port } = useContext(WorkspaceContext)
 
   const op = useRef(null);
 
-  const cleanResults = () => {
+  /*const cleanResults = () => {
     setSelectedResults([])
     setExpNames([])
     setSelectedPipelines([])
     setHistogramImages([])
     setHeatMap("")
-    setTreePlot("")
-  }
+    setTreePlots("")
+  }*/
 
   /*
   * @Description: This function is used to process the flow data
@@ -156,7 +156,10 @@ const ResultsPaneMEDimage = () => {
                       {/*Histograms*/}
                       <Accordion key={`AccordionTab-Histograms-${index+indexPip}`}>
                         <AccordionTab disabled={!isResults} key={`AccordionTab-Figures-${index+indexPip}`} header={"Analysis Plots"}>
-                            <Image key={indexPip+index} src={histogramImages[indexPip+index]} alt="Image" width="300" preview/>
+                          {(histogramImages.length > 0) ? (
+                            <Image key={indexPip+index} src={histogramImages[indexPip+index]} alt="Image" width="300" preview/>) :
+                            (<div style={{ color: 'red' }}>No histograms generated.</div>)
+                          }
                         </AccordionTab>
                       </Accordion>
 
@@ -183,7 +186,7 @@ const ResultsPaneMEDimage = () => {
 
           // Add experiment name to the list of keys
           if (expNames.length > 0) {
-            if (!values.hasOwnProperty("Experiment")) {
+            if (!Object.prototype.hasOwnProperty.call(values, "Experiment")) {
               values["Experiment"] = currentExp;
             }
             if (keysList.includes("Experiment")){
@@ -195,7 +198,7 @@ const ResultsPaneMEDimage = () => {
           // If no metrics are found, display a warning
           if (!values || keysList.length === 0 || (expNames.length > 0 && keysList.length === 1)){
             return (
-              <Accordion>
+              <Accordion key={`Accordion-${index}-${dataIdx}`}>
                 <AccordionTab key={`AccordionTab-${index}-${dataIdx}`} header={key}>
                   <div style={{ color: 'red' }}>Warning: Values are empty or undefined.</div>
                 </AccordionTab>
@@ -205,7 +208,7 @@ const ResultsPaneMEDimage = () => {
           
           // Display the metrics in a table
           return (
-            <Accordion>
+            <Accordion key={`Accordion-${dataIdx+index+1}`}>
               <AccordionTab disabled={!isResults} key={`AccordionTab-${dataIdx+index+1}`} header={key}>
                 <DataTable value={[values]}>
                   {keysList.map((key1, columnIndex) => (
@@ -275,7 +278,7 @@ const ResultsPaneMEDimage = () => {
                       MetricsKeysList = Object.keys(item[key1][key2][key]);
 
                       // Add experiment name to the list of keys
-                      if (!values.hasOwnProperty("Experiment")) {
+                      if (!Object.prototype.hasOwnProperty.call(values, "Experiment")) {
                         values[keyIndex][index]["Experiment"] = key1 + "_" + key2;
                       }
                       if (MetricsKeysList.includes("Experiment")){
@@ -291,9 +294,6 @@ const ResultsPaneMEDimage = () => {
 
           /*const item = data[index];
           if (Object.keys(item[expNames[index]][key]).length > 1){
-            console.log("keyIndex ", keyIndex)
-            console.log("key ", key)
-            console.log("item[expNames[index]][key]", item[expNames[index]][key])
             values[keyIndex][index] = item[expNames[index]][key];
             MetricsKeysList = Object.keys(item[expNames[index]][key]);*/
         
@@ -340,9 +340,9 @@ const ResultsPaneMEDimage = () => {
                   <div style={{ color: 'red' }}>No heatmap generated.</div>
                 </Panel>
               )}
-              {(treePlot === undefined || treePlot === "") && (
+              {(treePlots === undefined || treePlots === "" || treePlots.length < 0) && (
                 <Panel header="Tree Plot" toggleable>
-                  <div style={{ color: 'red' }}>No tree plot generated.</div>
+                  <div style={{ color: 'red' }}>No tree plots generated.</div>
                 </Panel>
               )}
               {(heatMap !== undefined && heatMap !== "") && (
@@ -350,10 +350,14 @@ const ResultsPaneMEDimage = () => {
                   <Image key={"Heatmap"} src={heatMap} alt="Image" width="500" preview/>
                 </Panel>
               )}
-              {(treePlot !== undefined && treePlot !== "") && (
-                <Panel header="Tree Plot" toggleable>
-                  <Image key={"treePlot"} src={treePlot} alt="Image" width="500" preview/>
-                </Panel>
+              {(treePlots !== undefined && treePlots !== "" && treePlots.length > 0) && (
+                <Panel header="Tree Plots" toggleable>
+                  {treePlots.map((treePlots, index) => {
+                    return (
+                        <Image key={"treePlots" + index} src={treePlots} alt="Image" width="500" preview/>
+                    );
+                  })}
+                </Panel>                
               )}
             </AccordionTab>
         </Accordion>
@@ -375,31 +379,26 @@ const ResultsPaneMEDimage = () => {
 
   useEffect(() => {
     if (flowContent.nodes) {
-      let experiments = []
       let histograms = []
+      let treePlotsPaths = ""
+      let pathHeatMap = ""
       flowContent.nodes.map((node) => {
         if (node.type === "Analyze"){
           // Images
-          if (node.data.internal.results.hasOwnProperty("figures")){
+          if (Object.prototype.hasOwnProperty.call(node.data.internal.results, "figures")){
             // Heatmap
-            if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
-              if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
-                if (node.data.internal.results.figures.heatmap.hasOwnProperty("path")){
-                    setHeatMap(node.data.internal.results.figures.heatmap.path)
-                }
+            if (Object.prototype.hasOwnProperty.call(node.data.internal.results.figures, "heatmap")){
+              if (Object.prototype.hasOwnProperty.call(node.data.internal.results.figures.heatmap, "path")){
+                  pathHeatMap = node.data.internal.results.figures.heatmap.path
               }
             }
             // Tree Plot
-            if (node.data.internal.results.figures.hasOwnProperty("treeplot")){
-              if (node.data.internal.results.figures.hasOwnProperty("treeplot")){
-                if (node.data.internal.results.figures.treeplot.hasOwnProperty("treeplot")){
-                    setTreePlot(node.data.internal.results.figures.treeplot.path)
-                }
-              }
+            if (Object.prototype.hasOwnProperty.call(node.data.internal.results.figures, "treeplots")){
+              treePlotsPaths = node.data.internal.results.figures.treeplots
             }
           }
           // Results - Metrics
-          if (node.data.internal.results.hasOwnProperty("results_avg")){
+          if (Object.prototype.hasOwnProperty.call(node.data.internal.results, "results_avg")){
             setSelectedResults(node.data.internal.results.results_avg)
             /*node.data.internal.results.results_avg.map((result, index) => {
               console.log("result map", result)
@@ -422,8 +421,8 @@ const ResultsPaneMEDimage = () => {
                   Object.entries(item[1]).map((itemAnalysis, _) => {
                     Object.entries(itemAnalysis[1]).map((resultAnalysis, _) => {
                       let result = resultAnalysis[1];
-                          if (result.hasOwnProperty("histogram")){
-                            if (result.histogram.hasOwnProperty("path")){
+                          if (Object.prototype.hasOwnProperty.call(result, "histogram")){
+                            if (Object.prototype.hasOwnProperty.call(result.histogram, "path")){
                               if(!histograms.includes(result.histogram.path)){
                                 histograms.push(result.histogram.path)
                               }
@@ -434,19 +433,20 @@ const ResultsPaneMEDimage = () => {
                 });
               }
             } catch (error) {
+              toast.error("Error detected while processing histograms", error)
             }
           }
-          if (node.data.internal.results.hasOwnProperty("pips")){
+          if (Object.prototype.hasOwnProperty.call(node.data.internal.results, "pips")){
             setSelectedPipelines(node.data.internal.results.pips)
           }
-          if (node.data.internal.results.hasOwnProperty("experiments")){
+          if (Object.prototype.hasOwnProperty.call(node.data.internal.results, "experiments")){
             setExpNames(node.data.internal.results.experiments)
           }
         }
       })
-      if (histograms.length > 0){
-        setHistogramImages(histograms)
-      }
+      setHeatMap(pathHeatMap)
+      setHistogramImages(histograms)
+      setTreePlots(treePlotsPaths)
     }
   }, [flowContent])
 

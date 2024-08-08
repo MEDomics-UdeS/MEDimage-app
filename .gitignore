@@ -153,6 +153,8 @@ flask_server/extraction_MEDimage/MEDimageApp/tmp/*
 renderer/public/pythonCode/MedLibs/MEDimageApp/tmp/*
 /flask_server/local_dir/*
 renderer/public/pythonCode/local_dir/*
+renderer/public/images/checks/*
+renderer/public/images/analyze/*
 path2condaenv_toDeleteInProd.txt
 gh_token.txt
 package-lock.json
