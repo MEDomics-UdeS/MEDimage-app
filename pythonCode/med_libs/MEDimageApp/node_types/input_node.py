@@ -18,7 +18,10 @@ class InputNode(Node):
         self.filepath = params["data"]["filepath"]
 
         self.scan_type = None  # Formatted scan type of the image
-        
+    
+    def change_params(self, new_params: dict) -> None:
+        self.filepath = new_params["filepath"]
+    
     def run(self, pipeline: Pipeline) -> None:
         print("************************ RUNNING INPUT ***************************")
         # Load the MEDimg object from the input file

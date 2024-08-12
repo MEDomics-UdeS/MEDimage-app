@@ -29,8 +29,10 @@ class Pipeline:
         self.pipeline_name = name  # Name of the pipeline
             
         self.MEDimg = None  # MEDimg object of the input image
-        self.latest_node_output = {}  # Output of the latest node in the pipeline (used for non texture features)
-        self.latest_node_output_texture = {}  # Output of the latest node in the pipeline (used for texture features)
+        self.latest_node_output = {"vol": None,
+                                   "roi": None}  # Output of the latest node in the pipeline (used for non texture features)
+        self.latest_node_output_texture = {"vol": None,
+                                           "roi": None}  # Output of the latest node in the pipeline (used for texture features)
         
         self.settings_res = {}  # Dictionary to store the settings results of the pipeline
         self.scan_res = {}  # Dictionary to store the scan results (radiomics)
@@ -137,7 +139,7 @@ class Pipeline:
             None.
         """
         for i in range(len(self.nodes)):
-            self.nodes[i].params = new_pipeline.nodes[i].params
+            self.nodes[i].change_params(new_pipeline.nodes[i].params)
     
     def run(self, set_progress: dict, node_id: str = "all") -> dict:
         """
@@ -153,6 +155,13 @@ class Pipeline:
             dict: Dictionary of the results of the pipeline execution. Contains the features extracted
                   (if any) and the settings used in the pipeline.
         """
+        self.settings_res = {}  # Dictionary to store the settings results of the pipeline
+        self.scan_res = {}  # Dictionary to store the scan results (radiomics)
+    
+        # Dictionary that contains the parameters of the image processing pipeline in the format used by MEDimage.
+        self.im_params = MEDimage.utils.json_utils.load_json(JSON_SETTINGS_PATH)  # Loading default settings from MEDimageApp json file as im_params
+        
+        
         # The pipeline is starting, set the progress to 0%
         set_progress(now=0.0, label=f"Starting pipeline : " + self.pipeline_name)
         
@@ -177,10 +186,13 @@ class Pipeline:
                    "settings": self.settings_res}
         
         # Reset the latest node output
-        self.latest_node_output = {}
-        self.latest_node_output_texture = {}
-        
+        self.MEDimg = None  # MEDimg object of the input image
+        self.latest_node_output = {"vol": None,
+                                   "roi": None}  # Output of the latest node in the pipeline (used for non texture features)
+        self.latest_node_output_texture = {"vol": None,
+                                           "roi": None}  # Output of the latest node in the pipeline (used for texture features)
+
         # The pipeline is done executing, set the progress to 100%
         set_progress(now=100.0, label=f"Ending pipeline : " + self.pipeline_name)
-        
+
         return results

@@ -6,10 +6,9 @@ class Node(ABC):
     Each node can be executed, provided that the necessary data is available
     in it's pipeline. A same node can be part of multiple pipelines.
     """
-    @abstractmethod
     def __init__(self, params: dict) -> None:
         """
-        Abstract constructor of the Node class.
+        Constructor of the Node class.
 
         Args:
             params (dict): Dictionary containing the parameters of the node.
@@ -25,11 +24,14 @@ class Node(ABC):
         self.params = params['data']
     
         # The output of the node is stored in the output attribute
-        self.output = {}
+        self.output = {"vol": None,
+                       "roi": None,
+                       "vol_texture": None,
+                       "roi_texture": None}
     
     def __eq__(self, node: "Node") -> bool:
         """
-        Abstract method to compare two nodes. Two nodes are equal if they have the same id.
+        Compare two nodes. Two nodes are equal if they have the same id.
 
         Args:
             node (Node): Node to compare with.
@@ -38,6 +40,18 @@ class Node(ABC):
             bool: True if the nodes are equal, False otherwise.
         """
         return self.id == node.id
+    
+    def change_params(self, new_params: dict) -> None:
+        """
+        Change the parameters of the node.
+
+        Args:
+            new_params (dict): Dictionary containing the new parameters of the node.
+            
+        Returns:
+            None.
+        """
+        self.params = new_params
     
     @abstractmethod
     def run(self, pipeline: "Pipeline") -> None:
