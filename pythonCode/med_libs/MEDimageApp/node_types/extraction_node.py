@@ -11,6 +11,19 @@ class ExtractionNode(Node):
         
         self.extracted_features = {}  # Dictionary to store the extracted features
 
+    def change_params(self, new_params: dict) -> None:
+        """
+        Change the parameters of the node.
+
+        Args:
+            new_params (dict): Dictionary containing the new parameters of the node.
+            
+        Returns:
+            None.
+        """
+        self.params = new_params
+        self.extracted_features = {}  # Reset the extracted features dictionary 
+
     def __manage_exception(self, e: Exception) -> dict:
         """
         Manages exceptions that occur during the extraction of features.
@@ -66,10 +79,12 @@ class ExtractionNode(Node):
 
             last_feat_vol = pipeline.latest_node_output["vol"]
             last_feat_roi = pipeline.latest_node_output["roi"]
-            
+
             if "roi_obj_morph" not in pipeline.latest_node_output_texture or pipeline.latest_node_output_texture["roi_obj_morph"] is None:
-                raise Exception("roi_obj_morph")
-            roi_obj_morph = pipeline.latest_node_output["roi_obj_morph"]
+                #raise Exception("roi_obj_morph")
+                roi_obj_morph = last_feat_roi
+            else:
+                roi_obj_morph = pipeline.latest_node_output["roi_obj_morph"]
 
             # If all features need to be extracted
             if features_to_extract[0] == "extract_all":
@@ -360,6 +375,7 @@ class ExtractionNode(Node):
             # If all features need to be extracted
             if features_to_extract[0] == "extract_all":
                 features = all_features
+
             else:
                 for i in range(len(features_to_extract)):
                     feature_name_convention = "Frlm_" + str(features_to_extract[i])
@@ -423,8 +439,10 @@ class ExtractionNode(Node):
             vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
             
             if "roi_obj_morph" not in pipeline.latest_node_output_texture or pipeline.latest_node_output_texture["roi_obj_morph"] is None:
-                raise Exception("roi_obj_morph")
-            roi_obj_morph_texture = pipeline.latest_node_output_texture["roi_obj_morph"]
+                #raise Exception("roi_obj_morph")
+                roi_obj_morph_texture = pipeline.latest_node_output["roi"]
+            else:
+                roi_obj_morph_texture = pipeline.latest_node_output_texture["roi_obj_morph"]
 
             # TODO : temporary code used to replace single feature extraction for user
             all_features = MEDimage.biomarkers.gldzm.extract_all(
@@ -592,6 +610,6 @@ class ExtractionNode(Node):
             
             # Sort the extracted features by categories
             self.__sort_features_by_categories()
-            
+
             # Place the scan results in the pipeline
             pipeline.scan_res = self.extracted_features
