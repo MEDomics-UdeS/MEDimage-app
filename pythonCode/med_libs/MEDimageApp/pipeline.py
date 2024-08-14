@@ -83,7 +83,7 @@ class Pipeline:
     
     def get_node_output_from_type(self, node_name: str) -> dict:
         """ 
-        Checks if a node with the given name exists in the pipeline and returns its output
+        Checks if a node with the given type (name) exists in the pipeline and returns its output.
 
         Args:
             node_name (str): _description_
@@ -155,28 +155,26 @@ class Pipeline:
             dict: Dictionary of the results of the pipeline execution. Contains the features extracted
                   (if any) and the settings used in the pipeline.
         """
-        self.settings_res = {}  # Dictionary to store the settings results of the pipeline
-        self.scan_res = {}  # Dictionary to store the scan results (radiomics)
+        # Reset the results of the pipeline
+        self.settings_res = {}
+        self.scan_res = {}
     
-        # Dictionary that contains the parameters of the image processing pipeline in the format used by MEDimage.
+        # Precautionary measure since upon running the input node, im_params is updated with the parameters of the nodes
         self.im_params = MEDimage.utils.json_utils.load_json(JSON_SETTINGS_PATH)  # Loading default settings from MEDimageApp json file as im_params
         
-        
         # The pipeline is starting, set the progress to 0%
-        set_progress(now=0.0, label=f"Starting pipeline : " + self.pipeline_name)
+        set_progress(now=0, label=f"Starting pipeline : " + self.pipeline_name)
         
         # Number of nodes in the pipeline
         number_nodes = len(self.nodes)
-        # Number of the current node 
-        node_number = 1.0 
 
-        for node in self.nodes:
-            # Run the node
+        # Run each node in the pipeline in order up to node_id
+        for index, node in enumerate(self.nodes, start = 1):
             node.run(self)
+            
             # Update the progress bar
-            set_progress(now=node_number * 100 / number_nodes, label=f"Pipeline " + self.pipeline_name + " | Running node : " + node.name)
-            # Increment the node number
-            node_number += 1.0
+            progress = int(index * 100 / number_nodes)
+            set_progress(now=progress, label=f"Pipeline " + self.pipeline_name + " | Running node : " + node.name)
 
             if node.id == node_id:
                 break
@@ -186,13 +184,12 @@ class Pipeline:
                    "settings": self.settings_res}
         
         # Reset the latest node output
-        self.MEDimg = None  # MEDimg object of the input image
-        self.latest_node_output = {"vol": None,
-                                   "roi": None}  # Output of the latest node in the pipeline (used for non texture features)
-        self.latest_node_output_texture = {"vol": None,
-                                           "roi": None}  # Output of the latest node in the pipeline (used for texture features)
+        self.MEDimg = None
+        reset_dict = {"vol": None, "roi": None}
+        self.latest_node_output = reset_dict
+        self.latest_node_output_texture = reset_dict
 
         # The pipeline is done executing, set the progress to 100%
-        set_progress(now=100.0, label=f"Ending pipeline : " + self.pipeline_name)
+        set_progress(now=100, label=f"Ending pipeline : " + self.pipeline_name)
 
         return results
