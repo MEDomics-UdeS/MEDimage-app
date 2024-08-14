@@ -224,7 +224,7 @@ class ExtractionWorkflow:
 class MEDimageExtraction:
     def __init__(self, json_config: dict) -> None:
         self.json_config = json_config  # JSON config sent from the front end in the form of a dictionary
-        self._progress = {'currentLabel': '', 'now': 0.0} # Progress of a pipeline execution.
+        self._progress = {'currentLabel': '', 'now': 0} # Progress of a pipeline execution.
         
         self.nb_runs = 0
         self.runs = {}
@@ -376,11 +376,16 @@ class MEDimageExtraction:
             dict: Dictionary with the results of the pipeline(s) execution.
         """
         try:
-            # Get the id of the node where the run button was clicked
-            node_id = self.json_config["id"]
+            if "id" not in self.json_config:
+                node_id = "all"
+                json_scene = self.json_config
+                
+            else:
+                node_id = self.json_config["id"]
+                json_scene = self.json_config["json_scene"]
 
             # Create a new extraction workflow object from the json_scene
-            new_extraction_workflow = ExtractionWorkflow(self.json_config["json_scene"])
+            new_extraction_workflow = ExtractionWorkflow(json_scene)
             
             # Check if an extraction workflow already exists and retrieve it
             if "extractionWorkflow.pkl" in os.listdir(UPLOAD_FOLDER):
@@ -401,43 +406,6 @@ class MEDimageExtraction:
                        
             return convert_np_to_py(results)
 
-        except Exception as e:
-            return {"error": str(e)}
-    
-    def run_all(self) -> dict:
-        """
-        Runs all the pipeline(s) in the extraction workflow.
-        Returns the results of the pipeline(s) execution.
-
-        Args:
-            None.
-
-        Returns:
-            dict: Dictionary with the results of the pipeline(s) execution.
-        """
-        try:
-           # Create a new extraction workflow object from the json_scene
-            new_extraction_workflow = ExtractionWorkflow(self.json_config)
-            
-            # Check if an extraction workflow already exists and retrieve it
-            if "extractionWorkflow.pkl" in os.listdir(UPLOAD_FOLDER):
-                with open(os.path.join(UPLOAD_FOLDER, "extractionWorkflow.pkl"), 'rb') as f:
-                    extraction_workflow = pickle.load(f)
-                    
-                # Compare the new extraction workflow with the old one and update it
-                extraction_workflow.update_workflow(new_extraction_workflow)
-            else:
-                extraction_workflow = new_extraction_workflow
-                
-            # Run the entire workflow
-            results = extraction_workflow.run_pipelines(self.set_progress)
-            
-            # Pickle extraction_workflow objet and put it in the UPLOAD_FOLDER
-            with open(os.path.join(UPLOAD_FOLDER, "extractionWorkflow.pkl"), 'wb') as f:
-                pickle.dump(extraction_workflow, f)
-            
-            return convert_np_to_py(results)
-            
         except Exception as e:
             return {"error": str(e)}
     
