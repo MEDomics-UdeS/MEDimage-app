@@ -14,26 +14,27 @@ class ReSegmentationNode(Node):
         
     def run(self, pipeline: Pipeline) -> None:
         print("************************ RUNNING RE-SEGMENTATION ***************************")
-        # 1- Compute re-segmentation for NON TEXTURE FEATURES
-        ## 1.1- Get the latest volume output of the pipeline (should be the one from interpolation node)
+        # Compute re-segmentation for NON TEXTURE FEATURES
+        ## Get the latest volume output of the pipeline (should be the one from interpolation or segmentation node)
         vol_obj = pipeline.latest_node_output["vol"]
         
-        ## 1.2- Create deep copy of roi_obj_morph to avoid modifying the original object
-        # Check if roi_obj_morph is present, otherwise missing interpolation node, use latest roi object
+        ## Create deep copy of roi_obj_morph to avoid modifying the original object
+        # Check if roi_obj_morph is present, otherwise missing interpolation node, use latest roi object as a fallback
         if "roi_obj_morph" in pipeline.latest_node_output and pipeline.latest_node_output["roi_obj_morph"] is not None:
             roi_obj_int = deepcopy(pipeline.latest_node_output["roi_obj_morph"])
         elif "roi" in pipeline.latest_node_output and pipeline.latest_node_output["roi"] is not None:
             roi_obj_int = deepcopy(pipeline.latest_node_output["roi"])
         else:
             raise ValueError("No roi object found in pipeline.")
-        ## 1.3- Intensity mask range re-segmentation (returns an ndarray)
+        
+        ## Intensity mask range re-segmentation (returns an ndarray)
         roi_obj_int.data = MEDimage.processing.range_re_seg(
             vol=vol_obj.data,
             roi=roi_obj_int.data,
             im_range=pipeline.MEDimg.params.process.im_range
         )        
         
-        ## 1.4- Intensity mask outlier re-segmentation (returns an ndarray)
+        ## Intensity mask outlier re-segmentation (returns an ndarray)
         roi_obj_int.data = np.logical_and(
             MEDimage.processing.outlier_re_seg(
                 vol=vol_obj.data,
@@ -43,34 +44,31 @@ class ReSegmentationNode(Node):
             roi_obj_int.data
         ).astype(int)
         
-        ## 1.5- Update the latest output object of the pipeline (only the roi was modified)
+        ## Update the latest output object of the pipeline (only the roi was modified)
         pipeline.latest_node_output["roi"] = roi_obj_int
         # Keep a reference to roi_obj_int in the pipeline for future feature extraction
         pipeline.latest_node_output["roi_obj_int"] = roi_obj_int
         
-        ## 1.6 Update the output of the node
-        self.output = {"vol": vol_obj.data,
-                    "roi": roi_obj_int.data,
-                    "vol_texture": None,
-                    "roi_texture": None}
+        ## Update the output of the node
+        self.output["vol"] = vol_obj.data
+        self.output["roi"] = roi_obj_int.data
         
-        # 2- Compute re-segmentation for TEXTURE FEATURES
+        # Compute re-segmentation for TEXTURE FEATURES
         if "vol" in pipeline.latest_node_output_texture and pipeline.latest_node_output_texture["vol"] is not None:
-            ## 2.1- Get the latest texture volume output of the pipeline (should be the one from interpolation node)
+            ## Get the latest texture volume output of the pipeline (should be the one from interpolation node)
             vol_obj_texture = pipeline.latest_node_output_texture["vol"]
         
-            ## 2.2- Create deep copy of texture roi_obj_morph to avoid modifying the original object
-            # TODO : Check if roi_obj_morph is present, otherwise missing interpolation node!
+            ## Create deep copy of texture roi_obj_morph to avoid modifying the original object
             roi_obj_int_texture = deepcopy(pipeline.latest_node_output_texture["roi_obj_morph"])
             
-            ## 2.3- Intensity mask range re-segmentation (returns an ndarray)
+            ## Intensity mask range re-segmentation (returns an ndarray)
             roi_obj_int_texture.data = MEDimage.processing.range_re_seg(
                     vol=vol_obj_texture.data,
                     roi=roi_obj_int_texture.data,
                     im_range=pipeline.MEDimg.params.process.im_range
             )
             
-            ## 2.4- Intensity mask outlier re-segmentation (returns an ndarray)
+            ## Intensity mask outlier re-segmentation (returns an ndarray)
             roi_obj_int_texture.data = np.logical_and(
                 MEDimage.processing.outlier_re_seg(
                     vol=vol_obj_texture.data,
@@ -80,17 +78,17 @@ class ReSegmentationNode(Node):
                 roi_obj_int_texture.data
             ).astype(int)
             
-            ## 2.5- Update the latest texture output object of the pipeline (only the roi was modified)
+            ## Update the latest texture output object of the pipeline (only the roi was modified)
             pipeline.latest_node_output_texture["roi"] = roi_obj_int_texture
             # Keep a reference to roi_obj_int in the pipeline for future feature extraction
             pipeline.latest_node_output_texture["roi_obj_int"] = roi_obj_int_texture
         
-            ## 2.6- Update the output of the node
+            ## Update the output of the node
             self.output["vol_texture"] = vol_obj_texture.data
             self.output["roi_texture"] = roi_obj_int_texture.data
-        
-        # 3- Update settings results of pipeline
-        # If re-segmentation is not serialized, change inf to string
+            
+        # Update settings results of pipeline
+        ## If re-segmentation is not serialized, change inf to string
         if np.isinf(pipeline.MEDimg.params.process.im_range[1]):
             self.params["range"][1] = "inf"
         if np.isinf(pipeline.MEDimg.params.process.im_range[0]):

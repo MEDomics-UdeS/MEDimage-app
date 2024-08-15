@@ -29,10 +29,8 @@ class Pipeline:
         self.pipeline_name = name  # Name of the pipeline
             
         self.MEDimg = None  # MEDimg object of the input image
-        self.latest_node_output = {"vol": None,
-                                   "roi": None}  # Output of the latest node in the pipeline (used for non texture features)
-        self.latest_node_output_texture = {"vol": None,
-                                           "roi": None}  # Output of the latest node in the pipeline (used for texture features)
+        self.latest_node_output = {key: None for key in ["vol", "roi"]} # Output of the latest node in the pipeline (used for non texture features)
+        self.latest_node_output_texture = {key: None for key in ["vol", "roi"]}  # Output of the latest node in the pipeline (used for texture features)
         
         self.settings_res = {}  # Dictionary to store the settings results of the pipeline
         self.scan_res = {}  # Dictionary to store the scan results (radiomics)
@@ -185,7 +183,7 @@ class Pipeline:
         
         # Reset the latest node output
         self.MEDimg = None
-        reset_dict = {"vol": None, "roi": None}
+        reset_dict = {key: None for key in ["vol", "roi"]}
         self.latest_node_output = reset_dict
         self.latest_node_output_texture = reset_dict
 
