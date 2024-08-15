@@ -13,6 +13,9 @@ class InterpolationNode(Node):
         
     def run(self, pipeline: Pipeline) -> None:
         print("************************ RUNNING INTERPOLATION ***************************")
+        # NOTE : The node before interpolation is always the segmentation node, therefore the same volume and roi objects 
+        #        are used to compute the interpolation for non-texture features
+        
         # Get the latest output of the pipeline and the MEDimg object
         MEDimg = pipeline.MEDimg
         last_vol_compute = pipeline.latest_node_output["vol"]

@@ -24,9 +24,9 @@ class SegmentationNode(Node):
         pipeline.latest_node_output["vol"] = vol_obj_init
         pipeline.latest_node_output["roi"] = roi_obj_init
         
+        # Update the output of the node
+        self.output["vol"] = vol_obj_init.data
+        self.output["roi"] = roi_obj_init.data
+        
         # Update settings results of the pipeline
         pipeline.settings_res['segmentation'] = self.params
-        
-        # Update the output of the node
-        self.output = {"vol": vol_obj_init.data,
-                       "roi": roi_obj_init.data}

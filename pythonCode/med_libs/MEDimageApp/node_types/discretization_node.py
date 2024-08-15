@@ -62,7 +62,7 @@ class DiscretizationNode(Node):
         if "vol_int_re" in pipeline.latest_node_output_texture and pipeline.latest_node_output_texture["vol_int_re"] is not None:
             vol_int_re_texture = pipeline.latest_node_output_texture["vol_int_re"]
         else:
-            vol_int_re_texture = vol_int_re
+            vol_int_re_texture = deepcopy(vol_int_re)
             
         vol_quant_re_texture, _texture = MEDimage.processing.discretize(
                 vol_re=vol_int_re_texture,

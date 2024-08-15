@@ -257,5 +257,7 @@ def convert_np_to_py(obj):
         return obj.tolist()
     elif isinstance(obj, np.bool_):
         return bool(obj)
+    elif isinstance(obj, float) and np.isinf(obj):
+        return str(obj)  # Handle Python's float('inf') and float('-inf')
     else:
         return obj

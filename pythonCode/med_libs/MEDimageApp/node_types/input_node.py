@@ -50,5 +50,4 @@ class InputNode(Node):
         pipeline.MEDimg = MEDimg
         
         # Update the output of the node
-        self.output = {"vol": MEDimg.data.volume.array,
-                       "roi": None}
+        self.output["vol"] = MEDimg.data.volume.array

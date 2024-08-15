@@ -24,10 +24,7 @@ class Node(ABC):
         self.params = params['data']
     
         # The output of the node is stored in the output attribute
-        self.output = {"vol": None,
-                       "roi": None,
-                       "vol_texture": None,
-                       "roi_texture": None}
+        self.output = {key: None for key in ["vol", "roi", "vol_texture", "roi_texture"]}
     
     def __eq__(self, node: "Node") -> bool:
         """
@@ -65,8 +62,7 @@ class Node(ABC):
             None.
         """
         pass
-    
-    # TODO : Refactor with factory pattern
+
     @staticmethod
     def create_node(node_data: dict) -> "Node":
         """
@@ -82,28 +78,28 @@ class Node(ABC):
             Node: An instance of a subclass of Node.
         """
         node_type = node_data["name"]
-        if node_type == 'input':
+        if node_type == "input":
             from .node_types.input_node import InputNode
             return InputNode(node_data)
-        elif node_type == 'segmentation':
+        elif node_type == "segmentation":
             from .node_types.segmentation_node import SegmentationNode
             return SegmentationNode(node_data)
-        elif node_type == 'interpolation':
+        elif node_type == "interpolation":
             from .node_types.interpolation_node import InterpolationNode    
             return InterpolationNode(node_data)
-        elif node_type == 'filter':
+        elif node_type == "filter":
             from .node_types.filter_node import FilterNode
             return FilterNode(node_data)
-        elif node_type == 're_segmentation':
+        elif node_type == "re_segmentation":
             from .node_types.re_segmentation_node import ReSegmentationNode
             return ReSegmentationNode(node_data)
-        elif node_type == 'roi_extraction':
+        elif node_type == "roi_extraction":
             from .node_types.roi_extraction_node import ROIExtractionNode
             return ROIExtractionNode(node_data)
-        elif node_type == 'discretization':
+        elif node_type == "discretization":
             from .node_types.discretization_node import DiscretizationNode
             return DiscretizationNode(node_data)
-        elif node_type == 'extraction':
+        elif node_type == "extraction":
             from .node_types.extraction_node import ExtractionNode
             return ExtractionNode(node_data)
         else:

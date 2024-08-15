@@ -30,7 +30,7 @@ class FilterNode(Node):
 
         # Compute filter for TEXTURE FEATURES
         ## Check if there is an output for texture features
-        if pipeline.latest_node_output_texture["vol"] is not None:
+        if "vol" in pipeline.latest_node_output_texture and pipeline.latest_node_output_texture["vol"] is not None:
             ## Apply filter to the imaging volume 
             vol_obj_filter_texture = MEDimage.filters.apply_filter(
                 pipeline.MEDimg, 
