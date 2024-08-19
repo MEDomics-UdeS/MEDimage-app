@@ -185,12 +185,17 @@ class ExtractionNode(Node):
             dict: Dictionary containing the extracted statistical features.
         """
         try:
-            last_feat_vol = pipeline.latest_node_output["vol"]
+            #TODO : Could just use vol_int_re and raise exception if not present, but would not be
+            #       able to compute stats features when there is no ROI extraction node.
+            if "vol_int_re" in pipeline.latest_node_output:
+                last_feat_vol = pipeline.latest_node_output["vol_int_re"]
+            else:
+                last_feat_vol = pipeline.latest_node_output["vol"].data
             
             # If all features need to be extracted
             if features_to_extract[0] == "extract_all":
                 features = MEDimage.biomarkers.stats.extract_all(
-                    vol=last_feat_vol.data,  # vol_int_re
+                    vol=last_feat_vol,  # vol_int_re
                     intensity_type=pipeline.MEDimg.params.process.intensity_type # Only definite type is accepted for calculating features
                 )
             else:
