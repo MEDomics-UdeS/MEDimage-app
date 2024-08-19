@@ -46,6 +46,9 @@ class ExtractionNode(Node):
         if "vol_int_re" in string_exception:
             return {"Error": f"A ROI extraction node needs to be in the pipeline to compute these features."}
         
+        if "arbitrary" in string_exception:
+            return {"Error": f"These features cannot be computed using an image with arbitrary intensities."}
+        
         return {"Error": f"Problem with computation of features {string_exception}"}
     
     def __sort_features_by_categories(self) -> None:
@@ -131,6 +134,10 @@ class ExtractionNode(Node):
         """
         try:
             features = {}
+            
+            # If the intensity type is arbitrary, the LI features cannot be extracted
+            if pipeline.MEDimg.params.process.intensity_type == "arbitrary":
+                raise Exception("arbitrary")
             
             last_feat_vol = pipeline.latest_node_output["vol"]
             last_feat_roi = pipeline.latest_node_output["roi"]
