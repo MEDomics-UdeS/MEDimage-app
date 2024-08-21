@@ -57,14 +57,18 @@ const FilterNode = ({ id, data, type }) => {
    * @description
    * This function is used to change the filter form in the node data
    */
-  const changeFilterForm = useCallback((name, value) => {
-    data.internal.settings[selectedFilter][name] = value
-    console.log("data.internal.settings[selectedFilter]: ", data.internal.settings[selectedFilter])
-    updateNode({
-      id: id,
-      updatedData: data.internal
-    })
-  }, [])
+  const changeFilterForm = useCallback(
+    (event) => {
+      const { name, value, type } = event.target
+      data.internal.settings[selectedFilter][name] = type === "number" && !isNaN(value) ? parseFloat(value) : value
+      console.log("data.internal.settings[selectedFilter]: ", data.internal.settings[selectedFilter])
+      updateNode({
+        id: id,
+        updatedData: data.internal
+      })
+    },
+    [data.internal.settings]
+  )
 
   // Use effect to call changeFilterType on component mount and when selectedFilter changes
   useEffect(() => {
@@ -91,9 +95,9 @@ const FilterNode = ({ id, data, type }) => {
             {/* TODO : Should be able to use input.jsx from learning module
             to automatize the construction of the different filter elements, for
             now this is done manually in the filterTypes folder */}
-            <Form style={{ maxWidth: "400px" }}>
+            <Form className="standard-form">
               <Form.Group as={Row}>
-                <Form.Label column sm={3}>
+                <Form.Label column sm={2}>
                   Filter:
                 </Form.Label>
                 <Col sm={10}>
