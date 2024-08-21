@@ -89,32 +89,23 @@ class ExtractionNode(Node):
             else:
                 roi_obj_morph = pipeline.latest_node_output["roi_obj_morph"]
 
-            # If all features need to be extracted
-            if features_to_extract[0] == "extract_all":
-                features = MEDimage.biomarkers.morph.extract_all(
-                    vol=last_feat_vol.data,  # vol_obj.data
-                    mask_int=last_feat_roi.data,  # roi_obj_int.data,
-                    mask_morph=roi_obj_morph.data,  # roi_obj_morph.data
-                    res=pipeline.MEDimg.params.process.scale_non_text,
-                    intensity_type=pipeline.MEDimg.params.process.intensity_type
-                )
-
-            else:
-                # If only some features need to be extracted, use the name of the feature to build
-                # extraction code (executed dynamically using exec()).
-                for i in range(len(features_to_extract)):
-                    # TODO : Would a for loop be more efficient than calling exec for each feature?
-                    function_name = "MEDimage.biomarkers.morph." + str(features_to_extract[i])
-                    function_params = "vol=last_feat_vol.data, mask_int=last_feat_roi.data, " \
-                                    "mask_morph=last_feat_roi.data, res=MEDimg.params.process.scale_non_text"
-                    function_call = "result = " + function_name + "(" + function_params + ")"
-                    local_vars = {}
-                    global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol,
-                                "last_feat_roi": last_feat_roi, "MEDimg": pipeline.MEDimg}
-                    exec(function_call, global_vars, local_vars)
-
-                    feature_name_convention = "F" + "morph" + "_" + str(features_to_extract[i])
-                    features[feature_name_convention] = local_vars.get("result")
+            # Extract all features
+            # Note : Since the computation of morph features doesn't take a lot of time, we can extract all features
+            # and then filter the ones we want instead of making multiple calls to the extraction functions.
+            features = MEDimage.biomarkers.morph.extract_all(
+                vol=last_feat_vol.data,  # vol_obj.data
+                mask_int=last_feat_roi.data,  # roi_obj_int.data,
+                mask_morph=roi_obj_morph.data,  # roi_obj_morph.data
+                res=pipeline.MEDimg.params.process.scale_non_text,
+                intensity_type=pipeline.MEDimg.params.process.intensity_type
+            )
+            
+            if features_to_extract[0] != "extract_all":
+                features = {
+                    feature_key: features[feature_key]
+                    for feature_type in features_to_extract
+                    if (feature_key := "Fmorph_" + str(feature_type)) in features
+                }
                     
             return features
 
@@ -158,7 +149,7 @@ class ExtractionNode(Node):
                 for i in range(len(features_to_extract)):
                     function_name = "MEDimage.biomarkers.local_intensity." + str(features_to_extract[i])
                     function_params = "img_obj=last_feat_vol.data, roi_obj=last_feat_roi.data, " \
-                                    "res=MEDimg.params.process.scale_non_text "
+                                    "res=MEDimg.params.process.scale_non_text, intensity_type=MEDimg.params.process.intensity_type"
                     function_call = "result = " + function_name + "(" + function_params + ")"
                     local_vars = {}
                     global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol,
@@ -185,7 +176,13 @@ class ExtractionNode(Node):
             dict: Dictionary containing the extracted statistical features.
         """
         try:
-            #TODO : Could just use vol_int_re and raise exception if not present, but would not be
+            features = {}
+            
+            # If the intensity type is arbitrary, the LI features cannot be extracted
+            if pipeline.MEDimg.params.process.intensity_type == "arbitrary":
+                raise Exception("arbitrary")
+            
+            #NOTE : Could just use vol_int_re and raise exception if not present, but would not be
             #       able to compute stats features when there is no ROI extraction node.
             if "vol_int_re" in pipeline.latest_node_output:
                 last_feat_vol = pipeline.latest_node_output["vol_int_re"]
@@ -201,7 +198,6 @@ class ExtractionNode(Node):
             else:
                 # If only some features need to be extracted, use the name of the feature to build
                 # extraction code (executed dynamically using exec()).
-                features = {}
                 for i in range(len(features_to_extract)):
                     function_name = "MEDimage.biomarkers.stats." + str(features_to_extract[i])
                     function_params = "vol=last_feat_vol"
@@ -236,23 +232,17 @@ class ExtractionNode(Node):
                 raise Exception("vol_quant_re")
             vol_quant_re = pipeline.latest_node_output["vol_quant_re"]
             
-            # If all features need to be extracted
-            if features_to_extract[0] == "extract_all":
-                features = MEDimage.biomarkers.intensity_histogram.extract_all(vol=vol_quant_re)
-            else:
-                # If only some features need to be extracted, use the name of the feature to build
-                # extraction code (executed dynamically using exec()).
-                for i in range(len(features_to_extract)):
-                    function_name = "MEDimage.biomarkers.intensity_histogram." + str(
-                        features_to_extract[i])
-                    function_params = "vol=last_feat_vol"
-                    function_call = "result = " + function_name + "(" + function_params + ")"
-                    local_vars = {}
-                    global_vars = {"MEDimage": MEDimage, "last_feat_vol": vol_quant_re}
-                    exec(function_call, global_vars, local_vars)
+            # Extract all features
+            # Note : Since the computation of intensity histogram features doesn't take a lot of time, we can extract all features
+            # and then filter the ones we want instead of making multiple calls to the extraction functions.
+            features = MEDimage.biomarkers.intensity_histogram.extract_all(vol=vol_quant_re)
 
-                    feature_name_convention = "Fih_" + str(features_to_extract[i])
-                    features[feature_name_convention] = local_vars.get("result")
+            if features_to_extract[0] != "extract_all":
+                features = {
+                    feature_key: features[feature_key]
+                    for feature_type in features_to_extract
+                    if (feature_key := "Fih_" + str(feature_type)) in features
+                }
 
             return features
 
@@ -339,8 +329,9 @@ class ExtractionNode(Node):
                 # Extracts co-occurrence matrices from the intensity roi mask prior to features
                 matrices_dict = MEDimage.biomarkers.glcm.get_glcm_matrices(
                     vol_quant_re_texture,
-                    merge_method=pipeline.MEDimg.params.radiomics.glcm.merge_method,
-                    dist_weight_norm=pipeline.MEDimg.params.radiomics.glcm.dist_correction)
+                    dist_weight_norm=pipeline.MEDimg.params.radiomics.glcm.dist_correction,
+                    merge_method=pipeline.MEDimg.params.radiomics.glcm.merge_method
+                    )
 
                 # If not all features need to be extracted, use the name of each feature to build
                 # extraction code (executed dynamically using exec()).
@@ -379,19 +370,18 @@ class ExtractionNode(Node):
             vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
 
             # TODO : temporary code used to replace single feature extraction for user
-            all_features = MEDimage.biomarkers.glrlm.extract_all(
+            features = MEDimage.biomarkers.glrlm.extract_all(
                 vol=vol_quant_re_texture,
                 dist_correction=pipeline.MEDimg.params.radiomics.glrlm.dist_correction,
-                merge_method=pipeline.MEDimg.params.radiomics.glrlm.merge_method)
+                merge_method=pipeline.MEDimg.params.radiomics.glrlm.merge_method
+            )
 
-            # If all features need to be extracted
-            if features_to_extract[0] == "extract_all":
-                features = all_features
-
-            else:
-                for i in range(len(features_to_extract)):
-                    feature_name_convention = "Frlm_" + str(features_to_extract[i])
-                    features[feature_name_convention] = all_features[feature_name_convention]
+            if features_to_extract[0] != "extract_all":
+                features = {
+                    feature_key: features[feature_key]
+                    for feature_type in features_to_extract
+                    if (feature_key := "Frlm_" + str(feature_type)) in features
+                }
 
             return features
         
@@ -417,15 +407,14 @@ class ExtractionNode(Node):
             vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
 
             # TODO : temporary code used to replace single feature extraction for user
-            all_features = MEDimage.biomarkers.glszm.extract_all(vol=vol_quant_re_texture)
+            features = MEDimage.biomarkers.glszm.extract_all(vol=vol_quant_re_texture)
 
-            # If all features need to be extracted
-            if features_to_extract[0] == "extract_all":
-                features = all_features
-            else:
-                for i in range(len(features_to_extract)):
-                    feature_name_convention = "Fszm_" + str(features_to_extract[i])
-                    features[feature_name_convention] = all_features[feature_name_convention]
+            if features_to_extract[0] != "extract_all":
+                features = {
+                    feature_key: features[feature_key]
+                    for feature_type in features_to_extract
+                    if (feature_key := "Fszm_" + str(feature_type)) in features
+                }
             
             return features
 
@@ -457,17 +446,17 @@ class ExtractionNode(Node):
                 roi_obj_morph_texture = pipeline.latest_node_output_texture["roi_obj_morph"]
 
             # TODO : temporary code used to replace single feature extraction for user
-            all_features = MEDimage.biomarkers.gldzm.extract_all(
+            features = MEDimage.biomarkers.gldzm.extract_all(
                     vol_int=vol_quant_re_texture,
-                    mask_morph=roi_obj_morph_texture.data)
+                    mask_morph=roi_obj_morph_texture.data
+            )
 
-            # If all features need to be extracted
-            if features_to_extract[0] == "extract_all":
-                features = all_features
-            else:
-                for i in range(len(features_to_extract)):
-                    feature_name_convention = "Fdzm_" + str(features_to_extract[i])
-                    features[feature_name_convention] = all_features[feature_name_convention]
+            if features_to_extract[0] != "extract_all":
+                features = {
+                    feature_key: features[feature_key]
+                    for feature_type in features_to_extract
+                    if (feature_key := "Fdzm_" + str(feature_type)) in features
+                }
 
             return features
         
@@ -493,17 +482,17 @@ class ExtractionNode(Node):
             vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
 
             # TODO : temporary code used to replace single feature extraction for user
-            all_features = MEDimage.biomarkers.ngtdm.extract_all(
+            features = MEDimage.biomarkers.ngtdm.extract_all(
                     vol=vol_quant_re_texture,
-                    dist_correction=pipeline.MEDimg.params.radiomics.ngtdm.dist_correction)
+                    dist_correction=pipeline.MEDimg.params.radiomics.ngtdm.dist_correction
+            )
 
-            # If all features need to be extracted
-            if features_to_extract[0] == "extract_all":
-                features = all_features
-            else:
-                for i in range(len(features_to_extract)):
-                    feature_name_convention = "Fngt_" + str(features_to_extract[i])
-                    features[feature_name_convention] = all_features[feature_name_convention]
+            if features_to_extract[0] != "extract_all":
+                features = {
+                    feature_key: features[feature_key]
+                    for feature_type in features_to_extract
+                    if (feature_key := "Fngt_" + str(feature_type)) in features
+                }
 
             return features
 
@@ -529,33 +518,31 @@ class ExtractionNode(Node):
             vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
             
             # TODO : temporary code used to replace single feature extraction for user
-            all_features = MEDimage.biomarkers.ngldm.extract_all(vol=vol_quant_re_texture)
+            features = MEDimage.biomarkers.ngldm.extract_all(vol=vol_quant_re_texture)
 
-            # If all features need to be extracted
-            if features_to_extract[0] == "extract_all":
-                features = all_features
-            else:
-                features = {}
-                for i in range(len(features_to_extract)):
-                    feature_name_convention = "Fngl_" + str(features_to_extract[i])
-                    features[feature_name_convention] = all_features[feature_name_convention]
+            if features_to_extract[0] != "extract_all":
+                features = {
+                    feature_key: features[feature_key]
+                    for feature_type in features_to_extract
+                    if (feature_key := "Fngl_" + str(feature_type)) in features
+                }
 
-                """ NOTE : Code to use in prevision of future MEDimage update allowing extraction of single features
-                matrices_dict = MEDimage.biomarkers.ngldm.get_ngldm_matrices(
-                    vol=vol_quant_re_texture)
-                
-                # If only some features need to be extracted, use the name of the feature to build
-                # extraction code (executed dynamically using exec()).
-                features = {}
-                for i in range(len(features_to_extract)):
-                    function_name = "MEDimage.biomarkers.ngldm." + str(features_to_extract[i])
-                    function_params = "matrices_dict"
-                    function_call = "result = " + function_name + "(" + function_params + ")"
-                    local_vars = {}
-                    global_vars = {"MEDimage": MEDimage, "matrices_dict": matrices_dict}
-                    exec(function_call, global_vars, local_vars)
-                    features[str(features_to_extract[i])] = local_vars.get("result")
-                """
+            """ NOTE : Code to use in prevision of future MEDimage update allowing extraction of single features
+            matrices_dict = MEDimage.biomarkers.ngldm.get_ngldm_matrices(
+                vol=vol_quant_re_texture)
+            
+            # If only some features need to be extracted, use the name of the feature to build
+            # extraction code (executed dynamically using exec()).
+            features = {}
+            for i in range(len(features_to_extract)):
+                function_name = "MEDimage.biomarkers.ngldm." + str(features_to_extract[i])
+                function_params = "matrices_dict"
+                function_call = "result = " + function_name + "(" + function_params + ")"
+                local_vars = {}
+                global_vars = {"MEDimage": MEDimage, "matrices_dict": matrices_dict}
+                exec(function_call, global_vars, local_vars)
+                features[str(features_to_extract[i])] = local_vars.get("result")
+            """
 
             return features
 
