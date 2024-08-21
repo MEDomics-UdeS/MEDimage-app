@@ -257,8 +257,6 @@ export const updateHasWarning = (data) => {
   if (data.setupParam.type === "segmentationNode") {
     if (Object.keys(data.internal.settings.rois).length === 0) {
       data.internal.hasWarning = { state: true, tooltip: <p>Upload an image and link an input node</p> }
-    } else if (data.internal.settings.rois_data === "") {
-      data.internal.hasWarning = { state: true, tooltip: <p>Select at least one ROI to analyze</p> }
     }
   }
   // Split node check if all the mandatory fields are filled

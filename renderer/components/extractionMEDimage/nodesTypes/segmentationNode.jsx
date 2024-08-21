@@ -29,6 +29,8 @@ const SegmentationNode = ({ id, data, type }) => {
       for (const roiNumber in data.internal.settings.rois) {
         newSelectedRois[data.internal.settings.rois[roiNumber]] = "2"
       }
+      // At least one positive ROI should be selected, select the first one by default
+      newSelectedRois[data.internal.settings.rois[0]] = "0"
       setSelectedRois(newSelectedRois)
     } else {
       setSelectedRois(data.internal.settings.selected_rois)
