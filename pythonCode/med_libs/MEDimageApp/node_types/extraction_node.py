@@ -133,31 +133,21 @@ class ExtractionNode(Node):
             last_feat_vol = pipeline.latest_node_output["vol"]
             last_feat_roi = pipeline.latest_node_output["roi"]
             
-            # If all features need to be extracted
-            if features_to_extract[0] == "extract_all":
-                features = MEDimage.biomarkers.local_intensity.extract_all(
+            # Extract all features
+            features = MEDimage.biomarkers.local_intensity.extract_all(
                     img_obj=last_feat_vol.data,  # vol_obj.data
                     roi_obj=last_feat_roi.data,  # roi_obj_int.data
                     res=pipeline.MEDimg.params.process.scale_non_text,
                     intensity_type=pipeline.MEDimg.params.process.intensity_type
                     # TODO: missing parameter that is automatically set to false
-                )
-            else:
-                # If only some features need to be extracted, use the name of the feature to build
-                # extraction code (executed dynamically using exec()).
-                features = {}
-                for i in range(len(features_to_extract)):
-                    function_name = "MEDimage.biomarkers.local_intensity." + str(features_to_extract[i])
-                    function_params = "img_obj=last_feat_vol.data, roi_obj=last_feat_roi.data, " \
-                                    "res=MEDimg.params.process.scale_non_text, intensity_type=MEDimg.params.process.intensity_type"
-                    function_call = "result = " + function_name + "(" + function_params + ")"
-                    local_vars = {}
-                    global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol,
-                                "last_feat_roi": last_feat_roi, "MEDimg": pipeline.MEDimg}
-                    exec(function_call, global_vars, local_vars)
-
-                    feature_name_convention = "Floc_" + str(features_to_extract[i])
-                    features[feature_name_convention] = local_vars.get("result")
+            )
+            
+            if features_to_extract[0] != "extract_all":
+                features = {
+                    feature_key: features[feature_key]
+                    for feature_type in features_to_extract
+                    if (feature_key := "Floc_" + str(feature_type)) in features
+                }
             
             return features
             
@@ -272,29 +262,20 @@ class ExtractionNode(Node):
             vol_int_re = pipeline.latest_node_output["vol_int_re"]
             
             wd = pipeline.latest_node_output["wd"]
-            
-            # If all features need to be extracted
-            if features_to_extract[0] == "extract_all":
-                features = MEDimage.biomarkers.int_vol_hist.extract_all(
-                    medscan=pipeline.MEDimg,
-                    vol=last_feat_vol,  # vol_quant_re
-                    vol_int_re=vol_int_re,
-                    wd=wd  # TODO: Missing user_set_range argument?
-                )
-            else:
-                # If only some features need to be extracted, use the name of the feature to build
-                # extraction code (executed dynamically using exec()).
-                for i in range(len(features_to_extract)):
-                    function_name = "MEDimage.biomarkers.int_vol_hist." + str(features_to_extract[i])
-                    function_params = "medscan=MEDimg, vol=last_feat_vol, vol_int_re=vol_int_re, wd=wd"
-                    function_call = "result = " + function_name + "(" + function_params + ")"
-                    local_vars = {}
-                    global_vars = {"MEDimage": MEDimage, "last_feat_vol": last_feat_vol,
-                                "vol_int_re": vol_int_re, "MEDimg": pipeline.MEDimg, "wd": wd}
-                    exec(function_call, global_vars, local_vars)
 
-                    feature_name_convention = "Fint_vol_hist_" + str(features_to_extract[i])
-                    features[feature_name_convention] = local_vars.get("result")
+            features = MEDimage.biomarkers.int_vol_hist.extract_all(
+                medscan=pipeline.MEDimg,
+                vol=last_feat_vol,  # vol_quant_re
+                vol_int_re=vol_int_re,
+                wd=wd  # TODO: Missing user_set_range argument?
+            )
+                        
+            if features_to_extract[0] != "extract_all":
+                features = {
+                    feature_key: features[feature_key]
+                    for feature_type in features_to_extract
+                    if (feature_key := "Fint_vol_hist_" + str(feature_type)) in features
+                }
 
             return features
         
@@ -319,32 +300,19 @@ class ExtractionNode(Node):
                 raise Exception("vol_quant_re")
             vol_quant_re_texture = pipeline.latest_node_output_texture["vol_quant_re"]
             
-            # If all features need to be extracted
-            if features_to_extract[0] == "extract_all":
-                features = MEDimage.biomarkers.glcm.extract_all(
+            
+            features = MEDimage.biomarkers.glcm.extract_all(
                     vol=vol_quant_re_texture,
                     dist_correction=pipeline.MEDimg.params.radiomics.glcm.dist_correction,
-                    merge_method=pipeline.MEDimg.params.radiomics.glcm.merge_method)
-            else:
-                # Extracts co-occurrence matrices from the intensity roi mask prior to features
-                matrices_dict = MEDimage.biomarkers.glcm.get_glcm_matrices(
-                    vol_quant_re_texture,
-                    dist_weight_norm=pipeline.MEDimg.params.radiomics.glcm.dist_correction,
                     merge_method=pipeline.MEDimg.params.radiomics.glcm.merge_method
-                    )
-
-                # If not all features need to be extracted, use the name of each feature to build
-                # extraction code (executed dynamically using exec()).
-                for i in range(len(features_to_extract)):
-                    function_name = "MEDimage.biomarkers.glcm." + str(features_to_extract[i])
-                    function_params = "matrices_dict"
-                    function_call = "result = " + function_name + "(" + function_params + ")"
-                    local_vars = {}
-                    global_vars = {"MEDimage": MEDimage, "matrices_dict": matrices_dict}
-                    exec(function_call, global_vars, local_vars)
-
-                    feature_name_convention = "Fcm_" + str(features_to_extract[i])
-                    features[feature_name_convention] = local_vars.get("result")
+            )
+            
+            if features_to_extract[0] != "extract_all":
+                features = {
+                    feature_key: features[feature_key]
+                    for feature_type in features_to_extract
+                    if (feature_key := "Fcm_" + str(feature_type)) in features
+                }
             
             return features
 
@@ -526,23 +494,6 @@ class ExtractionNode(Node):
                     for feature_type in features_to_extract
                     if (feature_key := "Fngl_" + str(feature_type)) in features
                 }
-
-            """ NOTE : Code to use in prevision of future MEDimage update allowing extraction of single features
-            matrices_dict = MEDimage.biomarkers.ngldm.get_ngldm_matrices(
-                vol=vol_quant_re_texture)
-            
-            # If only some features need to be extracted, use the name of the feature to build
-            # extraction code (executed dynamically using exec()).
-            features = {}
-            for i in range(len(features_to_extract)):
-                function_name = "MEDimage.biomarkers.ngldm." + str(features_to_extract[i])
-                function_params = "matrices_dict"
-                function_call = "result = " + function_name + "(" + function_params + ")"
-                local_vars = {}
-                global_vars = {"MEDimage": MEDimage, "matrices_dict": matrices_dict}
-                exec(function_call, global_vars, local_vars)
-                features[str(features_to_extract[i])] = local_vars.get("result")
-            """
 
             return features
 
