@@ -353,6 +353,13 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
 
     // Initialize settings in node data to put the parameters selected by the user
     let featuresNodeDefaultSettings = { features: ["extract_all"] }
+    if (["GLCM", "GLRLM"].includes(newNode.name)) {
+      featuresNodeDefaultSettings = {
+        features: ["extract_all"],
+        dist_correction: "false",
+        merge_method: "vol_merge"
+      }
+    }
     newNode.data.internal.settings = newNode.type === "featuresNode" ? featuresNodeDefaultSettings : newNode.data.setupParam.possibleSettings.defaultSettings
 
     newNode.data.internal.subflowId = !associatedNode ? groupNodeId.id : associatedNode
@@ -585,14 +592,14 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
           // Activate progress if node is extraction node
           if (nodeName === "extraction") {
             // Start progress bar
-            setProgress({now: 0, currentLabel: progress.currentLabel})
+            setProgress({ now: 0, currentLabel: progress.currentLabel })
             setIsProgressUpdating(true)
           }
 
           // Activate progress if node is extraction node
           if (nodeName === "extraction") {
             // Start progress bar
-            setProgress({now: 0, currentLabel: progress.currentLabel})
+            setProgress({ now: 0, currentLabel: progress.currentLabel })
             setIsProgressUpdating(true)
           }
 
@@ -612,15 +619,15 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
               }
               setShowError(true)
 
+              // Update progress
+              if (nodeName === "extraction") {
                 // Update progress
-                if (nodeName === "extraction") {
-                  // Update progress
-                  setIsProgressUpdating(false)
-                  setProgress({
-                    now: 0,
-                    currentLabel: ""
-                  })
-                }
+                setIsProgressUpdating(false)
+                setProgress({
+                  now: 0,
+                  currentLabel: ""
+                })
+              }
             } else {
               toast.success("Node executed successfully")
               console.log("Response from backend is: ", response)
@@ -699,6 +706,13 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
 
     // Transform the flow instance to a dictionnary compatible with the backend
     let newFlow = transformFlowInstance()
+
+    // If there is nothing in the flow, cancel the run
+    if (Object.keys(newFlow["drawflow"]["Home"]["data"]).length === 0) {
+      toast.warn("No workflow to run")
+      return
+    }
+
     console.log("Flow dictionnary sent to back end is : ")
     console.log(newFlow)
 
@@ -715,10 +729,6 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
 
         // Update progress
         setIsProgressUpdating(false)
-        setProgress({
-          now: 0,
-          currentLabel: ""
-        })
         setProgress({
           now: 0,
           currentLabel: ""
