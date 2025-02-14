@@ -20,12 +20,6 @@ class InterpolationNode(Node):
         MEDimg = pipeline.MEDimg
         last_vol_compute = pipeline.latest_node_output["vol"]
         last_roi_compute = pipeline.latest_node_output["roi"]
-
-        # Create deep copies of latest node output image_volume_object to avoid modifying the original object
-        vol_obj = deepcopy(pipeline.latest_node_output["vol"])
-        roi_obj_morph = deepcopy(pipeline.latest_node_output["roi"])
-        vol_obj_texture = deepcopy(pipeline.latest_node_output["vol"])
-        roi_obj_morph_texture = deepcopy(pipeline.latest_node_output["roi"])
         
         # Compute interpolation for NON TEXTURE FEATURES
         ## Compute the intensity mask (returns an image_volume_object)
@@ -37,7 +31,7 @@ class InterpolationNode(Node):
             interp_met=MEDimg.params.process.vol_interp,
             round_val=MEDimg.params.process.gl_round,
             image_type='image',
-            box_string="full" #TODO : prendre box_string de l'objet MEDimg?
+            box_string=MEDimg.params.process.box_string
         )
         
         ## Compute the morphological mask (returns an image_volume_object)
@@ -50,43 +44,45 @@ class InterpolationNode(Node):
             interp_met=MEDimg.params.process.roi_interp,
             round_val=MEDimg.params.process.roi_pv,
             image_type='roi',
-            box_string="full" #TODO : prendre box_string de l'objet MEDimg?
+            box_string=MEDimg.params.process.box_string
         )
         
         ## Update the latest output object of the pipeline
         pipeline.latest_node_output["vol"] = vol_obj
         pipeline.latest_node_output["roi"] = roi_obj_morph
+        
         # Keep a reference to roi_obj_morph in the pipeline for future feature extraction
         pipeline.latest_node_output["roi_obj_morph"] = roi_obj_morph
         
         # Compute interpolation for TEXTURE FEATURES
         ## Compute the intensity mask (returns an image_volume_object)
         vol_obj_texture = MEDimage.processing.interp_volume(
-                vol_obj_s=vol_obj_texture,
+                vol_obj_s=last_vol_compute,
                 vox_dim=MEDimg.params.process.scale_text[0],
                 interp_met=MEDimg.params.process.vol_interp,
                 round_val=MEDimg.params.process.gl_round,
                 image_type='image',
-                roi_obj_s=roi_obj_morph_texture,
+                roi_obj_s=last_roi_compute,
                 box_string=MEDimg.params.process.box_string
             )
         
         ## Compute the morphological mask (returns an image_volume_object)
         roi_obj_morph_texture = MEDimage.processing.interp_volume(
-                vol_obj_s=roi_obj_morph_texture,
+                vol_obj_s=last_roi_compute,
                 vox_dim=MEDimg.params.process.scale_text[0],
                 interp_met=MEDimg.params.process.roi_interp,
                 round_val=MEDimg.params.process.roi_pv,
                 image_type='roi',
-                roi_obj_s=roi_obj_morph_texture,
+                roi_obj_s=last_roi_compute,
                 box_string=MEDimg.params.process.box_string
             )
         
         ## Update the latest output object of the pipeline
         pipeline.latest_node_output_texture["vol"] = vol_obj_texture
-        pipeline.latest_node_output_texture["roi"] = roi_obj_morph_texture
+        pipeline.latest_node_output_texture["roi"] = deepcopy(roi_obj_morph_texture)
+        
         # Keep a reference to roi_obj_morph_texture in the pipeline for future feature extraction
-        pipeline.latest_node_output_texture["roi_obj_morph"] = roi_obj_morph_texture
+        pipeline.latest_node_output_texture["roi_obj_morph"] = deepcopy(roi_obj_morph_texture)
 
         # Update the output of the node
         self.output = {"vol": vol_obj.data,

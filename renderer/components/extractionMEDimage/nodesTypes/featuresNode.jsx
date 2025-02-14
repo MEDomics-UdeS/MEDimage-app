@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo, useContext } from "re
 import Node from "../../flow/node"
 import { Form } from "react-bootstrap"
 import { FlowFunctionsContext } from "../../flow/context/flowFunctionsContext"
-import Card from 'react-bootstrap/Card';
 
 /**
  * @param {string} id id of the node
@@ -178,13 +177,14 @@ const FeaturesNode = ({ id, data, type }) => {
           ) : null
         }
         nodeSpecific={
-          <Card style={{display: 'block', overflow: 'auto', padding: '10px', maxHeight: "250px"}}>
+          <>
             <Form.Check
               type="checkbox"
               label="Select all"
               checked={isAllChecked || selectedFeatures[0] === "extract_all"}
               onChange={handleToggleAll}
             />
+
             {features.map((feature) => (
               <Form.Check
                 key={feature}
@@ -201,7 +201,7 @@ const FeaturesNode = ({ id, data, type }) => {
                 onChange={handleToggleFeature}
               />
             ))}
-          </Card>
+          </>
         }
       />
     </>

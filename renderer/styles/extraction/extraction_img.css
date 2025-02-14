@@ -114,6 +114,7 @@
 
 .standard-form {
   width: 100%;
+}
 
 .features-node-body {
   font-size: small;
@@ -151,4 +152,4 @@
 .extraction-progress label {
   background-color: transparent;
   color: rgba(0, 0, 0, 0.74);
-} 
+}

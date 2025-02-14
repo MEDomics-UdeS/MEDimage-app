@@ -2,26 +2,49 @@
 /* eslint-disable no-undef */
 /* eslint-disable camelcase */
 
-import { Actions, BorderNode, CLASSES, DockLocation, DragDrop, DropInfo, IJsonTabNode, ILayoutProps, ITabRenderValues, ITabSetRenderValues, Layout, Model, Node, TabNode, TabSetNode } from "flexlayout-react"
+import {
+  Action,
+  Actions,
+  BorderNode,
+  CLASSES,
+  DockLocation,
+  DragDrop,
+  DropInfo,
+  IJsonTabNode,
+  ILayoutProps,
+  ITabRenderValues,
+  ITabSetRenderValues,
+  Layout,
+  Model,
+  Node,
+  TabNode,
+  TabSetNode
+} from "flexlayout-react"
+import fs from "fs"
 import Image from "next/image"
 import * as Prism from "prismjs"
 import "prismjs/themes/prism-coy.css"
 import * as React from "react"
 import * as Icons from "react-bootstrap-icons"
 import Iframe from "react-iframe"
-import { loadJsonPath } from "../../../utilities/fileManagementUtils"
-import BatchExtractor from "../../mainPages/batchextractor"
-import DataManager from "../../mainPages/datamanager"
+import { toast } from "react-toastify"
+import { getPathSeparator, loadJsonPath } from "../../../utilities/fileManagementUtils"
 import ExtractionMEDimagePage from "../../mainPages/extractionMEDimage"
+import LearningMEDimagePage from "../../mainPages/learningMEDimage"
+import DataManager from "../../mainPages/datamanager"
+import DataTableWrapperBPClass from "../../dataTypeVisualisation/dataTableWrapperBPClass"
+import DataTableFromDB from "../../dbComponents/dataTableFromDB"
+import BatchExtractor from "../../mainPages/batchextractor"
 import HomePage from "../../mainPages/home"
 import HtmlViewer from "../../mainPages/htmlViewer"
-import LearningMEDimagePage from "../../mainPages/learningMEDimage"
 import ModulePage from "../../mainPages/moduleBasics/modulePage"
 import NotebookEditor from "../../mainPages/notebookEditor"
 import OutputPage from "../../mainPages/output"
 import SettingsPage from "../../mainPages/settings"
 import TerminalPage from "../../mainPages/terminal"
+import { updateMEDDataObjectName, updateMEDDataObjectPath } from "../../mongoDB/mongoDBUtils"
 import { DataContext } from "../../workspace/dataContext"
+import { MEDDataObject } from "../../workspace/NewMedDataObject"
 import { LayoutModelContext } from "../layoutContext"
 import { showPopup } from "./popupMenu"
 import { TabStorage } from "./tabStorage"
@@ -338,10 +361,17 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
       event.preventDefault()
       event.stopPropagation()
       console.log(node, event)
-      showPopup(node instanceof TabNode ? "Tab: " + node.getName() : "Type: " + node.getType(), this.layoutRef!.current!.getRootDiv(), event.clientX, event.clientY, ["Option 1", "Option 2"], (item: string | undefined) => {
-        console.log("selected: " + item)
-        this.showingPopupMenu = false
-      })
+      showPopup(
+        node instanceof TabNode ? "Tab: " + node.getName() : "Type: " + node.getType(),
+        this.layoutRef!.current!.getRootDiv(),
+        event.clientX,
+        event.clientY,
+        ["Option 1", "Option 2"],
+        (item: string | undefined) => {
+          console.log("selected: " + item)
+          this.showingPopupMenu = false
+        }
+      )
       this.showingPopupMenu = true
     }
   }
@@ -463,6 +493,47 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
   }
 
   /**
+   * Callback when an action is dispatched by flexlayout.
+   * @param action action that was dispatched
+   * @returns optionally return a Action to replace the action or null to not dispatch action
+   * @description here we catch RENAME_TAB actions and update the medDataObject name
+   */
+  onAction = (action: Action) => {
+    console.log("MainContainer action: ", action, this.layoutRef, this.state.model)
+    if (action.type === Actions.RENAME_TAB) {
+      const { globalData, setGlobalData } = this.props as DataContextType
+      let newName = action.data.text
+      let medObject = globalData[action.data.node]
+      console.log("medObject", medObject)
+      if (medObject) {
+        // update the medDataObject name
+        let success = updateMEDDataObjectName(medObject.id, newName)
+        if (!success) {
+          toast.error("Failed to update MEDDataObject name of the file")
+          console.error("Failed to update MEDDataObject name")
+          return null
+        }
+        // Update the path
+        let oldPath = medObject.path
+        let newPath = oldPath.split(getPathSeparator()).slice(0, -1).join(getPathSeparator()) + getPathSeparator() + newName
+        success = updateMEDDataObjectPath(medObject.id, newPath)
+        if (!success) {
+          toast.error("Failed to update MEDDataObject path of the file")
+          console.error("Failed to update MEDDataObject path")
+          return null
+        }
+        // Update the local filename
+        if (medObject.inWorkspace) {
+          fs.renameSync(oldPath, newPath)
+          // Update the workspace data object
+          MEDDataObject.updateWorkspaceDataObject()
+        }
+      }
+    }
+    return action
+  }
+
+  /**
    * The most important function of the class
    * It is called for each node and must return a react component to display
    * @param node the node to display
@@ -538,7 +609,7 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
       const jsonText = JSON.stringify(node.getExtraData().data, null, "\t")
       const html = Prism.highlight(jsonText, Prism.languages.javascript, "javascript")
       return (
-        <ModulePage pageId={"jsonViewer-" + config.path} configPath={config.path} shadow>
+        <ModulePage pageId={"jsonViewer-" + config.path} shadow>
           <pre style={{ tabSize: "20px" }} dangerouslySetInnerHTML={{ __html: html }} />
         </ModulePage>
       )
@@ -563,37 +634,145 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
           return <ZoomPanPinchComponent imagePath={config.path} image={image.toDataURL()} width={width} height={height} options={""} />
         }
       }
-    } else if (component === "extractionMEDimagePage") {
+    } else if (component === "evaluationPage") {
+      if (node.getExtraData().data == null) {
+        const config = node.getConfig()
+        return <EvaluationPage pageId={config.id} />
+      }
+    } else if (component === "extractionTextPage") {
       if (node.getExtraData().data == null) {
         const config = node.getConfig()
         if (config.path !== null) {
-          return <ExtractionMEDimagePage pageId={config.uuid} configPath={config.path} />
+          return <ExtractionTextPage pageId={config.uuid} />
         } else {
-          return <ExtractionMEDimagePage pageId={"ExtractionMEDimagePage"} />
+          return <ExtractionTextPage pageId={"ExtractionTextPage"} />
         }
       }
-    } else if (component === "LearningMEDimagePage") {
+    } else if (component === "MEDprofilesViewer") {
       if (node.getExtraData().data == null) {
         const config = node.getConfig()
+        if (config.path !== null) {
+          return <MEDprofilesViewer pageId={config.uuid} MEDclassesFolder={config?.MEDclassesFolder} MEDprofilesBinaryFile={config?.MEDprofilesBinaryFile} />
+        } else {
+          return <MEDprofilesViewer pageId={"MEDprofilesViewer"} MEDclassesFolder={config?.MEDclassesFolder} MEDprofilesBinaryFile={config?.MEDprofilesBinaryFile} />
+        }
+      }
+    } else if (component === "extractionImagePage") {
+      if (node.getExtraData().data == null) {
+        const config = node.getConfig()
+        if (config.path !== null) {
+          return <ExtractionImagePage pageId={config.uuid} />
+        } else {
+          return <ExtractionImagePage pageId={"ExtractionImagePage"} />
+        }
+      }
+    } else if (component === "extractionMEDimagePage") {
+      const config = node.getConfig()
+      if (config.uuid) {
+        return <ExtractionMEDimagePage pageId={config.uuid} />
+      } else if (config.id) {
+        return <ExtractionMEDimagePage pageId={config.id} />
+      } else {
+        return <ExtractionMEDimagePage pageId={"ExtractionMEDimagePage"} />
+      }
+    } else if (component === "dataTable") {
+      const config = node.getConfig()
+      if (node.getExtraData().data == null) {
+        const dfd = require("danfojs-node")
+        const whenDataLoaded = (data) => {
+          const { globalData, setGlobalData } = this.props as DataContextType
+          let globalDataCopy = globalData
+          if (globalDataCopy[config.uuid] !== undefined) {
+            globalDataCopy[config.uuid].setData(new dfd.DataFrame(data))
+            setGlobalData(globalDataCopy)
+          }
+          node.getExtraData().data = dfd.toJSON(globalDataCopy[config.uuid].data, { format: "column" })
+        }
+        let extension = config.extension
+        if (extension === undefined) {
+          extension = config.path.split(".").pop()
+        }
+        config.name = node.getName()
+        if (extension === "csv") loadCSVFromPath(config.path, whenDataLoaded)
+        else if (extension === "json") loadJSONFromPath(config.path, whenDataLoaded)
+        else if (extension === "xlsx") loadXLSXFromPath(config.path, whenDataLoaded)
+      }
+      return (
+        <>
+          <DataTableWrapperBPClass
+            data={node.getExtraData().data}
+            tablePropsData={{
+              paginator: true,
+              rows: 10,
+              scrollable: true,
+              scrollHeight: "400px"
+            }}
+            tablePropsColumn={{
+              sortable: true
+            }}
+            config={{ ...config }}
+            globalData={this.props.globalData}
+            setGlobalData={this.props.setGlobalData}
+          />
+        </>
+      )
+    } else if (component === "dataTableFromDB") {
+      const config = node.getConfig()
+      if (node.getExtraData().data == null) {
+        const whenDataLoaded = (data) => {
+          node.getExtraData().data = data
+        }
+        // const { M, setGlobalData } = this.props as DataContextType
+      }
 
-        return <LearningMEDimagePage pageId={config.uuid} configPath={config.path} />
+      return (
+        <>
+          <DataTableFromDB data={node.getConfig()} isReadOnly={(node.getConfig().extension === "view") ? true : false} />
+        </>
+      )
+    } else if (component === "LearningMEDimagePage") {
+      const config = node.getConfig()
+      if (config.uuid) {
+        return <LearningMEDimagePage pageId={config.uuid} />
+      } else if (config.id) {
+        return <LearningMEDimagePage pageId={config.id} />
+      } else {
+        return <LearningMEDimagePage pageId={"LearningMEDimagePage"} />
       }
     } else if (component === "BatchExtractor") {
       if (node.getExtraData().data == null) {
         const config = node.getConfig()
         if (config.path !== null) {
-          return <BatchExtractor pageId={config.uuid} configPath={config.path} />
+          return <ModulePage><BatchExtractor pageId={config.uuid} configPath={config.path} /></ModulePage>
         } else {
-          return <BatchExtractor pageId={"BatchExtractorPage"} />
+          return <ModulePage><BatchExtractor pageId={"BatchExtractorPage"} /></ModulePage>
         }
       }
     } else if (component === "DataManager") {
       if (node.getExtraData().data == null) {
         const config = node.getConfig()
         if (config.path !== null) {
-          return <DataManager pageId={config.uuid} configPath={config.path} />
+          return <ModulePage><DataManager pageId={config.uuid} configPath={config.path} /></ModulePage>
         } else {
-          return <DataManager pageId={"DataManagerPage"} />
+          return <ModulePage><DataManager pageId={"DataManagerPage"} /></ModulePage>
+        }
+      }
+    }else if (component === "extractionTSPage") {
+      if (node.getExtraData().data == null) {
+        const config = node.getConfig()
+        if (config.path !== null) {
+          return <ExtractionTSPage pageId={config.uuid} configPath={config.path} />
+        } else {
+          return <ExtractionTSPage pageId={"ExtractionTSPage"} />
+        }
+      }
+    } else if (component === "applicationPage") {
+      if (node.getExtraData().data == null) {
+        const config = node.getConfig()
+        if (config.path !== null) {
+          return <ApplicationPage pageId={config.uuid} />
+        } else {
+          return <ApplicationPage pageId={"EvaluationPage"} />
         }
       }
     } else if (component === "terminal") {
@@ -608,11 +787,15 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
 
         return <OutputPage />
       }
-    } else if (component === "htmlViewer") {
+    } else if (component === "modelViewer") {
       if (node.getExtraData().data == null) {
         const config = node.getConfig()
         console.log("config", config)
-        return <HtmlViewer configPath={config.path} />
+        return <ModelViewer pageId={config.id} />
+      }
+    } else if (component === "htmlViewer") {
+      if (node.getExtraData().data == null) {
+        return <HtmlViewer config={node.getConfig()} />
       }
     } else if (component === "iframeViewer") {
       if (node.getExtraData().data == null) {
@@ -703,6 +886,15 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
       let icon = <span style={{ marginRight: 3 }}>{iconToReturn}</span>
       return icon
     } else {
+      if (component === "InputToolsDB" || component === "inputPage") {
+        return <span style={{ marginRight: 3 }}>🛢️</span>
+      }
+      if (component === "BatchExtractor") {
+        return <span style={{ marginRight: 3 }}>🔍</span>
+      }
+      if (component == "DataManager") {
+        return <span style={{ marginRight: 3 }}>💼</span>
+      }
       if (component === "resultsPage") {
         return <span style={{ marginRight: 3 }}>📊</span>
       }
@@ -710,13 +902,7 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
         return <span style={{ marginRight: 3 }}>📷</span>
       }
       if (component === "LearningMEDimagePage") {
-        return <span style={{ marginRight: 3 }}>📚</span>
-      }
-      if (component === "DataManager") {
-        return <span style={{ marginRight: 3 }}>💼</span>
-      }
-      if (component === "BatchExtractor") {
-        return <span style={{ marginRight: 3 }}>🔎</span>
+        return <span style={{ marginRight: 3 }}>📖</span>
       }
       if (component === "terminal") {
         return <span style={{ marginRight: 3 }}>🖥️</span>
@@ -900,6 +1086,7 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
           onContextMenu={this.onContextMenu}
           onAuxMouseClick={this.onAuxMouseClick}
           onTabSetPlaceHolder={this.onTabSetPlaceHolder}
+          supportsPopout={false}
         />
       )
     }
@@ -1006,4 +1193,3 @@ function showImage(url, scale) {
 }
 
 export { MainContainer }
-

@@ -26,7 +26,7 @@ import { FlowResultsContext } from "../context/flowResultsContext"
  *
  */
 const ResultsPaneMEDimage = () => {
-  const { setShowResultsPane, isResults } = useContext(FlowResultsContext)
+  const { selectedResultsId, setSelectedResultsId, flowResults, showResultsPane, setShowResultsPane, isResults } = useContext(FlowResultsContext)
   const [selectedResults, setSelectedResults] = useState([])
   const [selectedPipelines, setSelectedPipelines] = useState([])
   const [generatedPipelines, setGeneratedPipelines] = useState([])
@@ -36,19 +36,19 @@ const ResultsPaneMEDimage = () => {
   const [showMetrics, setShowMetrics] = useState(true)
   const [histogramImages, setHistogramImages] = useState([])
   const [heatMap, setHeatMap] = useState()
-  const [treePlots, setTreePlots] = useState("")
+  const [treePlot, setTreePlot] = useState("")
   const { port } = useContext(WorkspaceContext)
 
   const op = useRef(null);
 
-  /*const cleanResults = () => {
+  const cleanResults = () => {
     setSelectedResults([])
     setExpNames([])
     setSelectedPipelines([])
     setHistogramImages([])
     setHeatMap("")
-    setTreePlots("")
-  }*/
+    setTreePlot("")
+  }
 
   /*
   * @Description: This function is used to process the flow data
@@ -61,9 +61,13 @@ const ResultsPaneMEDimage = () => {
       node.data = node.data.internal.settings;
     });
 
+    console.log("newFlow", newFlow)
+
     // extract selected pipelines
     let pipIndexes = generatedPipelines.map((pip) => pip.name.split(" ")[1] - 1)
+    console.log("pipIndexes", pipIndexes)
     let pipsToGenerate = pipIndexes.map((pipIndex) => selectedPipelines[pipIndex])
+    console.log("pipsToGenerate", pipsToGenerate)
     return {
       "nodes": newFlow.nodes,
       "pips": pipsToGenerate,
@@ -104,13 +108,13 @@ const ResultsPaneMEDimage = () => {
                   function (error, stdout, stderr) {
                       console.log('stdout: ' + stdout);
                       console.log('stderr: ' + stderr);
-                      toast.error("Error detected while opening the notebook, check console for more details")
                       if (error !== null) {
                           console.log('exec error: ' + error);
                       }
                   });
-            } catch (error) {
-              console.log("Error detected while opening the notebook", error);
+                }
+            catch (error) {
+              console.log("Error detected while opening the notebook", error)
             }
             
           } else {
@@ -142,6 +146,7 @@ const ResultsPaneMEDimage = () => {
 
     // Else
     try {    
+      console.log("renderAccordions data", data)
       return data.map((pipelines, indexPip) => {
         return (
           <Accordion key={`AccordionPips-${indexPip}`}>
@@ -156,10 +161,7 @@ const ResultsPaneMEDimage = () => {
                       {/*Histograms*/}
                       <Accordion key={`AccordionTab-Histograms-${index+indexPip}`}>
                         <AccordionTab disabled={!isResults} key={`AccordionTab-Figures-${index+indexPip}`} header={"Analysis Plots"}>
-                          {(histogramImages.length > 0) ? (
-                            <Image key={indexPip+index} src={histogramImages[indexPip+index]} alt="Image" width="300" preview/>) :
-                            (<div style={{ color: 'red' }}>No histograms generated.</div>)
-                          }
+                            <Image key={indexPip+index} src={histogramImages[indexPip+index]} alt="Image" width="300" preview/>
                         </AccordionTab>
                       </Accordion>
 
@@ -177,16 +179,25 @@ const ResultsPaneMEDimage = () => {
   };
   
   const renderAccordionTabs = (item, index, isResults) => {
+    console.log("item renderAccordionTabs", item)
+    console.log("index renderAccordionTabs", index)
+    console.log("expNames", expNames)
     return Object.keys(item).map((currentExp, _) => {
+      console.log("currentExp", currentExp)
+      console.log("expNames[index]", expNames[index])
       if (expNames.includes(currentExp)){
+        console.log("went it")
         return Object.keys(item[currentExp]).map((key, dataIdx) => {
+          console.log("item[currentExp]", item[currentExp])
           let values = item[currentExp][key];
+          console.log("values", values)
 
           let keysList = Object.keys(values);
+          console.log("keysList", keysList)
 
           // Add experiment name to the list of keys
           if (expNames.length > 0) {
-            if (!Object.prototype.hasOwnProperty.call(values, "Experiment")) {
+            if (!values.hasOwnProperty("Experiment")) {
               values["Experiment"] = currentExp;
             }
             if (keysList.includes("Experiment")){
@@ -198,7 +209,7 @@ const ResultsPaneMEDimage = () => {
           // If no metrics are found, display a warning
           if (!values || keysList.length === 0 || (expNames.length > 0 && keysList.length === 1)){
             return (
-              <Accordion key={`Accordion-${index}-${dataIdx}`}>
+              <Accordion>
                 <AccordionTab key={`AccordionTab-${index}-${dataIdx}`} header={key}>
                   <div style={{ color: 'red' }}>Warning: Values are empty or undefined.</div>
                 </AccordionTab>
@@ -208,7 +219,7 @@ const ResultsPaneMEDimage = () => {
           
           // Display the metrics in a table
           return (
-            <Accordion key={`Accordion-${dataIdx+index+1}`}>
+            <Accordion>
               <AccordionTab disabled={!isResults} key={`AccordionTab-${dataIdx+index+1}`} header={key}>
                 <DataTable value={[values]}>
                   {keysList.map((key1, columnIndex) => (
@@ -260,9 +271,12 @@ const ResultsPaneMEDimage = () => {
       }
       keysList = keysList.reduce((a, b) => a.filter(c => b.includes(c)));
 
+      console.log("keysList 225", keysList)
+
       // Fill values for Data Table
       let keyIndex = 0;
       for (const key of keysList) {
+        console.log("key 225", key)
         values[keyIndex] = []
         for (let index = 0; index < data.length; index++) {
             let item = data[index];
@@ -278,7 +292,7 @@ const ResultsPaneMEDimage = () => {
                       MetricsKeysList = Object.keys(item[key1][key2][key]);
 
                       // Add experiment name to the list of keys
-                      if (!Object.prototype.hasOwnProperty.call(values, "Experiment")) {
+                      if (!values.hasOwnProperty("Experiment")) {
                         values[keyIndex][index]["Experiment"] = key1 + "_" + key2;
                       }
                       if (MetricsKeysList.includes("Experiment")){
@@ -294,6 +308,9 @@ const ResultsPaneMEDimage = () => {
 
           /*const item = data[index];
           if (Object.keys(item[expNames[index]][key]).length > 1){
+            console.log("keyIndex ", keyIndex)
+            console.log("key ", key)
+            console.log("item[expNames[index]][key]", item[expNames[index]][key])
             values[keyIndex][index] = item[expNames[index]][key];
             MetricsKeysList = Object.keys(item[expNames[index]][key]);*/
         
@@ -340,9 +357,9 @@ const ResultsPaneMEDimage = () => {
                   <div style={{ color: 'red' }}>No heatmap generated.</div>
                 </Panel>
               )}
-              {(treePlots === undefined || treePlots === "" || treePlots.length < 0) && (
+              {(treePlot === undefined || treePlot === "") && (
                 <Panel header="Tree Plot" toggleable>
-                  <div style={{ color: 'red' }}>No tree plots generated.</div>
+                  <div style={{ color: 'red' }}>No tree plot generated.</div>
                 </Panel>
               )}
               {(heatMap !== undefined && heatMap !== "") && (
@@ -350,14 +367,10 @@ const ResultsPaneMEDimage = () => {
                   <Image key={"Heatmap"} src={heatMap} alt="Image" width="500" preview/>
                 </Panel>
               )}
-              {(treePlots !== undefined && treePlots !== "" && treePlots.length > 0) && (
-                <Panel header="Tree Plots" toggleable>
-                  {treePlots.map((treePlots, index) => {
-                    return (
-                        <Image key={"treePlots" + index} src={treePlots} alt="Image" width="500" preview/>
-                    );
-                  })}
-                </Panel>                
+              {(treePlot !== undefined && treePlot !== "") && (
+                <Panel header="Tree Plot" toggleable>
+                  <Image key={"treePlot"} src={treePlot} alt="Image" width="500" preview/>
+                </Panel>
               )}
             </AccordionTab>
         </Accordion>
@@ -379,26 +392,35 @@ const ResultsPaneMEDimage = () => {
 
   useEffect(() => {
     if (flowContent.nodes) {
+      let experiments = []
       let histograms = []
-      let treePlotsPaths = ""
-      let pathHeatMap = ""
       flowContent.nodes.map((node) => {
         if (node.type === "Analyze"){
           // Images
-          if (Object.prototype.hasOwnProperty.call(node.data.internal.results, "figures")){
+          if (node.data.internal.results.hasOwnProperty("figures")){
+            console.log("Found figures", node.data.internal.results.figures)
             // Heatmap
-            if (Object.prototype.hasOwnProperty.call(node.data.internal.results.figures, "heatmap")){
-              if (Object.prototype.hasOwnProperty.call(node.data.internal.results.figures.heatmap, "path")){
-                  pathHeatMap = node.data.internal.results.figures.heatmap.path
+            if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
+              if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
+                if (node.data.internal.results.figures.heatmap.hasOwnProperty("path")){
+                    setHeatMap(node.data.internal.results.figures.heatmap.path)
+                    console.log("pushing heatMaps", node.data.internal.results.figures.heatmap.path)
+                }
               }
             }
             // Tree Plot
-            if (Object.prototype.hasOwnProperty.call(node.data.internal.results.figures, "treeplots")){
-              treePlotsPaths = node.data.internal.results.figures.treeplots
+            if (node.data.internal.results.figures.hasOwnProperty("treeplot")){
+              if (node.data.internal.results.figures.hasOwnProperty("treeplot")){
+                if (node.data.internal.results.figures.treeplot.hasOwnProperty("treeplot")){
+                    setTreePlot(node.data.internal.results.figures.treeplot.path)
+                    console.log("pushing treeplot", node.data.internal.results.figures.treeplot.path)
+                }
+              }
             }
           }
           // Results - Metrics
-          if (Object.prototype.hasOwnProperty.call(node.data.internal.results, "results_avg")){
+          if (node.data.internal.results.hasOwnProperty("results_avg")){
+            console.log("Found results_avg", node.data.internal.results)
             setSelectedResults(node.data.internal.results.results_avg)
             /*node.data.internal.results.results_avg.map((result, index) => {
               console.log("result map", result)
@@ -416,14 +438,24 @@ const ResultsPaneMEDimage = () => {
             })*/
             // Histograms
             try{
+              console.log("BEEN HERE")
               for (let index = 0; index < node.data.internal.results.results_avg.length; index++) {
+                console.log("BEEN HERE 2")
                 Object.entries(node.data.internal.results.results_avg[index]).map((item, _) => {
+                  console.log("BEEN HERE 3")
+                  console.log("item BEEN", item[1])
                   Object.entries(item[1]).map((itemAnalysis, _) => {
+                    console.log("BEEN HERE 4")
+                    console.log("BEEN itemAnalysis", itemAnalysis)
                     Object.entries(itemAnalysis[1]).map((resultAnalysis, _) => {
+                      console.log("BEEN HERE 5")
+                      console.log("BEEN resultAnalysis", resultAnalysis)
                       let result = resultAnalysis[1];
-                          if (Object.prototype.hasOwnProperty.call(result, "histogram")){
-                            if (Object.prototype.hasOwnProperty.call(result.histogram, "path")){
+                      console.log("BEEN histogram test result", result)
+                          if (result.hasOwnProperty("histogram")){
+                            if (result.histogram.hasOwnProperty("path")){
                               if(!histograms.includes(result.histogram.path)){
+                                console.log("BEENpushing histogram", result.histogram.path)
                                 histograms.push(result.histogram.path)
                               }
                             }
@@ -433,26 +465,30 @@ const ResultsPaneMEDimage = () => {
                 });
               }
             } catch (error) {
-              toast.error("Error detected while processing histograms", error)
+              console.log("Error detected while processing histograms", error)
             }
           }
-          if (Object.prototype.hasOwnProperty.call(node.data.internal.results, "pips")){
+          if (node.data.internal.results.hasOwnProperty("pips")){
+            console.log("Found pip", node.data.internal.results.pips)
             setSelectedPipelines(node.data.internal.results.pips)
           }
-          if (Object.prototype.hasOwnProperty.call(node.data.internal.results, "experiments")){
+          if (node.data.internal.results.hasOwnProperty("experiments")){
+            console.log("Found experiments", node.data.internal.results.experiments)
             setExpNames(node.data.internal.results.experiments)
           }
         }
       })
-      setHeatMap(pathHeatMap)
-      setHistogramImages(histograms)
-      setTreePlots(treePlotsPaths)
+      if (histograms.length > 0){
+        setHistogramImages(histograms)
+      }
     }
   }, [flowContent])
 
   const getPipelinesName = () => {
+    console.log("expNames", expNames)
     if (selectedPipelines.length > 0){
       return selectedPipelines.map((_, index) => {
+        console.log("option", "pipeline " + index)
         return { name: "pipeline " + (index + 1) };
       });
     }

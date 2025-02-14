@@ -14,7 +14,11 @@ import DocLink from "../../docLink"
 const GaborFilter = ({ changeFilterForm, data }) => {
   return (
     <Form.Group as={Row} controlId="filter-gabor">
-      <DocLink linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#gabor"} name={"Gabor filter documentation"} image={"../icon/extraction_img/exclamation.svg"} />
+      <DocLink 
+        linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#gabor"} 
+        name={"Gabor filter documentation"} 
+        image={"https://www.svgrepo.com/show/521262/warning-circle.svg"} 
+      />
       <Form.Group as={Row} controlId="sigma">
         <Form.Label column>Sigma:</Form.Label>
         <Col>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef, useContext } from "react"
+import { ipcRenderer } from "electron"
 import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels"
 import Image from "next/image"
 import resizable from "../../styles/resizable.module.css"
@@ -7,15 +8,17 @@ import Home from "../mainPages/home"
 import ExtractionMEDimagePage from "../mainPages/extractionMEDimage"
 import LearningMEDimagePage from "../mainPages/learningMEDimage"
 import HomeSidebar from "./sidebarTools/pageSidebar/homeSidebar"
+import GeneralModuleSidebar from "./sidebarTools/pageSidebar/generalModuleSidebar"
+import ExplorerSidebar from "./sidebarTools/pageSidebar/explorerSidebar"
 import FlowSceneSidebar from "./sidebarTools/pageSidebar/flowSceneSidebar"
-import { ipcRenderer } from "electron"
+import EvaluationSidebar from "./sidebarTools/pageSidebar/evaluationSidebar"
 import { MainContainer } from "./flexlayout/mainContainerClass"
-import SidebarDirectoryTreeControlled from "./sidebarTools/directoryTree/sidebarDirectoryTreeControlled"
-import { Accordion, Stack } from "react-bootstrap"
 import { LayoutModelContext } from "./layoutContext"
 import { WorkspaceContext } from "../workspace/workspaceContext"
 import { requestBackend } from "../../utilities/requests"
 import { toast } from "react-toastify"
+import NotificationOverlay from "../generalPurpose/notificationOverlay"
+
 import os from "os"
 
 const LayoutManager = (props) => {
@@ -38,19 +41,25 @@ const LayoutManager = (props) => {
   useEffect(() => {
     console.log("port set to: ", port)
     if (port) {
-      requestBackend(
-        port,
-        "clearAll",
-        { data: "clearAll" },
-        (data) => {
-          console.log("clearAll received data:", data)
-          toast.success("Go server is connected and ready !")
-        },
-        (error) => {
-          console.log("clearAll error:", error)
-          toast.error("Go server is not connected !")
+      ipcRenderer.invoke("getBundledPythonEnvironment").then((res) => {
+        console.log("Python embedded: " + res)
+        if (res !== null) {
+          requestBackend(
+            port,
+            "clearAll",
+            { data: "clearAll" },
+            (data) => {
+              console.log("clearAll received data:", data)
+              toast.success("Go server is connected and ready !")
+            },
+            (error) => {
+              console.log("clearAll error:", error)
+              toast.error("Go server is not connected !")
+            }
+          )
+
         }
-      )
+      })
     }
   }, [port])
 
@@ -93,7 +102,7 @@ const LayoutManager = (props) => {
    */
   const handleSidebarItemSelect = (selectedItem) => {
     setActiveSidebarItem(selectedItem) // Update activeNavItem state with selected item
-    ipcRenderer.send("messageFromNext", "updateWorkingDirectory")
+    //ipcRenderer.send("messageFromNext", "updateWorkingDirectory")
   }
 
   // Render content component based on activeNavItem state
@@ -118,19 +127,23 @@ const LayoutManager = (props) => {
       case "home":
         return <HomeSidebar />
       case "extractionMEDimage":
-        return <FlowSceneSidebar type="extractionMEDimage" />
-        case "learningMEDimage":
-          return <FlowSceneSidebar pageId="learningMEDimage" />
-
+        return (
+          <GeneralModuleSidebar pageTitle="MEDimage Extraction">
+            <FlowSceneSidebar type="extractionMEDimage" />
+          </GeneralModuleSidebar>
+        )
+      case "LearningMEDimage":
+        return (
+          <GeneralModuleSidebar pageTitle="MEDimage Learning">
+            <FlowSceneSidebar type="learningMEDimage" />
+          </GeneralModuleSidebar>
+        )
+      case "evaluation":
+        return <EvaluationSidebar />
       default:
         return (
           <>
-            <Stack direction="vertical" gap={3} style={{ marginLeft: "0.5rem" }}>
-              <h5 style={{ color: "#d3d3d3", marginLeft: "0.5rem" }}>{activeSidebarItem}</h5>
-              <Accordion defaultActiveKey={["0"]} alwaysOpen>
-                <SidebarDirectoryTreeControlled />
-              </Accordion>
-            </Stack>
+            <GeneralModuleSidebar pageTitle={activeSidebarItem.charAt(0).toUpperCase() + activeSidebarItem.slice(1)} />
           </>
         )
     }
@@ -227,8 +240,16 @@ const LayoutManager = (props) => {
               {renderContentComponent({ props })} {/* Render content component based on activeNavItem state */}
             </Panel>
           </PanelGroup>
+          <NotificationOverlay />
           <div className="quebec-flag-div">
-            <Image className="quebec-flag" src="/images/QUEBEC-FLAG.jpg" alt="Quebec flag" width="750" height="500" style={{ opacity: quebecFlagDisplay ? "1" : "0", height: quebecFlagDisplayHeight, zIndex: quebecFlagZIndex }} />
+            <Image
+              className="quebec-flag"
+              src="/images/QUEBEC-FLAG.jpg"
+              alt="Quebec flag"
+              width="750"
+              height="500"
+              style={{ opacity: quebecFlagDisplay ? "1" : "0", height: quebecFlagDisplayHeight, zIndex: quebecFlagZIndex }}
+            />
           </div>
         </div>
       </div>

@@ -61,7 +61,11 @@ const InterpolationForm = ({ nodeForm, changeNodeForm, data }) => {
 
   return (
     <Form className="standard-form">
-      <DocLink linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#interp"} name={"Interpolation documentation"} image={"../icon/extraction_img/exclamation.svg"} />
+      <DocLink 
+        linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#interp"}
+        name={"Interpolation documentation"}
+        image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
+      />
 
       <Form.Group controlId="scale_non_text" style={{ paddingTop: "10px" }}>
         <Form.Label>Voxel size for non-texture features :</Form.Label>
@@ -151,7 +155,7 @@ const InterpolationForm = ({ nodeForm, changeNodeForm, data }) => {
       </Form.Group>
 
       <Form.Group controlId="gl_round" style={{ paddingTop: "10px" }}>
-        <Form.Label>Rounding value (only for CT scan) :</Form.Label>
+        <Form.Label>Rounding value (Leave empty if not a CT scan):</Form.Label>
         <Form.Control name="gl_round" type="number" defaultValue={nodeForm.gl_round} placeholder={"Default: " + String(defaultValues.gl_round)} onChange={changeNodeForm} />
       </Form.Group>
 

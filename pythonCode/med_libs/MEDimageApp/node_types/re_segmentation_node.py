@@ -1,5 +1,4 @@
 from copy import deepcopy
-import copy
 import numpy as np
 from ..node import Node
 import MEDimage
@@ -32,7 +31,7 @@ class ReSegmentationNode(Node):
             vol=vol_obj.data,
             roi=roi_obj_int.data,
             im_range=pipeline.MEDimg.params.process.im_range
-        )        
+        )
         
         ## Intensity mask outlier re-segmentation (returns an ndarray)
         roi_obj_int.data = np.logical_and(
@@ -45,7 +44,7 @@ class ReSegmentationNode(Node):
         ).astype(int)
         
         ## Update the latest output object of the pipeline (only the roi was modified)
-        pipeline.latest_node_output["roi"] = roi_obj_int
+        #pipeline.latest_node_output["roi"] = roi_obj_int
         # Keep a reference to roi_obj_int in the pipeline for future feature extraction
         pipeline.latest_node_output["roi_obj_int"] = roi_obj_int
         
@@ -57,7 +56,7 @@ class ReSegmentationNode(Node):
         if "vol" in pipeline.latest_node_output_texture and pipeline.latest_node_output_texture["vol"] is not None:
             ## Get the latest texture volume output of the pipeline (should be the one from interpolation node)
             vol_obj_texture = pipeline.latest_node_output_texture["vol"]
-        
+
             ## Create deep copy of texture roi_obj_morph to avoid modifying the original object
             roi_obj_int_texture = deepcopy(pipeline.latest_node_output_texture["roi_obj_morph"])
             
@@ -80,6 +79,7 @@ class ReSegmentationNode(Node):
             
             ## Update the latest texture output object of the pipeline (only the roi was modified)
             pipeline.latest_node_output_texture["roi"] = roi_obj_int_texture
+            
             # Keep a reference to roi_obj_int in the pipeline for future feature extraction
             pipeline.latest_node_output_texture["roi_obj_int"] = roi_obj_int_texture
         

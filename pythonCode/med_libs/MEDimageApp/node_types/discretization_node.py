@@ -33,8 +33,8 @@ class DiscretizationNode(Node):
         pipeline.latest_node_output["vol_quant_re"] = vol_quant_re 
         
         ## Update the output of the node
-        self.output["vol"] = vol_quant_re
-        self.output["roi"] = pipeline.latest_node_output["roi"].data
+        self.output["vol"] = deepcopy(vol_quant_re)
+        self.output["roi"] = deepcopy(pipeline.latest_node_output["roi"].data)
         
         ## Intensity discretization for IVH computation
         if pipeline.MEDimg.params.process.ivh and 'type' in pipeline.MEDimg.params.process.ivh and 'val' in pipeline.MEDimg.params.process.ivh:
@@ -55,8 +55,8 @@ class DiscretizationNode(Node):
         pipeline.latest_node_output["wd"] = wd
         
         ## Update the output of the node
-        self.output["vol_ivh"] = vol_quand_re_ivh
-        self.output["roi_ivh"] = pipeline.latest_node_output["roi"].data
+        self.output["vol_ivh"] = deepcopy(vol_quand_re_ivh)
+        self.output["roi_ivh"] = deepcopy(pipeline.latest_node_output["roi"].data)
         
         # Discretization for TEXTURE FEATURES
         if "vol_int_re" in pipeline.latest_node_output_texture and pipeline.latest_node_output_texture["vol_int_re"] is not None:

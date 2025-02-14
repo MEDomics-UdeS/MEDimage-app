@@ -2,40 +2,46 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from "re
 import { toast } from "react-toastify"
 
 // Import utilities
-import { downloadFile, loadJsonSync, processBatchSettings } from "../../utilities/fileManagementUtils"
-import { requestBackend } from "../../utilities/requests"
-import ProgressBarRequests from "../generalPurpose/progressBarRequests"
+import { loadJsonSync, processBatchSettings } from "../../utilities/fileManagementUtils.js"
+import { requestBackend } from "../../utilities/requests.js"
+import ProgressBarRequests from "../generalPurpose/progressBarRequests.jsx"
+import { getCollectionData } from "../dbComponents/utils.js"
+import { overwriteMEDDataObjectContent } from "../mongoDB/mongoDBUtils.js"
+import { updateHasWarning } from "../flow/node.jsx"
 
 
 // Workflow imports
 import { useEdgesState, useNodesState, useReactFlow } from "reactflow"
-import { FlowFunctionsContext } from "../flow/context/flowFunctionsContext"
-import { FlowResultsContext } from "../flow/context/flowResultsContext"
-import WorkflowBase from "../flow/workflowBase"
+import { FlowFunctionsContext } from "../flow/context/flowFunctionsContext.jsx"
+import { FlowResultsContext } from "../flow/context/flowResultsContext.jsx"
+import WorkflowBase from "../flow/workflowBase.jsx"
 import { ErrorRequestContext } from "../generalPurpose/errorRequestContext.jsx"
-import { WorkspaceContext } from "../workspace/workspaceContext"
+import { WorkspaceContext } from "../workspace/workspaceContext.jsx"
+import { MEDDataObject } from "../workspace/NewMedDataObject.js"
+import { DataContext } from "../workspace/dataContext.jsx"
+import { PageInfosContext } from "../mainPages/moduleBasics/pageInfosContext.jsx"
 
 // Import node types
-import Analyze from "./nodes/Analyze"
-import Cleaning from "./nodes/Cleaning"
-import Data from "./nodes/Data"
-import Design from "./nodes/Design"
-import FeatureReduction from "./nodes/FeatureReduction"
-import Normalization from "./nodes/Normalization"
-import RadiomicsLearner from "./nodes/RadiomicsLearner"
-import Split from "./nodes/Split"
+import Analyze from "./nodes/Analyze.jsx"
+import Cleaning from "./nodes/Cleaning.jsx"
+import Data from "./nodes/Data.jsx"
+import Design from "./nodes/Design.jsx"
+import FeatureReduction from "./nodes/FeatureReduction.jsx"
+import Normalization from "./nodes/Normalization.jsx"
+import RadiomicsLearner from "./nodes/RadiomicsLearner.jsx"
+import Split from "./nodes/Split.jsx"
+
 // Import node parameters
-import nodesParams from "../../public/setupVariables/allNodesParams"
+import nodesParams from "../../public/setupVariables/allNodesParams.jsx"
 
 // Import buttons
-import BtnDiv from "../flow/btnDiv"
+import BtnDiv from "../flow/btnDiv.jsx"
 
 // Static functions used in the workflow
-import { deepCopy } from "../../utilities/staticFunctions"
+import { deepCopy } from "../../utilities/staticFunctions.js"
 
 // Useful libraries
 import { useRef } from "react"
-
 
 /**
  * @param {String} id id of the workflow for multiple workflows management
@@ -61,13 +67,15 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
   const [nSplits, setNSplits] = useState([]) // nSplits is used to store the number of splits to be done in the learning experiment
   const [resultsFolder, setResultsFolder] = useState([])   // resultsFolder is used to store the path to the machine learning results
   const [experiments, setExperiments] = useState([]) // experiments is used to store the experiments to be done in the learning experiment
-  const pageId = "learningMEDimage" // pageId is used to identify the page in the backend
+  const { pageId } = useContext(PageInfosContext) // used to get the page infos such as id and config path
   const { setIsResults, isResults } = useContext(FlowResultsContext)
   const { groupNodeId, changeSubFlow, updateNode } = useContext(FlowFunctionsContext)
+  const { globalData } = useContext(DataContext)
   const { port } = useContext(WorkspaceContext)
   const { setError, setShowError } = useContext(ErrorRequestContext) // used to get the flow infos
   const op = useRef(null);
-  const [selectedModalities, setSelectModalities] = useState([]);
+  const [selectedModalities, setSelectModalities] = useState([])
+  const [metadataFileID, setMetadataFileID] = useState(null) // the metadata file in the .medml folder containing the frontend workflow
 
   // Hook executed upon modification of edges to verify the connections between input and segmentation nodes
   useEffect(() => {
@@ -126,6 +134,25 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
     }),
     []
   )
+
+  // When config is changed, we update the workflow
+  useEffect(() => {
+    async function getConfig() {
+      // Get Config file
+      if (globalData[pageId]?.childrenIDs) {
+        let configToLoad = MEDDataObject.getChildIDWithName(globalData, pageId, "metadata.json")
+        setMetadataFileID(configToLoad)
+        if (configToLoad) {
+          let jsonContent = await getCollectionData(configToLoad)
+          updateScene(jsonContent[0])
+          toast.success("Config file has been loaded successfully")
+        } else {
+          console.log("No config file found for this page, base workflow will be used")
+        }
+      }
+    }
+    getConfig()
+  }, [pageId])
 
   // Executes setTreeData when there is a change in nodes or edges arrays.
   useEffect(() => {
@@ -418,7 +445,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
    * Handles merge between the already existing data of an extraction node and the response dictionnary from the backend
    * TODO : Should not have to be used after refactoring of backend
    */
-  /*const handleExtractionResults = (oldNodeData, response) => {
+  const handleExtractionResults = (oldNodeData, response) => {
     // Get the results that were in the node
     let oldResults = oldNodeData
     let newResults = oldResults
@@ -462,7 +489,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
       }
     }
     return newResults
-  }*/
+  }
 
   /**
    * @param {String} id id of the node to execute
@@ -541,6 +568,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
    */
   function isFolderExists(folderPath) {
     try {
+      let resultFiles = 0;
       const folders = fs.readdirSync(folderPath);
       console.log("isFolderExists found files", folders);
       return true;
@@ -556,7 +584,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
   const sum = (arr) => arr.reduce((a, b) => a + b, 0);
 
   // Function to fetch and update data (your front-end function)
-  /*const fetchProgress = () => {
+  const fetchProgress = () => {
     let resultsFolderTemp = resultsFolder;
     let experimentsTemp = experiments;
     let nSplitsTemp = nSplits;
@@ -600,7 +628,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
       }
       indexExp++;
     }
-  }*/
+  }
 
   /*useEffect(() => {
     if (isProgressUpdating) {
@@ -627,7 +655,6 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
     let experimentsTemp = []
     let resultsFolders = []
     let nSplitsTemp = []
-    console.log("Running workflow")
 
     // Transform the flow instance to a dictionnary compatible with the backend
     let newFlow = transformFlowInstance()
@@ -639,13 +666,11 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
       let nodeData = value.data
       let nodeName = value.name
       if (nodeName === "design") {
-        console.log("0")
         let methodDesing = nodeData.testSets[0]
         if (!experimentsTemp.includes(nodeData.expName)){
           experimentsTemp.push(nodeData.expName)
         }
         folderNames.push("learn__" + nodeData.expName)
-        console.log("folderNames 0", folderNames)
         nSplitsTemp.push(nodeData[methodDesing].nSplits);
         //setNSplits(nodeData[methodDesing].nSplits);
       }
@@ -794,26 +819,38 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
    */
   const onClear = useCallback(() => {
     console.log("reactFlowInstance.toObject():", reactFlowInstance.toObject())
-    if (reactFlowInstance & (nodes.length > 0)) {
+    if (reactFlowInstance && nodes.length > 0) {
       let confirmation = confirm("Are you sure you want to clear the canvas?\nEvery data will be lost.")
       if (confirmation) {
         setNodes([])
         setEdges([])
+        toast.success("Canvas has been cleared successfully")
       }
     } else {
       toast.warn("No workflow to clear")
     }
   }, [reactFlowInstance, nodes])
 
+  const onClesar = useCallback(() => {
+      // Check if the workflow exists and there are nodes in the workflow
+      if (reactFlowInstance && nodes.length > 0) {
+        let confirmation = confirm("Are you sure you want to clear the canvas?\nEvery data will be lost.")
+        if (confirmation) {
+          setNodes([])
+          setEdges([])
+        }
+      } else {
+        toast.warn("No workflow to clear")
+      }
+    }, [reactFlowInstance, nodes])
+
   /**
    * @description
    * Save the workflow as a json file
    */
-  const onSave = useCallback(() => {
-    console.log(reactFlowInstance)
-    console.log(nodes)
-    if (reactFlowInstance && nodes.length > 0) {
-      const flow = JSON.parse(JSON.stringify(reactFlowInstance.toObject()))
+  const onSave = useCallback(async () => {
+    if (reactFlowInstance && metadataFileID) {
+      const flow = deepCopy(reactFlowInstance.toObject())
       flow.nodes.forEach((node) => {
         // Set enableView to false because only the scene is saved
         // and importing it back would not reload the volumes that
@@ -821,10 +858,12 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
         node.data.enableView = false
       })
       console.log("flow", flow)
-      downloadFile(flow, "learningMEDimage_experiment.json")
-    } else {
-      // Warn the user if there is no workflow to save
-      toast.warn("No workflow to save!")
+      let success = await overwriteMEDDataObjectContent(metadataFileID, [flow])
+      if (success) {
+        toast.success("Scene has been saved successfully")
+      } else {
+        toast.error("Error while saving scene")
+      }
     }
   }, [reactFlowInstance, nodes])
 
@@ -854,7 +893,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
             // set workflow type
             let subworkflowType = node.data.internal.subflowId != "MAIN" ? "learningMEDimage" : "learningMEDimage"
             // set node type
-            let setupParams = deepCopy(nodesParams[subworkflowType][node.name.toLowerCase().replaceAll(" ", "_")])
+            let setupParams = deepCopy(nodesParams[subworkflowType][node.name.toLowerCase().replaceAll(" ", "_").replaceAll("-", "_")])
             console.log("setupParams", setupParams)
             node.data.setupParam = setupParams
           })
@@ -879,7 +918,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
    * @description
    * Load a workflow from a json file
    */
-  /*const onLoadDeafult = useCallback(() => {
+  const onLoadDeafult = useCallback(() => {
     // Ask confirmation from the user if the canvas is not empty,
     // since the workflow will be replaced
     let confirmation = true
@@ -900,7 +939,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
             // set workflow type
             let subworkflowType = node.data.internal.subflowId != "MAIN" ? "learningMEDimage" : "learningMEDimage"
             // set node type
-            let setupParams = deepCopy(nodesParams[subworkflowType][node.name.toLowerCase().replaceAll(" ", "_")])
+            let setupParams = deepCopy(nodesParams[subworkflowType][node.name.toLowerCase().replaceAll(" ", "_").replaceAll("-", "_")])
             console.log("setupParams", setupParams)
             node.data.setupParam = setupParams
           })
@@ -919,13 +958,37 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
       // Call the async function
       restoreFlow()
     }
-  }, [setNodes, setViewport, nodes])*/
+  }, [setNodes, setViewport, nodes])
+
+  /**
+   *
+   * @param {Object} newScene new scene to update the workflow
+   *
+   * This function updates the workflow with the new scene
+   */
+  const updateScene = (newScene) => {
+    if (newScene) {
+      // For each nodes in the json file, add the specific parameters
+      Object.values(newScene.nodes).forEach((node) => {
+        // the line below is important because functions are not serializable
+        // set workflow type and get default parameters
+        let subworkflowType = node.data.internal.subflowId != "MAIN" ? "learningMEDimage" : "learningMEDimage"
+        let setupParams = deepCopy(nodesParams[subworkflowType][node.name.toLowerCase().replaceAll(" ", "_").replaceAll("-", "_")])
+        node.data.setupParam = setupParams
+        updateHasWarning(node.data)
+      })
+      const { x = 0, y = 0, zoom = 1 } = newScene.viewport
+      setNodes(newScene.nodes || [])
+      setEdges(newScene.edges || [])
+      setViewport({ x, y, zoom })
+    }
+  }
 
   /**
    * @description
    * Export the settings of the workflow as a json file for batch extraction
   */
- /*const onExport = useCallback(() => {
+ const onExport = useCallback(() => {
   if (reactFlowInstance && nodes.length > 0) {
     const flow = JSON.parse(JSON.stringify(reactFlowInstance.toObject()))
     flow.nodes.forEach((node) => {
@@ -937,11 +1000,11 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
     })
     console.log("flow", flow)
     processBatchSettings(flow, selectedModalities, "extraction_settings.json")
-
+    //downloadFile(flow, "experiment.json")
   } else {
     // Warn the user if there is no workflow to save
     toast.warn("No workflow to export!")
-  }}, [reactFlowInstance, nodes])*/
+  }}, [reactFlowInstance, nodes])
 
   /**
    * @description
@@ -1024,7 +1087,6 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
                     { type: "run", onClick: onRun },
                     { type: "clear", onClick: onClear },
                     { type: "save", onClick: onSave },
-                    { type: "load", onClick: onLoad },
                   ]}
                   op={op}
                 />

@@ -54,7 +54,11 @@ const ReSegmentationForm = ({ nodeForm, changeNodeForm, data }) => {
 
   return (
     <Form className="standard-form">
-      <DocLink linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#reseg"} name={"Re-segmentation documentation"} image={"../icon/extraction_img/exclamation.svg"} />
+      <DocLink 
+        linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#reseg"}
+        name={"Re-segmentation documentation"}
+        image={"https://www.svgrepo.com/show/521262/warning-circle.svg"} 
+      />
 
       <Form.Group>
         <Form.Label>Range:</Form.Label>
