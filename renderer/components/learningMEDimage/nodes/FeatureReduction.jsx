@@ -44,6 +44,7 @@ const FeatureReduction = ({ id, data, type }) => {
               </Form.Label>
                 <InputNumber
                     style={{width: "300px"}}
+                    buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.FDA.nSplits}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.FDA.nSplits = event.target.value;
@@ -93,6 +94,7 @@ const FeatureReduction = ({ id, data, type }) => {
               </Form.Label>
                 <InputNumber
                     style={{width: "300px"}}
+                    buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.FDA.threshStableStart}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.FDA.threshStableStart = event.target.value;
@@ -120,6 +122,7 @@ const FeatureReduction = ({ id, data, type }) => {
               </Form.Label>
                 <InputNumber
                     style={{width: "300px"}}
+                    buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.FDA.threshInterCorr}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.FDA.threshInterCorr = event.target.value;
@@ -143,6 +146,7 @@ const FeatureReduction = ({ id, data, type }) => {
               </Form.Label>
                 <InputNumber
                     style={{width: "300px"}}
+                    buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.FDA.minNfeatStable}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.FDA.minNfeatStable = event.target.value;
@@ -165,6 +169,7 @@ const FeatureReduction = ({ id, data, type }) => {
               </Form.Label>
                 <InputNumber
                     style={{width: "300px"}}
+                    buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.FDA.minNfeatInterCorr}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.FDA.minNfeatInterCorr = event.target.value;
@@ -191,6 +196,7 @@ const FeatureReduction = ({ id, data, type }) => {
               </Form.Label>
                 <InputNumber
                     style={{width: "300px"}}
+                    buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.FDA.minNfeat}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.FDA.minNfeat = event.target.value;

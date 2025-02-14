@@ -5,7 +5,6 @@ import pprint
 import shutil
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 pp = pprint.PrettyPrinter(indent=2, compact=True, width=40, sort_dicts=False)  # allow pretty print of datatypes in console
@@ -13,9 +12,9 @@ pp = pprint.PrettyPrinter(indent=2, compact=True, width=40, sort_dicts=False)  #
 import MEDimage
 import ray
 
-from .utils import *
-from .pipeline import Pipeline
 from .node import Node
+from .pipeline import Pipeline as MEDpipeline
+from .utils import *
 
 # Global variables
 UPLOAD_FOLDER = Path(os.path.dirname(os.path.abspath(__file__)))  / "tmp"
@@ -35,7 +34,7 @@ class ExtractionWorkflow:
         """
         self.pipelines = self.__get_pipelines(workflow)  
     
-    def __generate_pipelines(self, node_id: str, workflow: dict, pipelines: list[Pipeline], nodes_list: list[Node]) -> None:
+    def __generate_pipelines(self, node_id: str, workflow: dict, pipelines: list[MEDpipeline], nodes_list: list[Node]) -> None:
         """
         Recursive function to generate the pipelines of the extraction workflow starting from the node associated with node_id.
         Creates the nodes and pipelines objects and adds them to the pipelines list.
@@ -43,7 +42,7 @@ class ExtractionWorkflow:
         Args:
             node_id (str): Id of the node to start the pipeline from (should be an input node).
             workflow (dict): The workflow configuration in the form of a dictionary.
-            pipelines (list[Pipeline]): List of the pipeline objects in the extraction workflow.
+            pipelines (list[MEDpipeline]): List of the pipeline objects in the extraction workflow.
             nodes_list (list[Node]): List of the nodes of the pipeline being generated.
             
         Returns:
@@ -87,10 +86,11 @@ class ExtractionWorkflow:
             new_pipeline_name = "pip"
             for node in nodes_list:
                 new_pipeline_name += "/" + node.id
-                
-            pipelines.append(Pipeline(nodes_list, new_pipeline_id, new_pipeline_name))
+            
+            new_pipeline = MEDpipeline(nodes_list, new_pipeline_id, new_pipeline_name)
+            pipelines.append(new_pipeline)
       
-    def __get_pipelines(self, workflow: dict) -> list[Pipeline]:
+    def __get_pipelines(self, workflow: dict) -> list[MEDpipeline]:
         """
         Given the extraction workflow configuration in the form of a dictionary, generates a list of
         pipeline objects representing the extraction workflow.
@@ -99,7 +99,7 @@ class ExtractionWorkflow:
             workflow (dict): The workflow configuration in the form of a dictionary.
 
         Returns:
-            list[Pipeline]: List of the pipeline objects in the extraction workflow.
+            list[MEDpipeline]: List of the pipeline objects in the extraction workflow.
         """
         # In the json config, get the drawflow scene
         drawflow_scene = workflow['drawflow']
@@ -116,7 +116,7 @@ class ExtractionWorkflow:
         
         # Return the generated pipelines
         return pipelines
-    
+
     def print_pipelines(self) -> None:
         """
         Temporary debug function to print the pipelines of the workflow using the 
@@ -155,10 +155,10 @@ class ExtractionWorkflow:
         node_pipelines = [pipeline for pipeline in self.pipelines if node_id == "all" or pipeline.contains_node(node_id)]
         
         # Go over each pipeline
-        for pipeline in node_pipelines:
+        for idx, pipeline in enumerate(node_pipelines):
             
             # Run the pipeline
-            res = pipeline.run(set_progress, node_id)
+            res = pipeline.run(set_progress, node_id, idx+1)
             
             # Get the filepath associated with the pipeline
             filepath = pipeline.nodes[0].filepath  # A pipeline starts with an input node, the filepath is stored in the input node
@@ -172,7 +172,7 @@ class ExtractionWorkflow:
         
         return results
     
-    def get_node_pipeline(self, node_id: str) -> tuple[Node, Pipeline]:
+    def get_node_pipeline(self, node_id: str) -> tuple[Node, MEDpipeline]:
         """
         From a node id, returns de node object and the first pipeline object it belongs to.
 
@@ -180,7 +180,7 @@ class ExtractionWorkflow:
             node_id (str): Id of the node to find.
 
         Returns:
-            Tuple (Node, Pipeline): The node object and the first pipeline object it belongs to.
+            Tuple (Node, MEDpipeline): The node object and the first pipeline object it belongs to.
         """
         for pipeline in self.pipelines:
             for node in pipeline.nodes:
@@ -229,6 +229,20 @@ class MEDimageExtraction:
         self.nb_runs = 0
         self.runs = {}
 
+    def __update_upload_folder(self, upload_folder: Path) -> Path:
+        """
+        Updates the upload folder attribute of the extraction workflow.
+        
+        Args:
+            upload_folder (str): The new upload folder.
+        
+        Returns:
+            Path: The new upload folder.
+        """
+        global UPLOAD_FOLDER
+        UPLOAD_FOLDER = upload_folder
+        return UPLOAD_FOLDER
+    
     def get_3d_view(self) -> dict:
         """
         Plots the 3D view of the volume and the ROI associated with a node.
@@ -240,55 +254,80 @@ class MEDimageExtraction:
             dict: The success message if the 3D view was successfully plotted, else an error.
         """
         try:
+            # Initialize variables
+            extraction_workflow = None
+            file_path = None
+
+            # Set workspace
+            if "workspace" in self.json_config and self.json_config["workspace"] != "":
+                new_path = Path(self.json_config["workspace"]) / ".medomics" / "tmp"
+                UPLOAD_FOLDER = self.__update_upload_folder(new_path)
+
+                # Check if the workspace exists, if not create it
+                if not os.path.isdir(UPLOAD_FOLDER):
+                    return {"error": "The workspace path provided is not valid (.medomics/tmp/ folder is missing)"}
+        
             # Verify if the extraction workflow object exists and load it
             if "extractionWorkflow.pkl" in os.listdir(UPLOAD_FOLDER):
                 with open(os.path.join(UPLOAD_FOLDER, "extractionWorkflow.pkl"), 'rb') as f:
                     extraction_workflow = pickle.load(f)
+            elif "file_loaded" in self.json_config and self.json_config["file_loaded"] != "":
+                file_path = os.path.join(UPLOAD_FOLDER, self.json_config["file_loaded"])
             else:
-                return {"error": "No extraction workflow found. Please run the extraction workflow before trying to visualize it."}
+                return {"error": "No file loaded and no extraction workflow found. Please load a file or run the extraction workflow before trying to visualize it."}
             
-            # Get the output of the node where the 3D view button was clicked
-            node, pipeline = extraction_workflow.get_node_pipeline(self.json_config["id"])
-            
-            # If the node is an input node, and is not yet in the extraction workflow, use the file name to load the MEDimage object directly
-            if node is None and self.json_config["name"] == "input" and "file_loaded" in self.json_config:
-                if self.json_config["file_loaded"] != "":
-                    # Load the MEDimg object from the input file
-                    with open(UPLOAD_FOLDER / self.json_config["file_loaded"], 'rb') as f:
-                        MEDimg = pickle.load(f)
-                    MEDimg = MEDimage.MEDscan(MEDimg)
-                    
-                    # Remove dicom header from MEDimg object as it causes errors in get_3d_view()
-                    # TODO: check if dicom header is needed in the future
-                    MEDimg.dicomH = None
+            if extraction_workflow:
+                # Get the output of the node where the 3D view button was clicked
+                node, pipeline = extraction_workflow.get_node_pipeline(self.json_config["id"])
+                
+                # If the node is an input node, and is not yet in the extraction workflow, use the file name to load the MEDimage object directly
+                if node is None and self.json_config["name"] == "input" and "file_loaded" in self.json_config:
+                    if self.json_config["file_loaded"] != "":
+                        # Load the MEDimg object from the input file
+                        with open(UPLOAD_FOLDER / self.json_config["file_loaded"], 'rb') as f:
+                            MEDimg = pickle.load(f)
+                        MEDimg = MEDimage.MEDscan(MEDimg)
+                        
+                        # Remove dicom header from MEDimg object as it causes errors in get_3d_view()
+                        # TODO: check if dicom header is needed in the future
+                        MEDimg.dicomH = None
+                        
+                        # View 3D image
+                        image_viewer(MEDimg.data.volume.array, "Input image : " + self.json_config["file_loaded"])
+                    else:
+                        # In case the view button is clicked without uploading a file first
+                        return {"error": "No file uploaded in input node."}
+                # If the node is an input node in the extraction workflow, use it's output to plot the 3D view
+                elif node is not None and node.name == "input":
+                    image_viewer(node.output["vol"], "Input image : " + node.filepath)
+                # If there is no node or there is no output for the node, it hasn't run yet
+                elif node is None or node.output is None:
+                    return {"error": "No volume was computed for this node. Please run the node first."}
+                # For any other node in the extraction workflow, the output should have a volume and a ROI to plot the 3D view
+                else:
+                    node_output = node.output
+
+                    # In case the view button was clicked without running the node first
+                    # Or the volume couldn't be computed
+                    if "vol" not in node_output or node_output["vol"] is None or "roi" not in node_output or node_output["roi"] is None:
+                        return {"error": "No volume or ROI found in node output."}
+
+                    # Figure name for the 3D view
+                    fig_name = "Pipeline name: " + pipeline.pipeline_name + "<br>" + \
+                            "Node id: " + node.id + "<br>" + \
+                            "Node type: " + node.name + "\n" 
                     
                     # View 3D image
-                    image_viewer(MEDimg.data.volume.array, "Input image : " + self.json_config["file_loaded"])
-                else:
-                    # In case the view button is clicked without uploading a file first
-                    return {"error": "No file uploaded in input node."}
-            # If the node is an input node in the extraction workflow, use it's output to plot the 3D view
-            elif node is not None and node.name == "input":
-                image_viewer(node.output["vol"], "Input image : " + node.filepath)
-            # If there is no node or there is no output for the node, it hasn't run yet
-            elif node is None or node.output is None:
-                return {"error": "No volume was computed for this node. Please run the node first."}
-            # For any other node in the extraction workflow, the output should have a volume and a ROI to plot the 3D view
-            else:
-                node_output = node.output
+                    image_viewer(node_output["vol"], fig_name, node_output["roi"])
 
-                # In case the view button was clicked without running the node first
-                # Or the volume couldn't be computed
-                if "vol" not in node_output or node_output["vol"] is None or "roi" not in node_output or node_output["roi"] is None:
-                    return {"error": "No volume or ROI found in node output."}
-
-                # Figure name for the 3D view
-                fig_name = "Pipeline name: " + pipeline.pipeline_name + "<br>" + \
-                        "Node id: " + node.id + "<br>" + \
-                        "Node type: " + node.name + "\n" 
+            elif file_path:
+                # Load and store MEDimage instance from file loaded
+                with open(file_path, 'rb') as f:
+                    medscan = pickle.load(f)
+                    medscan = MEDimage.MEDscan(medscan)
                 
                 # View 3D image
-                image_viewer(node_output["vol"], fig_name, node_output["roi"])
+                image_viewer(medscan.data.volume.array, "Original Volume, Patient ID: " + medscan.patientID)
 
             # Return success message
             return {"success": "3D view successfully plotted."}
@@ -310,6 +349,8 @@ class MEDimageExtraction:
         """
         try:
             # Check if the post request has the necessary informations
+            if 'workspace' not in self.json_config and self.json_config['workspace'] == "":
+                return {"error": "No workspace provided."}
             if 'file' not in self.json_config and self.json_config['file'] != "":
                 return {"error": "No file found in the configuration dict."}
             elif 'type' not in self.json_config and self.json_config['type'] != "":
@@ -317,20 +358,28 @@ class MEDimageExtraction:
             
             # Initialize the dictionary to store the file informations
             up_file_infos = {}
+            new_path = Path(self.json_config['workspace']) / ".medomics"
             
-            # Check if the UPLOAD_FOLDER exists, if not create it
-            if not os.path.isdir(UPLOAD_FOLDER): 
-                os.makedirs(UPLOAD_FOLDER) 
+            # Check if the path exists and update it
+            if not os.path.isdir(new_path):
+                return {"error": "The workspace path provided is not valid (.medomics folder is missing)"}
 
+            # Check if the tmp folder exists, if not create it
+            new_path = new_path / "tmp"
+            if not os.path.isdir(new_path): 
+                os.makedirs(new_path) 
+            UPLOAD_FOLDER = self.__update_upload_folder(new_path)
+            
             file = self.json_config["file"] # Path of the file
             file_type = self.json_config["type"] # Type of file (folder or file)
 
             # If the file is a folder, process the DICOM scan
             if file_type == "folder":
                 # Initialize the DataManager class
-                dm = MEDimage.wrangling.DataManager(path_to_dicoms=file, path_save=UPLOAD_FOLDER, save=True)
+                dm = MEDimage.wrangling.DataManager(path_to_dicoms=file, path_save=UPLOAD_FOLDER, n_batch=2, save=True)
 
                 # Process the DICOM scan
+                os.environ['RAY_DISABLE_MEMORY_MONITOR'] = '1'
                 dm.process_all_dicoms()
 
                 # Ray shutdown for safety
@@ -376,13 +425,18 @@ class MEDimageExtraction:
             dict: Dictionary with the results of the pipeline(s) execution.
         """
         try:
+            # Initialize variables
             if "id" not in self.json_config:
                 node_id = "all"
                 json_scene = self.json_config
-                
             else:
                 node_id = self.json_config["id"]
                 json_scene = self.json_config["json_scene"]
+            
+            # Check and set worksapce
+            if "workspace" in self.json_config and self.json_config["workspace"] != "":
+                new_path = Path(self.json_config["workspace"]) / ".medomics" / "tmp"
+                UPLOAD_FOLDER = self.__update_upload_folder(new_path)
 
             # Create a new extraction workflow object from the json_scene
             new_extraction_workflow = ExtractionWorkflow(json_scene)
@@ -434,6 +488,8 @@ class MEDimageExtraction:
             path_csv = None
         if "save" in self.json_config.keys():
             save = self.json_config["save"]
+        else:
+            save = True
         if "nBatch" in self.json_config.keys():
             n_batch = self.json_config["nBatch"]
 
@@ -443,14 +499,22 @@ class MEDimageExtraction:
             return {"error": "No path to data given! At least DICOM or NIFTI path must be given."}
         
         # Init DataManager instance
+        result = []
         try:
+            # Check if path save exists:
+            if not path_save.exists():
+                return {"message": "The path to save the data does not exist."}
+            
+            os.environ['RAY_DISABLE_MEMORY_MONITOR'] = '1'
+            
             dm = MEDimage.wrangling.DataManager(
-            path_to_dicoms=path_to_dicoms,
-            path_to_niftis=path_to_niftis,
-            path_save=path_save,
-            path_csv=path_csv,
-            save=save, 
-            n_batch=n_batch)
+                path_to_dicoms=path_to_dicoms,
+                path_to_niftis=path_to_niftis,
+                path_save=path_save,
+                path_csv=path_csv,
+                save=save, 
+                n_batch=n_batch
+            )
 
             # Run the DataManager
             if path_to_dicoms is not None and path_to_niftis is None:
@@ -461,23 +525,26 @@ class MEDimageExtraction:
                 dm.process_all()
             
             # Return success message
-            summary = dm.summarize(return_summary=True).to_dict()
-            
-            # Get the number of rows
-            num_rows = len(summary["count"])
+            try:
+                summary = dm.summarize(True).to_dict()
+                
+                # Get the number of rows
+                num_rows = len(summary["count"])
 
-            # Create a list of objects in the desired format
-            result = []
-            for i in range(num_rows):
-                obj = {
-                    "count": summary["count"][i],
-                    "institution": summary["institution"][i],
-                    "roi_type": summary["roi_type"][i],
-                    "scan_type": summary["scan_type"][i],
-                    "study": summary["study"][i]
-                }
-                result.append(obj)
-            
+                # Create a list of objects in the desired format
+                for i in range(num_rows):
+                    obj = {
+                        "count": summary["count"][i],
+                        "institution": summary["institution"][i],
+                        "roi_type": summary["roi_type"][i],
+                        "scan_type": summary["scan_type"][i],
+                        "study": summary["study"][i]
+                    }
+                    result.append(obj)
+            except Exception as e:
+                print("exception getting summary", e)
+                summary = {}
+                        
         except Exception as e:
             return {"error": str(e)}
 
@@ -511,8 +578,6 @@ class MEDimageExtraction:
             path_csv = Path(data["pathCSV"])
         else:
             path_csv = None
-        if "save" in data.keys():
-            save = data["save"]
         if "nBatch" in data.keys():
             n_batch = data["nBatch"]
         if "wildcards_dimensions" in data.keys():
@@ -528,18 +593,14 @@ class MEDimageExtraction:
         if not wildcards_dimensions and not wildcards_window:
             return {"error": "No wildcards given! both wildcard for dimensions and for window must be given."}
         
-        try:
-            # path save (TODO: find another work-around)
-            path_save_checks = Path.cwd().parent / "renderer/public/images"
-            
+        try:            
             # Init DataManager instance
             dm = MEDimage.wrangling.DataManager(
                 path_to_dicoms=path_to_dicoms,
                 path_to_niftis=path_to_niftis,
                 path_save=path_save,
                 path_csv=path_csv,
-                path_save_checks=path_save_checks,
-                save=save, 
+                path_save_checks=path_save,
                 n_batch=n_batch)
 
             # Run the DataManager
@@ -551,18 +612,19 @@ class MEDimageExtraction:
                 save=True)
 
             # Get pre-checks images
+            if not (path_save / 'checks').exists():
+                (path_save / 'checks').mkdir()
+            
             # Find all png files in path
-            list_png = list((path_save_checks / 'checks').glob('*.png'))
+            list_png = list((path_save / 'checks').glob('*.png'))
             list_titles = [png.name for png in list_png]
             list_png = [str(png) for png in list_png]
-            url_list = ['.' + png.split('public')[-1].replace('\\', '/') for png in list_png]
         
         except Exception as e:
-            print("\nERROR : ", str(e))
             return {"error": str(e)}
         
         # Return success message
-        return {"url_list": url_list, "list_titles": list_titles, "message": "Pre-checks done successfully."}
+        return {"url_list": list_png, "list_titles": list_titles, "message": "Pre-checks done successfully."}
     
     def run_be_get_json(self) -> dict:
         """
@@ -680,11 +742,15 @@ class MEDimageExtraction:
         if "path_csv" in data.keys() and data["path_csv"] != "":
             path_csv = Path(data["path_csv"])
         else:
-            path_csv = None
+            return {"error": "No path to csv given!"}
         if "path_params" in data.keys() and data["path_params"] != "":
             path_params = Path(data["path_params"])
         else:
             path_params = None
+        if "skip_existing" in data.keys():
+            skip_existing = data["skip_existing"]
+        else:
+            skip_existing = False
         if "n_batch" in data.keys():
             n_batch = data["n_batch"]
 
@@ -697,8 +763,10 @@ class MEDimageExtraction:
             if not ("path_read" in data.keys() and data["path_read"] != "") and not (
                     "path_params" in data.keys() and data["path_params"] != "") and not (
                     "path_csv" in data.keys() and data["path_csv"] != ""):
-                print("Multiple arguments missing")
                 return {"error": "No path to data given! At least path to read, params and csv must be given."}
+
+            # To avoid RAY memory issues
+            os.environ['RAY_DISABLE_MEMORY_MONITOR'] = '1'
             
             # Init BatchExtractor instance
             be = MEDimage.biomarkers.BatchExtractor(
@@ -706,7 +774,9 @@ class MEDimageExtraction:
                 path_csv=path_csv,
                 path_params=path_params,
                 path_save=path_save,
-                n_batch=n_batch)
+                skip_existing=skip_existing,
+                n_batch=n_batch
+            )
 
             # Run the BatchExtractor
             be.compute_radiomics()

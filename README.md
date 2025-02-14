@@ -7,7 +7,7 @@
 
 Here is the develop branch of the MEDimage app. This branch is used to develop new features and fix bugs. The main branch is used to publish the latest stable version of the project. The develop branch is merged into the main branch when a new stable version is ready to be published.
 
-### Main documentation 👉 [here](https://medomics-udes.gitbook.io/medomicslab-docs/). 👈
+### Main documentation 👉 [here](https://medomics-udes.gitbook.io/medimage-app-docs/). 👈
 
 ### Development documentation 👇
 
@@ -37,19 +37,14 @@ npm install
 
 ## 4. Python environment
 
-The python environment is created automatically with the scripts in the `pythonEnv` folder.
-You have to run it manually by executing the following commands:
+The python environment is installed automatically once you download the app in your user folder under the folder `.medomics`. If you face any issue with the python environment, go to the applicaton settings page, click **Show first setup modal** and click **Start Setup**.
 
-- Windows : `.\pythonEnv\create_conda_env_win.bat`
-- Linux : `bash pythonEnv/create_conda_env_linux.sh`
 
-The script will create a conda environment named `med_conda_env`, install the required packages in it and create an environment variable named `MED_ENV` that contains the path to the environment.
-
-When developping python code, you may need to install new packages. To do so, you can activate the environment and install the package with pip:
+When developping python code, you may need to install new packages. To do so, you can open the terminal from the `.medomics` folder and install the packages using the following commands:
 
 ```
-conda activate med_conda_env
-pip install <package_name>
+cd <USER_PATH>\.medomics\python
+python -m pip install <package_name>
 ```
 
 ## 5. Run the Electron app in development mode

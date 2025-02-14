@@ -4,7 +4,8 @@ import * as Icon from "react-bootstrap-icons"
 import { TfiSave } from "react-icons/tfi"
 import { PiDownload } from "react-icons/pi"
 import { AiOutlineImport } from "react-icons/ai"
-import { Tooltip } from "primereact/tooltip"
+import { Tooltip } from 'primereact/tooltip';
+
 
 /**
  *
@@ -31,28 +32,36 @@ const buttonType = {
   clear: (onClear, disabled = false) => {
     return (
       <>
-        <Tooltip key="clearTip" target=".clearBtn" />
-        <Button key="clear" className="clearBtn" data-pr-tooltip="Clear the workflow" data-pr-position="bottom" variant="outline margin-left-10 padding-5" disabled={disabled} onClick={onClear}>
-          <Icon.Trash width="30px" height="30px" />
-        </Button>
+      <Tooltip key="clearTip" target=".clearBtn"/>
+      <Button
+        className="clearBtn"
+        key="clear" 
+        data-pr-tooltip="Clear the scene"
+        data-pr-position="bottom"
+        variant="outline margin-left-10 padding-5" 
+        onClick={onClear}
+        disabled={disabled}
+        >
+        <Icon.Trash width="30px" height="30px" />
+      </Button>
       </>
     )
   },
   save: (onSave, disabled = false) => {
     return (
       <>
-        <Tooltip key="saveTip" target=".saveBtn" />
-        <Button
-          key="save"
-          className="saveBtn"
-          data-pr-tooltip="Save the workflow to a json file"
-          data-pr-position="bottom"
-          variant="outline margin-left-10 padding-5"
-          disabled={disabled}
-          onClick={onSave}
+      <Tooltip key="saveTip" target=".saveBtn"/>
+      <Button
+        className="saveBtn"
+        key="save" 
+        data-pr-tooltip="Save the scene"
+        data-pr-position="bottom"
+        variant="outline margin-left-10 padding-5" 
+        onClick={onSave}
+        disabled={disabled}
         >
-          <TfiSave style={{ width: "30px", height: "auto", padding: "2px" }} />
-        </Button>
+        <TfiSave style={{ width: "30px", height: "auto" }} />
+      </Button>
       </>
     )
   },
@@ -66,28 +75,36 @@ const buttonType = {
   load: (onLoad, disabled = false) => {
     return (
       <>
-        <Tooltip key="loadTip" target=".loadBtn" />
-        <Button
-          key="load"
-          className="loadBtn"
-          data-pr-tooltip="Load workflow from a json file"
-          data-pr-position="bottom"
-          variant="outline margin-left-10 padding-5"
-          disabled={disabled}
-          onClick={onLoad}
+      <Tooltip key="loadTip" target=".loadBtn"/>
+      <Button
+        className="loadBtn"
+        key="load" 
+        data-pr-tooltip="Load a scene"
+        data-pr-position="bottom"
+        variant="outline margin-left-10 padding-5" 
+        onClick={onLoad}
+        disabled={disabled}
         >
-          <AiOutlineImport style={{ width: "30px", height: "auto" }} />
-        </Button>
+        <AiOutlineImport style={{ width: "30px", height: "auto" }} />
+      </Button>
       </>
     )
   },
   run: (onRun, disabled = false) => {
     return (
       <>
-        <Tooltip key="runTip" target=".runBtn" />
-        <Button key="run" className="runBtn" data-pr-tooltip="Run all pipelines" data-pr-position="bottom" variant="outline margin-left-10 padding-5" disabled={disabled} onClick={onRun}>
-          <Icon.PlayCircle width="30px" height="30px" />
-        </Button>
+      <Tooltip key="runTip" target=".runBtn"/>
+      <Button
+        className="runBtn"
+        key="run" 
+        data-pr-tooltip="Run the workflow"
+        data-pr-position="bottom"
+        variant="outline margin-left-10 padding-5" 
+        onClick={onRun}
+        disabled={disabled}
+        >
+        <Icon.PlayCircle width="30px" height="30px" />
+      </Button>
       </>
     )
   },
@@ -101,39 +118,38 @@ const buttonType = {
   export: (onExport, disabled = false, op) => {
     return (
       <>
-        <Tooltip key="exportTip" target=".saveBtn" />
-        <Button
-          key="export"
-          className="saveBtn"
-          data-pr-tooltip="Export settings for batch extraction"
-          data-pr-position="bottom"
-          variant="outline margin-left-10 padding-5"
-          disabled={disabled}
-          onClick={(e) => {
-            onExport
+      <Tooltip key="exportTip" target=".saveBtn"/>
+      <Button 
+        key="export" 
+        className="saveBtn" 
+        data-pr-tooltip="Export settings for batch extraction"
+        data-pr-position="bottom"
+        variant="outline margin-left-10 padding-5" 
+        disabled={disabled}
+        onClick={(e) =>
+          {
+            onExport;
             op.current.toggle(e)
-          }}
-        >
-          <i className="pi pi-file-export" style={{ fontSize: "1.8rem" }}></i>
-        </Button>
+          }}>
+          <i className="pi pi-file-export" style={{ fontSize: '1.8rem' }}></i>
+      </Button>
       </>
     )
   },
   loadDeafult: (onLoadDeafult) => {
     return (
       <>
-        <Tooltip key="loadDeafultTip" target=".loadDeafultBtn" />
-        <Button
-          key="loadDeafult"
-          className="loadDeafultBtn"
-          data-pr-tooltip="Load default learning workflow"
-          data-pr-position="left"
-          variant="outline-info uccess margin-left-10 padding-5"
-          onClick={onLoadDeafult}
-        >
+      <Tooltip key="loadDeafultTip" target=".loadDeafultBtn"/>
+      <Button 
+        key="loadDeafult"
+        className="loadDeafultBtn"
+        data-pr-tooltip="Load default learning workflow"
+        data-pr-position="left"
+        variant="outline-info uccess margin-left-10 padding-5" 
+        onClick={onLoadDeafult}>
           <AiOutlineImport style={{ width: "30px", height: "auto" }} />
-        </Button>
+      </Button>
       </>
     )
-  }
+  },
 }

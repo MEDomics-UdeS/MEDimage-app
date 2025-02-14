@@ -1,4 +1,5 @@
 import MEDimage
+import numpy as np
 from ..node import Node
 from ..pipeline import Pipeline
 
@@ -78,11 +79,10 @@ class ExtractionNode(Node):
             dict: Dictionary containing the extracted morphological features.
         """
         try:
+            # Initialize variables
             features = {}
-
             last_feat_vol = pipeline.latest_node_output["vol"]
             last_feat_roi = pipeline.latest_node_output["roi"]
-
             if "roi_obj_morph" not in pipeline.latest_node_output_texture or pipeline.latest_node_output_texture["roi_obj_morph"] is None:
                 #raise Exception("roi_obj_morph")
                 roi_obj_morph = last_feat_roi
@@ -124,12 +124,12 @@ class ExtractionNode(Node):
             dict: Dictionary containing the extracted local intensity features.
         """
         try:
-            features = {}
-            
             # If the intensity type is arbitrary, the LI features cannot be extracted
             if pipeline.MEDimg.params.process.intensity_type == "arbitrary":
                 raise Exception("arbitrary")
             
+            # Initialize variables
+            features = {}
             last_feat_vol = pipeline.latest_node_output["vol"]
             last_feat_roi = pipeline.latest_node_output["roi"]
             
@@ -139,7 +139,6 @@ class ExtractionNode(Node):
                     roi_obj=last_feat_roi.data,  # roi_obj_int.data
                     res=pipeline.MEDimg.params.process.scale_non_text,
                     intensity_type=pipeline.MEDimg.params.process.intensity_type
-                    # TODO: missing parameter that is automatically set to false
             )
             
             if features_to_extract[0] != "extract_all":
@@ -501,7 +500,7 @@ class ExtractionNode(Node):
             return self.__manage_exception(e)
     
     # TODO : refactor : for node in extraction node, run node. 
-    def run(self, pipeline: Pipeline) -> None:
+    def run(self, pipeline: Pipeline, pipeline_number: str = 1, set_progress = None, current_progress: str = 0) -> None:
         print("************************ RUNNING EXTRACTION ***************************")
         last_vol_compute = pipeline.latest_node_output["vol"]        
         
@@ -517,10 +516,21 @@ class ExtractionNode(Node):
             algo=a,
             gl=n,
             scale=s)
-        
+
+        # Count all the features to extract
+        extraction_count = 0
+        for node in self.params:
+            if self.params[node]["name"] in ["morph", "local_intensity", "stats", "intensity_histogram", 
+                                             "int_vol_hist", "glcm", "glrlm", "glszm", "gldzm", "ngtdm", "ngldm"]:
+                extraction_count += 1
+
         for node in self.params:    
             feature_family = self.params[node]["name"]
             features_to_extract = self.params[node]["data"]["features"]
+
+            # Update the progress of the pipeline
+            progress_step = (100 - current_progress) / extraction_count
+            set_progress(label=f"Pipeline " + str(pipeline_number) + f" | Extracting {feature_family} features")
             
             if feature_family == "morph":
                 self.extracted_features[feature_family] = self.get_morph_features(features_to_extract, pipeline)
@@ -557,6 +567,12 @@ class ExtractionNode(Node):
                 
             else:
                 print("Feature family : ", feature_family, "is invalid.")
+
+            # Update the progress of the pipeline
+            if current_progress + progress_step >= 100:
+                set_progress(now=100, label="Done")
+            else:
+                set_progress(now=current_progress + progress_step)
             
             # Sort the extracted features by categories
             self.__sort_features_by_categories()

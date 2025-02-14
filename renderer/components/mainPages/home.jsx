@@ -1,21 +1,36 @@
 import React, { useContext, useEffect, useState } from "react"
 import Image from "next/image"
-import myimage from "../../../resources/MEDimage_LOGO.png"
+import myimage from "../../../resources/medomics_transparent_bg.png"
 import { Button, Stack } from "react-bootstrap"
 import { WorkspaceContext } from "../workspace/workspaceContext"
 import { ipcRenderer } from "electron"
+import FirstSetupModal from "../generalPurpose/installation/firstSetupModal"
 
 /**
  *
  * @returns the home page component
  */
 const HomePage = () => {
-  const { workspace, recentWorkspaces } = useContext(WorkspaceContext)
+  const { workspace, setWorkspace, recentWorkspaces } = useContext(WorkspaceContext)
   const [hasBeenSet, setHasBeenSet] = useState(workspace.hasBeenSet)
+
+  const [requirementsMet, setRequirementsMet] = useState(true)
 
   async function handleWorkspaceChange() {
     ipcRenderer.send("messageFromNext", "requestDialogFolder")
   }
+
+  // Check if the requirements are met
+  useEffect(() => {
+    ipcRenderer.invoke("checkRequirements").then((data) => {
+      console.log("Requirements: ", data)
+      if (data.pythonInstalled && data.mongoDBInstalled) {
+        setRequirementsMet(true)
+      } else {
+        setRequirementsMet(false)
+      }
+    })
+  }, [])
 
   // We set the workspace hasBeenSet state
   useEffect(() => {
@@ -37,13 +52,12 @@ const HomePage = () => {
         <Stack direction="vertical" gap={1} style={{ padding: "0 0 0 0", alignContent: "center" }}>
           <h2>Home page</h2>
           <Stack direction="horizontal" gap={0} style={{ padding: "0 0 0 0", alignContent: "center" }}>
-            <h1 style={{ fontSize: "5rem" }}>MEDimage</h1>
+            <h1 style={{ fontSize: "5rem" }}>MEDomicsLab </h1>
 
             <Image src={myimage} alt="" style={{ height: "175px", width: "175px" }} />
           </Stack>
           {hasBeenSet ? (
             <>
-              <h5>This is part of the MEDomicsLab <a href="https://github.com/MEDomics-UdeS/MEDomicsLab" target="_blank"><b>platform</b></a></h5>
               <h5>Set up your workspace to get started</h5>
               <Button onClick={handleWorkspaceChange} style={{ margin: "1rem" }}>
                 Set Workspace
@@ -56,7 +70,12 @@ const HomePage = () => {
                     <a
                       key={index}
                       onClick={() => {
-                        ipcRenderer.send("setWorkingDirectory", workspace.path)
+                        ipcRenderer.invoke("setWorkingDirectory", workspace.path).then((data) => {
+                          if (workspace !== data) {
+                            let workspaceToSet = { ...data }
+                            setWorkspace(workspaceToSet)
+                          }
+                        })
                       }}
                       style={{ margin: "0rem", color: "var(--blue-600)" }}
                     >
@@ -67,13 +86,11 @@ const HomePage = () => {
               </Stack>
             </>
           ) : (
-            <>
-              <h5>This is part of the MEDomicsLab <a href="https://github.com/MEDomics-UdeS/MEDomicsLab" target="_blank"><b>platform</b></a></h5>
-              <h5>Workspace is set to {workspace.workingDirectory.path}</h5>
-            </>
+            <h5>Workspace is set to {workspace.workingDirectory.path}</h5>
           )}
         </Stack>
       </div>
+      {!requirementsMet && process.platform !=="darwin" && <FirstSetupModal visible={!requirementsMet} closable={false} setRequirementsMet={setRequirementsMet} />}
     </>
   )
 }

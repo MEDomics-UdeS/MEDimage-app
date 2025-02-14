@@ -27,14 +27,11 @@ class Pipeline:
         self.nodes = nodes  # List of nodes object in the pipeline
         self.id = id  # ID of the pipeline
         self.pipeline_name = name  # Name of the pipeline
-            
         self.MEDimg = None  # MEDimg object of the input image
         self.latest_node_output = {key: None for key in ["vol", "roi"]} # Output of the latest node in the pipeline (used for non texture features)
         self.latest_node_output_texture = {key: None for key in ["vol", "roi"]}  # Output of the latest node in the pipeline (used for texture features)
-        
         self.settings_res = {}  # Dictionary to store the settings results of the pipeline
         self.scan_res = {}  # Dictionary to store the scan results (radiomics)
-    
         # Dictionary that contains the parameters of the image processing pipeline in the format used by MEDimage.
         self.im_params = MEDimage.utils.json_utils.load_json(JSON_SETTINGS_PATH)  # Loading default settings from MEDimageApp json file as im_params
 
@@ -139,7 +136,7 @@ class Pipeline:
         for i in range(len(self.nodes)):
             self.nodes[i].change_params(new_pipeline.nodes[i].params)
     
-    def run(self, set_progress: dict, node_id: str = "all") -> dict:
+    def run(self, set_progress: dict, node_id: str = "all", pipeline_number: int = 1) -> dict:
         """
         Runs the pipeline up to the node associated with node_id and collects the results
         in a dictionary.
@@ -168,26 +165,30 @@ class Pipeline:
 
         # Run each node in the pipeline in order up to node_id
         for index, node in enumerate(self.nodes, start = 1):
-            node.run(self)
             
             # Update the progress bar
-            progress = int(index * 100 / number_nodes)
-            set_progress(now=progress, label=f"Pipeline " + self.pipeline_name + " | Running node : " + node.name)
+            if node.name.lower() != "extraction":
+                progress = int(index * 100 / number_nodes)
+                set_progress(now=progress, label=f"Pipeline " + str(pipeline_number) + " | Running node : " + node.name)
 
+            # Run node
+            if node.name.lower() == "extraction":
+                node.run(self, pipeline_number, set_progress, progress)
+            else:
+                node.run(self)
+            
             if node.id == node_id:
                 break
         
         # Create the results dictionary
-        results = {"features": self.scan_res, 
-                   "settings": self.settings_res}
+        results = {
+            "features": self.scan_res, 
+            "settings": self.settings_res
+        }
         
         # Reset the latest node output
         self.MEDimg = None
-        reset_dict = {key: None for key in ["vol", "roi"]}
-        self.latest_node_output = reset_dict
-        self.latest_node_output_texture = reset_dict
-
-        # The pipeline is done executing, set the progress to 100%
-        set_progress(now=100, label=f"Ending pipeline : " + self.pipeline_name)
+        self.latest_node_output = {key: None for key in ["vol", "roi"]}
+        self.latest_node_output_texture = {key: None for key in ["vol", "roi"]}
 
         return results

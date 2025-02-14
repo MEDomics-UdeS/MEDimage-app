@@ -1,7 +1,7 @@
 import os
 import pprint
-import re
 import shutil
+import sys
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
@@ -22,17 +22,7 @@ class MEDimageLearning:
         self.json_config = json_config
         self._progress = {'currentLabel': '', 'now': 0.0}
     
-    def __round_dict(self, dict: dict, decimals: int) -> dict:
-        """
-        Rounds all the values of a dictionary to a given number of decimals
-
-        Args:
-            dict (dict): Dictionary to round
-            decimals (int): Number of decimals to round to
-            
-        Returns:
-            dict: Dictionary with rounded values
-        """
+    def __round_dict(self, dict, decimals):
         for key, value in dict.items():
             if (type(value) is list):
                 dict[key] = [round(x, decimals) for x in value]
@@ -46,18 +36,18 @@ class MEDimageLearning:
         pip.append(id)  # Current node added to pip
 
         # ---------------------------------------------- NEXT NODES COMPUTE ----------------------------------------------
-        # NO output CONNECTION
-        if not "output_1" in node_content["outputs"]:  # if no output connection
+        # NO OUPUT CONNECTION
+        if not "output_1" in node_content["outputs"]:  # if no ouput connection
             pips.append(deepcopy(pip))  # Add the current pip to pips
             return pip
 
-        # ONE output CONNECTION
+        # ONE OUPUT CONNECTION
         elif len(node_content["outputs"]["output_1"]["connections"]) == 1:
             out_node_id = node_content["outputs"]["output_1"]["connections"][0]["node"]
             out_node_content = get_node_content(out_node_id, json_scene)
             pip = self.generate_all_pips(out_node_id, out_node_content, pip, json_scene, pips, counter)
 
-        # MORE ONE output CONNECTION
+        # MORE ONE OUPUT CONNECTION
         else:
             connections = node_content["outputs"]["output_1"]["connections"]  # output connections of last node added to pip
             for connection in connections:
@@ -185,6 +175,8 @@ class MEDimageLearning:
                                 
                                 # Fill design settings
                                 desing_settings['design'] = content["data"]
+                                method_desing = desing_settings['design']['testSets'][0]
+                                nb_split = desing_settings['design'][method_desing]['nSplits'] if 'nSplits' in desing_settings['design'][method_desing].keys() else 10
 
                                 # Initialize the DesignExperiment class
                                 experiment = MEDimage.learning.DesignExperiment(path_study, path_settings, experiment_label)
@@ -282,7 +274,7 @@ class MEDimageLearning:
                                         name_tab = 'radTab' + str(idx+1)
                                         rad_tab_x['csv'] = Path(path_features / feature_file)
                                         rad_tab_x['txt'] = Path(path_features / (feature_file.split('.')[0] + '.txt'))
-                                        rad_tab_x['type'] = re.search(r'__(.*?)(?=\.)', feature_file).group(1) if '__' in feature_file else 'None'
+                                        rad_tab_x['type'] = feature_file.split('__')[1].split('_')[0] if '__' in feature_file else 'None'
 
                                         # check if file exist
                                         if not rad_tab_x['csv'].exists():
@@ -298,7 +290,6 @@ class MEDimageLearning:
                                     # Update
                                     loaded_data = True
                                     self.set_progress(now=round(self._progress['now'] + 100/len(paths_splits)/5))
-
                                 # Clinical or other variables (For ex: Volume)
                                 else:
                                     return {"error":  "Variable type not implemented yet, only Radiomics variables are supported!"}
@@ -412,7 +403,7 @@ class MEDimageLearning:
                                 # Update progress
                                 self.set_progress(label=f"Pip {str(pip_idx+1)} | Split {split_counter+1} | Reducing data")
 
-                                # Separate training and testing data before feature set reduction
+                                # Seperate training and testing data before feature set reduction
                                 rad_tables_testing = deepcopy(rad_tables_learning)
                                 rad_tables_training = []
                                 for rad_tab in rad_tables_learning:
@@ -483,7 +474,7 @@ class MEDimageLearning:
                                 # Update progress
                                 self.set_progress(label=f"Pip {str(pip_idx+1)} | Split {split_counter+1} | Model training")
 
-                                # Separate training and testing if no feature set reduction step was performed
+                                # Seperate training and testing if no feature set reduction step was performed
                                 if not reduced_features:
                                     rad_tables_testing = deepcopy(rad_tables_learning)
                                     rad_tables_training = []
@@ -531,7 +522,7 @@ class MEDimageLearning:
                                 else:
                                     return {"error":  "Radiomics learner: seed was not provided"}
 
-                                # Separate variable table for training sets (repetitive but double-checking)
+                                # Serperate variable table for training sets (repetitive but double-checking)
                                 var_table_train = rad_tables_training.loc[patients_train, :]
 
                                 # Training the model
@@ -553,7 +544,7 @@ class MEDimageLearning:
                                     return {"error":  "Radiomics learner: Name to save model was not provided"}
                                 model_id = name_save_model + '_' + "var1"
                                 path_model = os.path.dirname(path_results) + '/' + (model_id + '.pickle')
-                                model_dict = MEDimage.learning.ml_utils.save_model(model, "None", path_model)
+                                model_dict = MEDimage.learning.ml_utils.save_model(name_type, model, "var1", path_model)
 
                                 # --> C. Testing phase        
                                 # C.1. Testing the XGBoost model and computing model response
@@ -561,9 +552,9 @@ class MEDimageLearning:
                                     model,
                                     rad_tables_testing,
                                     [patients_train, patients_test]
-                                ) 
+                                )                
                                 if holdout_test:
-                                    # --> D. Holdout set testing phase
+                                    # --> D. Holdoutset testing phase
                                     # D.1. Prepare holdout test data
                                     # Loading and pre-processing
                                     rad_tables_holdout = list()
@@ -679,10 +670,6 @@ class MEDimageLearning:
                                     level = experiment_label.split("_")[1]
                                     modality = experiment_label.split("_")[-1]
                                     sort_option = content["data"]["histParams"]["sortOption"]
-
-                                    # Create the folder if it does not exist
-                                    if not (Path.cwd().parent / "renderer/public/images/analyze").exists():
-                                        os.makedirs(Path.cwd().parent / "renderer/public/images/analyze")
                                     path_image = Path(path_study) / f'features_importance_histogram_{level}_{modality}_{sort_option}.png'
                                     path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'features_importance_histogram_{level}_{modality}_{sort_option}_{pip_name}.png'
                                     path_save = shutil.copy(path_image, path_save)
@@ -709,7 +696,7 @@ class MEDimageLearning:
                         results_avg.append({pip_name: {experiment_label: results_avg_dict, "analysis": analysis_dict}})
 
                     except Exception as e:
-                        return {"error": "Results averaging & Features analysis:" + str(e)}
+                        return {"error": "Reults averaging & Features analysis:" + str(e)}
                 
                 # Check if all the splits are done
                 if designed_experiment and split_counter == len(paths_splits):
@@ -777,37 +764,47 @@ class MEDimageLearning:
                         try:
                             result.plot_heatmap(
                                 Path(path_study), 
-                                experiments_labels, 
+                                experiment=experiment, 
+                                levels=[exp_label.split("_")[1] for exp_label in experiments_labels],
+                                modalities=list(set([exp_label.split("_")[-1] for exp_label in experiments_labels])),
                                 metric=metric,
                                 stat_extra=stat_extra,
                                 title=title,
                                 plot_p_values=plot_p_values,
                                 p_value_test=p_value_test,
+                                nb_split=nb_split,
                                 save=True)
                         except Exception as e:
                             return {"error": str(e)}
                         
                         # Move images to public folder
                         path_image = Path(path_study) / f'{title}.png' if title else Path(path_study) / f'{metric}_heatmap.png'
-
-                        # Create the folder if it does not exist
-                        if not (Path.cwd().parent / "renderer/public/images/analyze").exists():
-                            os.makedirs(Path.cwd().parent / "renderer/public/images/analyze")
-                        path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'{title.replace(" ", "_")}_{pip_name}.png' if title else Path.cwd().parent / "renderer/public/images/analyze" / f'{metric}_heatmap_{pip_name}.png'
-                        
+                        path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'{title}_{pip_name}.png' if title else Path.cwd().parent / "renderer/public/images/analyze" / f'{metric}_heatmap_{pip_name}.png'
                         path_save = shutil.copy(path_image, path_save)
 
                         # Update results dict with new figures
                         figures_dict["heatmap"] = {}
                         figures_dict["heatmap"]["path"] = '.' + str(path_save).split('public')[-1].replace('\\', '/')
 
-                        # Find optimal level
+                    # Find optimal level
+                    if "optimalLevel" in content["data"].keys() and content["data"]["optimalLevel"] is not None:
+                        find_optimal_level = content["data"]["optimalLevel"]
+                    else:
+                        find_optimal_level = False
+                    if "tree" in content["data"].keys() and content["data"]["tree"] is not None:
+                        plot_tree = content["data"]["tree"]
+                    else:
+                        plot_tree = False
+                    if find_optimal_level:
                         try:
                             optimal_levels = result.get_optimal_level(
                                 Path(path_study), 
-                                experiments_labels,
+                                experiment=experiment, 
+                                levels=list(set([exp_label.split("_")[1] for exp_label in experiments_labels])),
+                                modalities=list(set([exp_label.split("_")[-1] for exp_label in experiments_labels])),
                                 metric=metric,
                                 p_value_test=p_value_test,
+                                nb_split=nb_split
                                 )
                         except Exception as e:
                             return {"error": str(e)}
@@ -816,85 +813,70 @@ class MEDimageLearning:
                         figures_dict["optimal_level"] = {}
                         figures_dict["optimal_level"]["name"] = optimal_levels
 
-                        if "tree" in content["data"].keys() and content["data"]["tree"] is not None:
-                            plot_tree = content["data"]["tree"]
-                        else:
-                            plot_tree = False
-
                         # Extra optimal level analysis
                         if plot_tree:
                             try:
-                                # Initialization
-                                treeplots = []
-
-                                # Loop over the optimal levels
+                                modalities = list(set([exp_label.split("_")[-1] for exp_label in experiments_labels]))
                                 for idx_m, optimal_level in enumerate(optimal_levels):
                                     path_tree = None
-                                    if "Text" in optimal_level.split("_")[1]:
+                                    if "Text" in optimal_level:
+                                        # Plot tree
                                         result.plot_original_level_tree(
                                             Path(path_study), 
-                                            experiment=optimal_level.split("_")[0],
-                                            level=optimal_level.split("_")[1],
-                                            modalities=[optimal_level.split("_")[2]],
+                                            experiment=experiment,
+                                            level=optimal_level,
+                                            modalities=[modalities[idx_m]] if len(modalities) == 1 else modalities[idx_m],
                                             figsize=(25, 10),
                                         )
                                         # Get image path
-                                        path_tree = Path(path_study) / f'Original_level_{optimal_level}_explanation_tree.png'
+                                        path_tree = Path(path_study) / f'Original_level_{experiment}_{optimal_level}_{modalities[idx_m]}_explanation_tree.png'
                                         
                                     elif "LF" in optimal_level:
                                         result.plot_lf_level_tree(
                                             Path(path_study), 
-                                            experiment=optimal_level.split("_")[0],
-                                            level=optimal_level.split("_")[1],
-                                            modalities=[optimal_level.split("_")[2]],
+                                            experiment=experiment,
+                                            level=optimal_level,
+                                            modalities=[modalities[idx_m]] if len(modalities) == 1 else modalities[idx_m],
                                             figsize=(25, 10),
                                         )
                                         # Get image path
-                                        path_tree = Path(path_study) / f'LF_level_{optimal_level}_explanation_tree.png'
+                                        path_tree = Path(path_study) / f'LF_level_{experiment}_{optimal_level}_{modalities[idx_m]}_explanation_tree.png'
                                     
                                     elif "TF" in optimal_level:
                                         result.plot_tf_level_tree(
                                             Path(path_study), 
-                                            experiment=optimal_level.split("_")[0],
-                                            level=optimal_level.split("_")[1],
-                                            modalities=[optimal_level.split("_")[2]],
+                                            experiment=experiment,
+                                            level=optimal_level,
+                                            modalities=[modalities[idx_m]] if len(modalities) == 1 else modalities[idx_m],
                                             figsize=(25, 10),
                                         )
                                         # Get image path
-                                        path_tree = Path(path_study) / f'TF_level_{optimal_level}_explanation_tree.png'
+                                        path_tree = Path(path_study) / f'TF_level_{experiment}_{optimal_level}_{modalities[idx_m]}_explanation_tree.png'
                                     
                                     # Move plot to public folder
                                     if path_tree is not None:
-                                        # Create the folder if it does not exist
-                                        if not (Path.cwd().parent / "renderer/public/images/analyze").exists():
-                                            os.makedirs(Path.cwd().parent / "renderer/public/images/analyze")
                                         if 'Text' in optimal_level:
-                                            path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'Original_level_{optimal_level}_explanation_tree_{pip_name}.png'
-                                            path_save = shutil.copy(path_tree, path_save)
+                                            path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'Original_level_{experiment}_{optimal_level}_{modalities[idx_m]}_explanation_tree_{pip_name}.png'
                                         elif 'LF' in optimal_level:
-                                            path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'LF_level_{optimal_level}_explanation_tree_{pip_name}.png'
-                                            path_save = shutil.copy(path_tree, path_save)
+                                            path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'LF_level_{experiment}_{optimal_level}_{modalities[idx_m]}_explanation_tree_{pip_name}.png'
                                         elif 'TF' in optimal_level:
-                                            path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'TF_level_{optimal_level}_explanation_tree_{pip_name}.png'
-                                            path_save = shutil.copy(path_tree, path_save)
-                                        else:
-                                            path_save = None
-                                        
-                                        # Update figures list
-                                        treeplots.append('.' + str(path_save).split('public')[-1].replace('\\', '/') if path_save is not None else "")
-                                        
-                                # Update figures dict
-                                figures_dict["treeplots"] = treeplots
+                                            path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'TF_level_{experiment}_{optimal_level}_{modalities[idx_m]}_explanation_tree_{pip_name}.png'
+                                        path_save = shutil.copy(path_tree, path_save)
+
+                                        # Update Analysis dict
+                                        figures_dict["optimal_level"]["tree"] = {}
+                                        figures_dict["optimal_level"]["tree"][optimal_level] = {}
+                                        figures_dict["optimal_level"]["tree"][optimal_level]["path"] = '.' + str(path_save).split('public')[-1].replace('\\', '/')
                             except Exception as e:
                                 return {"error": str(e)}
                     
                     # Break the nodes loop
                     break
 
-            # Break the pips loop (only one analyze node is allowed per scene)
+            # Break the pips loop (only one analyze node is allowed per scence)
             break
         
-        # pip features and settings updated
+        # pip features and settings updateded
         scan_res[pip_name_res] = pip_res
     
         # pips response update
@@ -936,7 +918,7 @@ class MEDimageLearning:
                 if analyze_nodes > 1:
                     return {"error": "Only one analyze node is allowed!"}
         
-        # Process Pipelines starting with split
+        # Process Piplines starting with split
         for module in drawflow_scene:  # We scan all module in scene
             for node_id in drawflow_scene[module]['data']:  # We scan all node of each module in scene
                 node_content = drawflow_scene[module]['data'][node_id]  # Getting node content
@@ -944,7 +926,7 @@ class MEDimageLearning:
                     self.generate_all_pips(str(node_content["id"]), node_content, [], json_scene, pips, counter)
                     counter += 1
         
-        # Full experience check
+        # Full expeience check
         design_nodes = 0
         for module in drawflow_scene:
             for node_id in drawflow_scene[module]['data']:
@@ -1000,7 +982,6 @@ class MEDimageLearning:
         f.writelines("import json\n")
         f.writelines("import os\n")
         f.writelines("import pandas as pd\n")
-        f.writelines("import re\n")
         f.writelines("from copy import deepcopy\n")
         f.writelines("from pathlib import Path\n")
         f.writelines("\nfrom numpyencoder import NumpyEncoder\n")
@@ -1086,7 +1067,7 @@ class MEDimageLearning:
                         f.writelines("\n# Initializing experiment data\n")
                         f.writelines("experiment_label = design_settings['expName']\n")
                         f.writelines("paths_splits = [tests_dict[run] for run in tests_dict.keys()]\n")
-                        f.writelines("\n# Number of splits\n")
+                        f.writelines("\n# Numebr of splits\n")
                         f.writelines("nb_split = len(paths_splits)\n")
 
                         f.writelines("# make sure we have at least two splits\n")
@@ -1168,7 +1149,7 @@ class MEDimageLearning:
                         f.writelines("        name_tab = 'radTab' + str(idx+1)\n")
                         f.writelines("        rad_tab_x['csv'] = Path(path_features / feature_file)\n")
                         f.writelines("        rad_tab_x['txt'] = Path(path_features / (feature_file.split('.')[0] + '.txt'))\n")
-                        f.writelines("        rad_tab_x['type'] = re.search(r'__(.*?)(?=\.)', feature_file).group(1) if '__' in feature_file else 'None'\n")
+                        f.writelines("        rad_tab_x['type'] = feature_file.split('__')[1].split('_')[0] if '__' in feature_file else 'None'\n")
 
                         f.writelines("\n        # check if file exist\n")
                         f.writelines("        if not rad_tab_x['csv'].exists():\n")
@@ -1261,14 +1242,14 @@ class MEDimageLearning:
                         f.writelines(f"    fsr_settings = {pp.pformat(content['data'])}\n")
                         if not cleaned_data and not normalized_features:
                             f.writelines("    for item in rad_var_struct['path'].values():\n")
-                            f.writelines("        # Loading the table\n")
+                            f.writelines("        # Loading the tablen\n")
                             f.writelines("        path_radiomics_csv = item['csv']\n")
                             f.writelines("        path_radiomics_txt = item['txt']\n")
                             f.writelines("        image_type = item['type']\n")
                             f.writelines("        rad_table_learning = MEDimage.learning.ml_utils.get_radiomics_table(path_radiomics_csv, path_radiomics_txt, image_type, patient_ids)\n")
                             f.writelines("        rad_tables_learning.append(rad_table_learning)\n")
 
-                        f.writelines("\n    # Separate training and testing data before feature set reduction\n")
+                        f.writelines("\n    # Seperate training and testing data before feature set reduction\n")
                         f.writelines("    rad_tables_testing = deepcopy(rad_tables_learning)\n")
                         f.writelines("    rad_tables_training = []\n")
                         f.writelines("    for rad_tab in rad_tables_learning:\n")
@@ -1329,7 +1310,7 @@ class MEDimageLearning:
                             f.writelines("        rad_table_learning = MEDimage.learning.ml_utils.get_radiomics_table(path_radiomics_csv, path_radiomics_txt, image_type, patient_ids)\n")
                             f.writelines("        rad_tables_learning.append(rad_table_learning)\n")
                         
-                        f.writelines("\n    # Separate training and testing if no feature set reduction step was performed\n")
+                        f.writelines("\n    # Seperate training and testing if no feature set reduction step was performed\n")
                         if not reduced_features:
                             f.writelines("        rad_tables_testing = deepcopy(rad_tables_learning)\n")
                             f.writelines("        rad_tables_training = []\n")
@@ -1358,7 +1339,7 @@ class MEDimageLearning:
                         f.writelines("    use_gpu = learner_settings[model_name]['use_gpu']  if 'use_gpu' in learner_settings[model_name] else False\n")
                         f.writelines("    seed = learner_settings[model_name]['seed']\n")
 
-                        f.writelines("\n    # Separate variable table for training sets (repetitive but double-checking)\n")
+                        f.writelines("\n    # Serperate variable table for training sets (repetitive but double-checking)\n")
                         f.writelines("    var_table_train = rad_tables_training.loc[patients_train, :]\n")
 
                         f.writelines("\n    # Training the model\n")
@@ -1378,7 +1359,7 @@ class MEDimageLearning:
                         f.writelines("    name_save_model = learner_settings[model_name]['nameSave']\n")
                         f.writelines("    model_id = name_save_model + '_' + 'var1'\n")
                         f.writelines("    path_model = os.path.dirname(path_results) + '/' + (model_id + '.pickle')\n")
-                        f.writelines("    model_dict = MEDimage.learning.ml_utils.save_model(model, 'None', path_model)\n")
+                        f.writelines("    model_dict = MEDimage.learning.ml_utils.save_model(name_type, model, 'var1', path_model)\n")
 
                         f.writelines("\n    # --> C. Testing phase\n")
                         f.writelines("\n    # C.1. Testing the XGBoost model and computing model response\n")
@@ -1388,7 +1369,7 @@ class MEDimageLearning:
                         f.writelines("        [patients_train, patients_test]\n")
                         f.writelines("    )\n")
                         f.writelines("    if holdout_test:\n")
-                        f.writelines("        # --> D. Holdout set testing phase\n")
+                        f.writelines("        # --> D. Holdoutset testing phase\n")
                         f.writelines("        # D.1. Prepare holdout test data\n")
                         f.writelines("        # Loading and pre-processing\n")
                         f.writelines("        rad_tables_holdout = list()\n")
@@ -1498,6 +1479,10 @@ class MEDimageLearning:
             piplines_all.append(outcome_name + "_" + pip_name)
 
         # After all pips are executed, analyze both
+        f.writelines("\n")
+        f.writelines("\n# **All Experiments Analysis**\n")
+        f.writelines("\n")
+        
         # Find pips linked to analyze nodes
         experiments_labels = []
         for pip in pips:
@@ -1513,11 +1498,14 @@ class MEDimageLearning:
                     experiments_labels.append(content["data"]["expName"])
                     break
         
+        f.writelines("experiments_labels = " + str(experiments_labels) + " # All experiments labels\n")
+        
         # Check and get experiment main name
         experiment = experiments_labels[0].split("_")[0]
         for exp_label in experiments_labels:
             if exp_label.split("_")[0] != experiment:
                 return {"error": f"To analyze experiments, labels must start with the same name! {experiment} != {exp_label}"}
+        f.writelines("experiment = '" + experiment + "' # Experiment name\n")
                     
         analyzed_all = False
         for pip in pips:
@@ -1525,13 +1513,6 @@ class MEDimageLearning:
                 content = [x for x in self.json_config["nodes"] if x["id"] == node][0]
                 if content["name"].lower() == "analyze" and not analyzed_all:
                     if "heatmap" in content["data"].keys() and content["data"]["heatmap"]:
-                        f.writelines("\n")
-                        f.writelines("\n# **All Experiments Analysis**\n")
-                        f.writelines("\n")
-
-                        f.writelines("experiments_labels = " + str(experiments_labels) + " # All experiments labels\n")
-                        f.writelines("experiment = '" + experiment + "' # Experiment name\n")
-
                         f.writelines("\n# **Model's Performance Heatmap**\n")
                         f.writelines("\nmetric = analyze_settings['heatmapParams']['metric']\n")
                         f.writelines("plot_p_values = analyze_settings['heatmapParams']['pValues']\n")
@@ -1549,62 +1530,77 @@ class MEDimageLearning:
 
                         f.writelines("result.plot_heatmap(\n")
                         f.writelines("    Path(path_study), \n")
-                        f.writelines("    experiments_labels, \n")
+                        f.writelines("    experiment=experiment, \n")
+                        f.writelines("    levels=list(set([exp_label.split('_')[1] for exp_label in experiments_labels])),\n")
+                        f.writelines("    modalities=list(set([exp_label.split('_')[-1] for exp_label in experiments_labels])),\n")
                         f.writelines("    metric=metric,\n")
                         f.writelines("    stat_extra=stat_extra,\n")
                         f.writelines("    title=title,\n")
                         f.writelines("    plot_p_values=plot_p_values,\n")
                         f.writelines("    p_value_test=p_value_test,\n")
+                        f.writelines("    nb_split=nb_split,\n")
                         f.writelines("    save=False)\n")
 
-                        # Find optimal level
+                    # Find optimal level
+                    if "optimalLevel" in content["data"].keys() and content["data"]["optimalLevel"] is not None:
+                        find_optimal_level = content["data"]["optimalLevel"]
+                    else:
+                        find_optimal_level = False
+                    if "tree" in content["data"].keys() and content["data"]["tree"] is not None:
+                        plot_tree = content["data"]["tree"]
+                    else:
+                        plot_tree = False
+                    if find_optimal_level:
                         f.writelines("\n# **Finding Optimal Level**\n")
                         f.writelines("\noptimal_levels = result.get_optimal_level(\n")
                         f.writelines("    Path(path_study), \n")
-                        f.writelines("    experiments_labels, \n")
+                        f.writelines("    experiment=experiment, \n")
+                        f.writelines("    levels=list(set([exp_label.split('_')[1] for exp_label in experiments_labels])),\n")
+                        f.writelines("    modalities=list(set([exp_label.split('_')[-1] for exp_label in experiments_labels])),\n")
                         f.writelines("    metric=metric,\n")
                         f.writelines("    p_value_test=p_value_test,\n")
+                        f.writelines("    nb_split=nb_split\n")
                         f.writelines("    )\n")
                         f.writelines("print(optimal_levels)\n")
 
-                        if "tree" in content["data"].keys() and content["data"]["tree"] is not None:
-                            plot_tree = content["data"]["tree"]
-                        else:
-                            plot_tree = False
-                        
                         # Extra optimal level analysis
                         if plot_tree:
                             f.writelines("\n# **Tree of Importance: Extra optimal level analysis**\n")
                             f.writelines("\nmodalities = list(set([exp_label.split('_')[-1] for exp_label in experiments_labels]))\n")
                             f.writelines("for idx_m, optimal_level in enumerate(optimal_levels):\n")
+                            f.writelines("    path_tree = None\n")
                             f.writelines("    if 'Text' in optimal_level:\n")
+                            f.writelines("        # Plot tree\n")
                             f.writelines("        result.plot_original_level_tree(\n")
                             f.writelines("            Path(path_study), \n")
-                            f.writelines("            experiment=optimal_level.split('_')[0],\n")
-                            f.writelines("            level=optimal_level.split('_')[1],\n")
-                            f.writelines("            modalities=[optimal_level.split('_')[2]],\n")
+                            f.writelines("            experiment=experiment,\n")
+                            f.writelines("            level=optimal_level,\n")
+                            f.writelines("            modalities=[modalities[idx_m]] if len(modalities) == 1 else modalities[idx_m],\n")
                             f.writelines("            figsize=(25, 10),\n")
                             f.writelines("        )\n")
+                            f.writelines("        # Get image path\n")
+                            f.writelines("        path_tree = Path(path_study) / f'Original_level_{experiment}_{optimal_level}_{modalities[idx_m]}_explanation.png'\n")
                             f.writelines("\n")        
                             f.writelines("    elif 'LF' in optimal_level:\n")
                             f.writelines("        result.plot_lf_level_tree(\n")
                             f.writelines("            Path(path_study), \n")
-                            f.writelines("            experiment=optimal_level.split('_')[0],\n")
-                            f.writelines("            level=optimal_level.split('_')[1],\n")
-                            f.writelines("            modalities=[optimal_level.split('_')[2]],\n")
+                            f.writelines("            experiment=experiment,\n")
+                            f.writelines("            level=optimal_level,\n")
+                            f.writelines("            modalities=[modalities[idx_m]] if len(modalities) == 1 else modalities[idx_m],\n")
                             f.writelines("            figsize=(25, 10),\n")
                             f.writelines("        )\n")
                                 
                             f.writelines("    elif 'TF' in optimal_level:\n")
                             f.writelines("        result.plot_tf_level_tree(\n")
                             f.writelines("            Path(path_study), \n")
-                            f.writelines("            experiment=optimal_level.split('_')[0],\n")
-                            f.writelines("            level=optimal_level.split('_')[1],\n")
-                            f.writelines("            modalities=[optimal_level.split('_')[2]],\n")
+                            f.writelines("            experiment=experiment,\n")
+                            f.writelines("            level=optimal_level,\n")
+                            f.writelines("            modalities=[modalities[idx_m]] if len(modalities) == 1 else modalities[idx_m],\n")
                             f.writelines("            figsize=(25, 10),\n")
                             f.writelines("        )\n")
                             f.writelines("    else:\n")
                             f.writelines("        print('The optimal level does not qualify for a Tree Analysis, Must be Texture, or Filter-Based level')\n")
+
                     analyzed_all = True
                     
                     # Break the loop

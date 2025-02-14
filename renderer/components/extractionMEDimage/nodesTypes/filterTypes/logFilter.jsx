@@ -14,7 +14,11 @@ import DocLink from "../../docLink"
 const LogFilter = ({ changeFilterForm, data }) => {
   return (
     <Form.Group as={Row} controlId="filter-log">
-      <DocLink linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#log"} name={"Log filter documentation"} image={"../icon/extraction_img/exclamation.svg"} />
+      <DocLink 
+        linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#log"} 
+        name={"Log filter documentation"} 
+        image={"https://www.svgrepo.com/show/521262/warning-circle.svg"} 
+      />
 
       <Form.Group as={Row} controlId="ndims">
         <Form.Label column>Dimension:</Form.Label>

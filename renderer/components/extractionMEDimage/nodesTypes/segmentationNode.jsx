@@ -16,12 +16,9 @@ import ViewButton from "../buttonsTypes/viewButton"
  * it handles the display of the node and the modal
  */
 const SegmentationNode = ({ id, data, type }) => {
-  const [selectedRois, setSelectedRois] = useState(data.internal.settings.rois) // Hook to keep track of the selected ROIs
+  const [selectedROIs, setSelectedROIs] = useState(data.internal.settings.rois) // Hook to keep track of the selected ROIs
   const { updateNode } = useContext(FlowFunctionsContext)
 
-  /**
-   *
-   */
   // Hook called when the rois data of the node is changed, initializes the new selected rois
   useEffect(() => {
     let newSelectedRois = {}
@@ -31,19 +28,21 @@ const SegmentationNode = ({ id, data, type }) => {
       }
       // At least one positive ROI should be selected, select the first one by default
       newSelectedRois[data.internal.settings.rois[0]] = "0"
-      setSelectedRois(newSelectedRois)
+      setSelectedROIs(newSelectedRois)
+    } else if (data.internal.settings.selected_rois && Object.keys(data.internal.settings.selected_rois).length > 0) {
+      setSelectedROIs(data.internal.settings.selected_rois)
     } else {
-      setSelectedRois(data.internal.settings.selected_rois)
+      setSelectedROIs({})
     }
   }, [data.internal.settings.rois])
 
-  // Hook called whenever selectedRois changes, updates the ROIs selection and warnings
+  // Hook called whenever selectedROIs changes, updates the ROIs selection and warnings
   useEffect(() => {
     // Get the latest roi selection
     getRoisSelection()
     // Update warning
     updateHasWarning(data)
-  }, [selectedRois])
+  }, [selectedROIs])
 
   /**
    * @param {Event} event event given upon form change
@@ -58,7 +57,7 @@ const SegmentationNode = ({ id, data, type }) => {
     (event, currentRoi) => {
       try {
         if (event.target.value === "1" || event.target.value === "2") {
-          let tempSelectedRois = { ...selectedRois }
+          let tempSelectedRois = { ...selectedROIs }
           delete tempSelectedRois[currentRoi]
 
           const isPositiveRoiSelected = Object.values(tempSelectedRois).some((value) => value === "0")
@@ -67,7 +66,7 @@ const SegmentationNode = ({ id, data, type }) => {
           }
         }
 
-        setSelectedRois((prevRoisList) => ({
+        setSelectedROIs((prevRoisList) => ({
           ...prevRoisList,
           [currentRoi]: event.target.value
         }))
@@ -85,23 +84,23 @@ const SegmentationNode = ({ id, data, type }) => {
         })
       }
     },
-    [selectedRois]
+    [selectedROIs]
   )
 
   /**
    * @description
-   * This function is used to get the ROIs selection from the selectedRois hook
+   * This function is used to get the ROIs selection from the selectedROIs hook
    */
   const getRoisSelection = useCallback(() => {
     let roisString = ""
     let positiveRois = ""
     let negativeRois = ""
 
-    for (const roi in selectedRois) {
-      if (selectedRois[roi] === "0") {
+    for (const roi in selectedROIs) {
+      if (selectedROIs[roi] === "0") {
         // If the ROI is positive, add it to positive_rois
         positiveRois += "+{" + roi + "}"
-      } else if (selectedRois[roi] === "1") {
+      } else if (selectedROIs[roi] === "1") {
         // If the ROI is negative, add it to negative_rois
         negativeRois += "-{" + roi + "}"
       }
@@ -116,14 +115,14 @@ const SegmentationNode = ({ id, data, type }) => {
     // Add the ROI list to the node's data
     data.internal.settings["rois_data"] = roisString
     // Add the selected ROIs to the node's data
-    data.internal.settings["selected_rois"] = selectedRois
+    data.internal.settings["selected_rois"] = selectedROIs
 
     // And set changeView to true to update the view
     updateNode({
       id: id,
       updatedData: data.internal
     })
-  }, [selectedRois, id, data.internal, updateNode])
+  }, [selectedROIs, id, data.internal, updateNode])
 
   return (
     <>
@@ -136,7 +135,7 @@ const SegmentationNode = ({ id, data, type }) => {
         nodeSpecific={
           <>
             {/* Show segmentation warning when there is no roisList or the roisList is empty */}
-            {!Object.keys(selectedRois) || Object.keys(selectedRois).length === 0 ? (
+            {!Object.keys(selectedROIs) || Object.keys(selectedROIs).length === 0 ? (
               <Alert variant="danger" className="warning-message">
                 <b>No input node detected</b>
               </Alert>
@@ -163,14 +162,14 @@ const SegmentationNode = ({ id, data, type }) => {
                         </thead>
                         <tbody id={`segmentation-form-body-${id}`}>
                           {/* Map all possible ROIs to a set of radio buttons: add is 0, sub is 1 and unused is 2 (default value) */}
-                          {Object.keys(selectedRois).map((currentRoi) => (
+                          {Object.keys(selectedROIs).map((currentRoi) => (
                             <tr key={currentRoi}>
                               <td>
                                 <label htmlFor={currentRoi}>{currentRoi}</label>
                               </td>
                               {["0", "1", "2"].map((value, key) => (
                                 <td key={key}>
-                                  <input type="radio" name={currentRoi} value={value} checked={selectedRois[currentRoi] === value} onChange={(e) => handleRadioChange(e, currentRoi)} />
+                                  <input type="radio" name={currentRoi} value={value} checked={selectedROIs[currentRoi] === value} onChange={(e) => handleRadioChange(e, currentRoi)} />
                                 </td>
                               ))}
                             </tr>

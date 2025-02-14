@@ -44,6 +44,7 @@ const Cleaning = ({ id, data, type }) => {
               </Form.Label>
                 <InputNumber
                     style={{width: "300px"}}
+                    buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.default.feature.continuous.missingCutoffps}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.default.feature.continuous.missingCutoffps = event.target.value;
@@ -71,6 +72,7 @@ const Cleaning = ({ id, data, type }) => {
               </Form.Label>
                 <InputNumber
                     style={{width: "300px"}}
+                    buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.default.feature.continuous.missingCutoffpf}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.default.feature.continuous.missingCutoffpf = event.target.value;
@@ -98,6 +100,7 @@ const Cleaning = ({ id, data, type }) => {
               </Form.Label>
                 <InputNumber
                     style={{width: "300px"}}
+                    buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.default.feature.continuous.covCutoff}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.default.feature.continuous.covCutoff = event.target.value;

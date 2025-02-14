@@ -68,6 +68,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
               </Form.Label>
                 <InputNumber
                     style={{width: "300px"}}
+                    buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.XGBoost.varImportanceThreshold}
                     onValueChange={(event) => {
                         data.setupParam.possibleSettings.defaultSettings.XGBoost.varImportanceThreshold = event.target.value;
@@ -96,6 +97,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
               </Form.Label>
                 <InputNumber
                     style={{width: "300px"}}
+                    buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.XGBoost.optimalThreshold}
                     onValueChange={(event) => {
                         data.setupParam.possibleSettings.defaultSettings.optimalThreshold = event.target.value;
@@ -196,6 +198,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
               </Form.Label>
                 <InputNumber
                     style={{width: "300px"}}
+                    buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.XGBoost.seed}
                     onValueChange={(event) => {
                         data.setupParam.possibleSettings.defaultSettings.XGBoost.seed = event.target.value;

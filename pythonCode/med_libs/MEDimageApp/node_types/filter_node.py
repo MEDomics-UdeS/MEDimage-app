@@ -1,3 +1,4 @@
+from copy import deepcopy
 import MEDimage
 from ..node import Node
 from ..pipeline import Pipeline
@@ -25,8 +26,8 @@ class FilterNode(Node):
         pipeline.latest_node_output["vol"] = vol_obj_filter
                 
         ## Update the output of the node
-        self.output["vol"] = vol_obj_filter.data
-        self.output["roi"] = pipeline.latest_node_output["roi"].data
+        self.output["vol"] = deepcopy(vol_obj_filter.data)
+        self.output["roi"] = deepcopy(pipeline.latest_node_output["roi"].data)
 
         # Compute filter for TEXTURE FEATURES
         ## Check if there is an output for texture features

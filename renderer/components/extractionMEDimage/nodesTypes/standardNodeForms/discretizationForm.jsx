@@ -61,7 +61,7 @@ const DiscretizationForm = ({ nodeForm, changeNodeForm, data }) => {
       <DocLink
         linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#discretisation"}
         name={"Discretization documentation"}
-        image={"../icon/extraction_img/exclamation.svg"}
+        image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
       />
 
       <Form.Group style={{ paddingTop: "10px" }}>

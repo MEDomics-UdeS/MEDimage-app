@@ -14,7 +14,11 @@ import DocLink from "../../docLink"
 const MeanFilter = ({ changeFilterForm, data }) => {
   return (
     <Form.Group as={Row} controlId="filter-mean">
-      <DocLink linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#mean"} name={"Mean filter documentation"} image={"../icon/extraction_img/exclamation.svg"} />
+      <DocLink 
+        linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#mean"} 
+        name={"Mean filter documentation"}
+        image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
+      />
 
       <Form.Group as={Row} controlId="ndims">
         <Form.Label column>Dimension:</Form.Label>

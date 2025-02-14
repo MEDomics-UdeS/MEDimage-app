@@ -62,7 +62,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
           "https://medimage.readthedocs.io/en/latest/configuration_file.html#mean"
         }
         name={"Mean filter documentation"}
-        image={"../icon/extraction_img/exclamation.svg"}
+        image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
       />
 
       <Form.Group as={Row} controlId="ndims">
@@ -149,7 +149,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
             "https://medimage.readthedocs.io/en/latest/configuration_file.html#log"
             }
             name={"Log filter documentation"}
-            image={"../icon/extraction_img/exclamation.svg"}
+            image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
         />
 
         <Form.Group as={Row} controlId="ndims">
@@ -251,7 +251,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
           "https://medimage.readthedocs.io/en/latest/configuration_file.html#laws"
         }
         name={"Laws filter documentation"}
-        image={"../icon/extraction_img/exclamation.svg"}
+        image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
       />
       <Form.Group as={Row} controlId="config">
           <Col style={{ minWidth: "220px" }}>
@@ -446,7 +446,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
           "https://medimage.readthedocs.io/en/latest/configuration_file.html#gabor"
         }
         name={"Gabor filter documentation"}
-        image={"../icon/extraction_img/exclamation.svg"}
+        image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
       />
       <Form.Group as={Row} controlId="sigma">
         <Form.Label column>Sigma:</Form.Label>
@@ -594,7 +594,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
             "https://medimage.readthedocs.io/en/latest/configuration_file.html#wavelet"
             }
             name={"Wavelet filter documentation"}
-            image={"../icon/extraction_img/exclamation.svg"}
+            image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
         />
         <Form.Group as={Row} controlId="ndims">
             <Form.Label column>Dimension:</Form.Label>
@@ -604,10 +604,9 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
                 name="ndims"
                 type="number"
                 value={params.wavelet.ndims}
-                onChange={(event) =>{
-                    params.wavelet.ndims = event.target.value;
-                    setActiveIndex(!activeIndex);
-                }}
+                onChange={(event) =>
+                changeFilterForm(event.target.name, event.target.value)
+                }
             />
             </Col>
         </Form.Group>
@@ -700,10 +699,9 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
                 type="number"
                 name="level"
                 value={params.wavelet.level}
-                onChange={(event) => {
-                    params.wavelet.level = event.target.value;
-                    setActiveIndex(!activeIndex);
-                }}
+                onChange={(event) =>
+                changeFilterForm(event.target.name, event.target.value)
+                }
             />
             </Col>
         </Form.Group>
@@ -715,10 +713,9 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
                 as="select"
                 name="rot_invariance"
                 value={params.wavelet.rot_invariance}
-                onChange={(event) => {
-                    params.wavelet.rot_invariance = event.target.value;
-                    setActiveIndex(!activeIndex);
-                }}
+                onChange={(event) =>
+                changeFilterForm(event.target.name, event.target.value)
+                }
             >
                 <option value="false">False</option>
                 <option value="true">True</option>
@@ -733,10 +730,9 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
                 as="select"
                 name="padding"
                 value={params.wavelet.padding}
-                onChange={(event) => {
-                    params.wavelet.padding = event.target.value;
-                    setActiveIndex(!activeIndex);
-                }}
+                onChange={(event) =>
+                changeFilterForm(event.target.name, event.target.value)
+                }
             >
                 <option value="constant">Constant</option>
                 <option value="edge">Edge</option>
@@ -760,10 +756,9 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
                 type="text"
                 name="name_save"
                 value={params.wavelet.name_save}
-                onChange={(event) => {
-                    params.wavelet.name_save = event.target.value;
-                    setActiveIndex(!activeIndex);
-                }}
+                onChange={(event) =>
+                changeFilterForm(event.target.name, event.target.value)
+                }
             />
             </Col>
         </Form.Group>
@@ -780,7 +775,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
  * @param {string} pathSettings path to the settings file
  * @returns {JSX.Element} optional, a settings edior panel
  */
-function RenderParamsPanel (activeIndex, setActiveIndex, setShowEdit, ModSettings, imParamFilter, pathSettings) {
+const renderParamsPanel = (activeIndex, setActiveIndex, setShowEdit, ModSettings, imParamFilter, pathSettings) => {
     const toastPrime = useRef(null);
     const [oldValueMin, setoldValueMin] = useState(ModSettings.reSeg.range[0]);
     const [oldValueMax, setoldValueMax] = useState(ModSettings.reSeg.range[1]);
@@ -1163,7 +1158,7 @@ function RenderParamsPanel (activeIndex, setActiveIndex, setShowEdit, ModSetting
                             else{
                                 ModSettings.reSeg.range[0] = oldValueMin;
                             }
-                        }
+                        };
                         setActiveIndex(!activeIndex);
                     }}
                 />
@@ -1195,7 +1190,7 @@ function RenderParamsPanel (activeIndex, setActiveIndex, setShowEdit, ModSetting
                             } else {
                                 ModSettings.reSeg.range[1] = oldValueMax;
                             }
-                        }
+                        };
                         setActiveIndex(!activeIndex);
                     }}
                 />
@@ -1374,7 +1369,7 @@ function RenderParamsPanel (activeIndex, setActiveIndex, setShowEdit, ModSetting
                             value={ModSettings.filter_type}
                             options={filterTypes}
                             optionLabel="name"
-                            placeholder={ModSettings.filter_type}
+                            placeholder={ModSettings.filter_type ? ModSettings.filter_type : "Select a filter"}
                             className="w-full md:w-14rem"
                             onChange={(event) => {
                                 // check if "None" is selected
@@ -1427,34 +1422,195 @@ function RenderParamsPanel (activeIndex, setActiveIndex, setShowEdit, ModSetting
                     </div>
                 </Form.Group>
             </Row>
-        
+                        
+            {/* FEATURES TO EXTRACT */}
+            <br/>
+            <div className="text-center">
+                <span className="p-inputgroup-addon">
+                    <i className="pi pi-list-check"></i>
+                </span>
+            </div>
+            <Row className="form-group-box">
+                <Form.Group as={Row}>
+                    <Tooltip target=".ftext"/>
+                    <Form.Label 
+                        className="ftext" 
+                        data-pr-tooltip="Include or exclude the feature families to extract (All features are extracted by default)"
+                        data-pr-position="bottom">
+                        Features to extract :
+                    </Form.Label>
+                </Form.Group>
+                {('extract' in ModSettings && 'Morph' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
+                    <Toast ref={toastPrime} position="bottom-right"/>
+                    <h6>Morphology</h6>
+                    <InputSwitch 
+                        checked={ModSettings.extract.Morph}
+                        onChange={(e) => {
+                            console.log(e)
+                            console.log("ModSettings", ModSettings.extract)
+                            console.log("ModSettings", ModSettings.extract.Morph)
+                            ModSettings.extract.Morph = e.value
+                            setActiveIndex(!activeIndex)
+                        }} 
+                    />
+                </div>}
+                {('extract' in ModSettings && 'LocalIntensity' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
+                    <Toast ref={toastPrime} position="bottom-right"/>
+                    <h6>Local Intensity</h6>
+                    <InputSwitch 
+                        checked={ModSettings.extract.LocalIntensity}
+                        onChange={(e) => {
+                            console.log(e)
+                            ModSettings.extract.LocalIntensity = e.value
+                            setActiveIndex(!activeIndex)
+                        }} 
+                    />
+                </div>}
+                {('extract' in ModSettings && 'Stats' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
+                    <Toast ref={toastPrime} position="bottom-right"/>
+                    <h6>Statistical</h6>
+                    <InputSwitch 
+                        checked={ModSettings.extract.Stats}
+                        onChange={(e) => {
+                            console.log(e)
+                            ModSettings.extract.Stats = e.value
+                            setActiveIndex(!activeIndex)
+                        }} 
+                    />
+                </div>}
+                {('extract' in ModSettings && 'IntensityHistogram' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
+                    <Toast ref={toastPrime} position="bottom-right"/>
+                    <h6>Intensity Histogram</h6>
+                    <InputSwitch 
+                        checked={ModSettings.extract.IntensityHistogram}
+                        onChange={(e) => {
+                            console.log(e)
+                            ModSettings.extract.IntensityHistogram = e.value
+                            setActiveIndex(!activeIndex)
+                        }} 
+                    />
+                </div>}
+                {('extract' in ModSettings && 'IntensityVolumeHistogram' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
+                    <Toast ref={toastPrime} position="bottom-right"/>
+                    <h6>Intensity Volume Histogram</h6>
+                    <InputSwitch 
+                        checked={ModSettings.extract.IntensityVolumeHistogram}
+                        onChange={(e) => {
+                            console.log(e)
+                            ModSettings.extract.IntensityVolumeHistogram = e.value
+                            setActiveIndex(!activeIndex)
+                        }} 
+                    />
+                </div>}
+                {('extract' in ModSettings && 'GLCM' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
+                    <Toast ref={toastPrime} position="bottom-right"/>
+                    <h6>GLCM</h6>
+                    <InputSwitch 
+                        checked={ModSettings.extract.GLCM}
+                        onChange={(e) => {
+                            console.log(e)
+                            ModSettings.extract.GLCM = e.value
+                            setActiveIndex(!activeIndex)
+                        }} 
+                    />
+                </div>}
+                {('extract' in ModSettings && 'GLRLM' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
+                    <Toast ref={toastPrime} position="bottom-right"/>
+                    <h6>GLRLM</h6>
+                    <InputSwitch 
+                        checked={ModSettings.extract.GLRLM}
+                        onChange={(e) => {
+                            console.log(e)
+                            ModSettings.extract.GLRLM = e.value
+                            setActiveIndex(!activeIndex)
+                        }} 
+                    />
+                </div>}
+                {('extract' in ModSettings && 'GLSZM' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
+                    <Toast ref={toastPrime} position="bottom-right"/>
+                    <h6>GLSZM</h6>
+                    <InputSwitch 
+                        checked={ModSettings.extract.GLSZM}
+                        onChange={(e) => {
+                            console.log(e)
+                            ModSettings.extract.GLSZM = e.value
+                            setActiveIndex(!activeIndex)
+                        }} 
+                    />
+                </div>}
+                {('extract' in ModSettings && 'GLDZM' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
+                    <Toast ref={toastPrime} position="bottom-right"/>
+                    <h6>GLDZM</h6>
+                    <InputSwitch 
+                        checked={ModSettings.extract.GLDZM}
+                        onChange={(e) => {
+                            console.log(e)
+                            ModSettings.extract.GLDZM = e.value
+                            setActiveIndex(!activeIndex)
+                        }} 
+                    />
+                </div>}
+                {('extract' in ModSettings && 'NGTDM' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
+                    <Toast ref={toastPrime} position="bottom-right"/>
+                    <h6>NGTDM</h6>
+                    <InputSwitch 
+                        checked={ModSettings.extract.NGTDM}
+                        onChange={(e) => {
+                            console.log(e)
+                            ModSettings.extract.NGTDM = e.value
+                            setActiveIndex(!activeIndex)
+                        }} 
+                    />
+                </div>}
+                {('extract' in ModSettings && 'NGLDM' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
+                    <Toast ref={toastPrime} position="bottom-right"/>
+                    <h6>NGLDM</h6>
+                    <InputSwitch 
+                        checked={ModSettings.extract.NGLDM}
+                        onChange={(e) => {
+                            console.log(e)
+                            ModSettings.extract.NGLDM = e.value
+                            setActiveIndex(!activeIndex)
+                        }} 
+                    />
+                </div>}
+            </Row>
         </>
     )
 }
     
-const SettingsEditor = ({ showEdit, setShowEdit, settings, pathSettings}) => {
-    const [activeIndex, setActiveIndex] = useState(false);
-    const { port } = useContext(WorkspaceContext); // Get the port of the backend
+const SettingsEditor = ({ showEdit, setShowEdit, settings, pathSettings, onHideBE}) => {
+    const [activeIndex, setActiveIndex] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const { port } = useContext(WorkspaceContext) // Get the port of the backend
     const accept = (settings) => {
-        console.log("settings", settings);
+        console.log("settings", settings)
+        setLoading(true)
         requestBackend(
             port, 
             '/extraction_MEDimage/run_all/be_save_json',
             {settings, pathSettings}, 
             (response) => {
+                setLoading(false)
                 if (response.error) {
-                    console.error('Error:', response.error);
-                    toast.error('Error: ' + response.error);
+                    console.error('Error:', response.error)
+                    toast.error('Error: ' + response.error)
                 } else {
                     // Handle the response from the backend if needed
-                    console.log('Response from backend:', response);
+                    console.log('Response from backend:', response)
         
                     // toast message
-                    toast.success('File saved successfully');
+                    toast.success('File saved successfully')
 
                     // Close the dialog
-                    setShowEdit(false);
+                    onHideBE(false)
+                    setShowEdit(false)
                 }
+            },
+            (error) => {
+                setLoading(false)
+                console.error('Error:', error)
+                toast.error('Error: ' + error)
             }
           );
     };
@@ -1475,7 +1631,11 @@ const SettingsEditor = ({ showEdit, setShowEdit, settings, pathSettings}) => {
           visible={showEdit}
           style={{ width: '50vw' }}
           position={'right'}
-          onHide={() => setShowEdit(false)}
+          onHide={() => 
+            {
+                setShowEdit(false)
+                onHideBE(false)
+            }}
           maximizable
         >
         {/* GENERAL PARAMS */}
@@ -1529,13 +1689,13 @@ const SettingsEditor = ({ showEdit, setShowEdit, settings, pathSettings}) => {
         <br></br>
             <TabView>
             <TabPanel header="MR-scan">
-                {RenderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamMR, settings.imParamFilter, pathSettings)}
+                {renderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamMR, settings.imParamFilter, pathSettings)}
             </TabPanel>
             <TabPanel header="CT-scan">
-                {RenderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamCT, settings.imParamFilter, pathSettings)}
+                {renderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamCT, settings.imParamFilter, pathSettings)}
             </TabPanel>
             <TabPanel header="PET-scan">
-                {RenderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamPET, settings.imParamFilter, pathSettings)}
+                {renderParamsPanel(activeIndex, setActiveIndex, setShowEdit, settings.imParamPET, settings.imParamFilter, pathSettings)}
             </TabPanel>
             </TabView>
             {/* SAVE BUTTON */}
@@ -1547,6 +1707,7 @@ const SettingsEditor = ({ showEdit, setShowEdit, settings, pathSettings}) => {
                 className="p-button-info"
                 icon="pi pi-save"
                 onClick={(event) => confirmSave(event, settings)}
+                loading={loading}
                 raised
                 outlined
             />
