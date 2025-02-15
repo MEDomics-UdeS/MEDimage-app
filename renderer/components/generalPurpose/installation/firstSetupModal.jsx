@@ -241,7 +241,7 @@ const FirstSetupModal = ({ visible, onHide, closable, setRequirementsMet }) => {
     <Dialog header="Application first setup" visible={visible} onHide={onHide} style={{ width: "50vw" }} closable={closable}>
       <div className="p-grid p-fluid">
         <div className="p-col-12">
-          <h4>Thank you for installing the MEDomicsLab application!</h4>
+          <h4>Thank you for installing the MEDimage application!</h4>
           <p>Before you can start using it, we need to perform some initial setup.</p>
           <p>Ensure you are connected to the internet and click the button below to start the setup.</p>
           <p>Once the setup is complete, you will be able to start using the application.</p>
@@ -275,7 +275,7 @@ const FirstSetupModal = ({ visible, onHide, closable, setRequirementsMet }) => {
           />
         </div>
         <div className="p-end p-row-12" style={{ display: "flex", flexDirection: "row-reverse" }}>
-          {localRequirementsMet && (
+          {(
               <Button 
                 style={{ display: "flex", alignContent: "right", marginBottom: "0.5rem", width: "100px" }}
                 label="Close"
