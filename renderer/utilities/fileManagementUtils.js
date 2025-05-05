@@ -505,6 +505,7 @@ const getFileReadingMethodFromExtension = {
 }
 
 export {
+  processBatchSettings,
   getPathSeparator,
   splitStringAtTheLastSeparator,
   createFolderFromPath,
