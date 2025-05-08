@@ -1,4 +1,5 @@
 import MEDimage
+from copy import deepcopy
 import numpy as np
 from ..node import Node
 from ..pipeline import Pipeline
@@ -516,6 +517,15 @@ class ExtractionNode(Node):
             algo=a,
             gl=n,
             scale=s)
+        
+        # Check range for MEDimage params
+        if (pipeline.MEDimg.params.process.hasattr("im_range") and pipeline.MEDimg.params.process.im_range):
+            im_range = deepcopy(pipeline.MEDimg.params.process.im_range)
+            if(im_range[0] == "inf" or im_range[0] == "-inf"):
+                im_range[0] = -np.inf
+            if(im_range[1] == "inf"):
+                im_range[1] = np.inf
+            pipeline.MEDimg.params.process.im_range = im_range
 
         # Count all the features to extract
         extraction_count = 0
