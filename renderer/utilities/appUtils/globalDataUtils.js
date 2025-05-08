@@ -42,7 +42,19 @@ export async function loadMEDDataObjects() {
     // Format data
     medDataObjectsArray.forEach((data) => {
       const medDataObject = new MEDDataObject(data)
-      medDataObjectsDict[medDataObject.id] = medDataObject
+      
+      // Check if local objects still exist
+      if (medDataObject.inWorkspace && medDataObject.path) {
+        try {
+          fs.accessSync(medDataObject.path)
+          medDataObjectsDict[medDataObject.id] = medDataObject
+        } catch (error) {
+          console.error(`${medDataObject.name}: not found locally`, medDataObject)
+        }
+      } else {
+        medDataObjectsDict[medDataObject.id] = medDataObject
+      }
+
     })
   } catch (error) {
     console.error("Failed to load MEDDataObjects: ", error)
