@@ -21,13 +21,21 @@ const DiscretizationForm = ({ nodeForm, changeNodeForm, data }) => {
    * @description
    * This function is used to handle the change of a Value in the form.
    */
-  const handleChange = useCallback(
-    (event) => {
+  const handleChange = useCallback((algo, event) => {
       // Separate event in name and value
       const { name, value } = event.target
 
       let [nameFeature, nameType] = name.split("-")
-      let newValue = nameType === "type" ? value : parseInt(value)
+      let newValue = null
+      if (nameType !== "type"){
+        if (algo === "FBN") {
+          newValue = parseInt(value)
+        } else {
+          newValue = parseFloat(value)
+        }
+      } else {
+        newValue = value
+      }
 
       let newDict = { ...nodeForm[nameFeature] }
       if (nameFeature === "texture") {
@@ -71,14 +79,26 @@ const DiscretizationForm = ({ nodeForm, changeNodeForm, data }) => {
         <Row>
           <Col>
             <Form.Label>Type</Form.Label>
-            <Form.Control as="select" name="IH-type" value={nodeForm.IH.type} onChange={handleChange}>
+            <Form.Control 
+              as="select" 
+              name="IH-type" 
+              value={nodeForm.IH.type} 
+              onChange={(e) => handleChange(nodeForm.IH.type, e)}
+            >
               <option value="FBS">FBS</option>
               <option value="FBN">FBN</option>
             </Form.Control>
           </Col>
           <Col>
             <Form.Label>Value</Form.Label>
-            <Form.Control className="int" name="IH-val" type="number" value={nodeForm.IH.val} placeholder={"Default: " + String(defaultValues.IH.val)} onChange={handleChange} />
+            <Form.Control 
+              className="int" 
+              name="IH-val" 
+              type="number" 
+              value={nodeForm.IH.type === "FBN" ? parseInt(nodeForm.IH.val) : parseFloat(nodeForm.IH.val)}
+              placeholder={"Default: " + String(defaultValues.IH.val)} 
+              onChange={(e) => handleChange(nodeForm.IH.type, e)} 
+            />
           </Col>
         </Row>
       </Form.Group>
@@ -90,14 +110,26 @@ const DiscretizationForm = ({ nodeForm, changeNodeForm, data }) => {
         <Row>
           <Col>
             <Form.Label>Type</Form.Label>
-            <Form.Control as="select" name="IVH-type" value={nodeForm.IVH.type} onChange={handleChange}>
+            <Form.Control 
+              as="select" 
+              name="IVH-type" 
+              value={nodeForm.IVH.type} 
+              onChange={(e) => handleChange(nodeForm.IVH.type, e)}
+            >
               <option value="FBS">FBS</option>
               <option value="FBN">FBN</option>
             </Form.Control>
           </Col>
           <Col>
             <Form.Label>Value</Form.Label>
-            <Form.Control className="int" name="IVH-val" type="number" value={nodeForm.IVH.val} placeholder={"Default: " + String(defaultValues.IVH.val)} onChange={handleChange} />
+            <Form.Control 
+              className="int" 
+              name="IVH-val" 
+              type="number" 
+              value={nodeForm.IVH.type === "FBN" ? parseInt(nodeForm.IVH.val) : parseFloat(nodeForm.IVH.val)}
+              placeholder={"Default: " + String(defaultValues.IVH.val)} 
+              onChange={(e) => handleChange(nodeForm.IVH.type, e)} 
+            />
           </Col>
         </Row>
       </Form.Group>
@@ -109,7 +141,12 @@ const DiscretizationForm = ({ nodeForm, changeNodeForm, data }) => {
         <Row>
           <Col>
             <Form.Label>Type</Form.Label>
-            <Form.Control as="select" name="texture-type" value={nodeForm.texture.type[0]} onChange={handleChange}>
+            <Form.Control 
+              as="select" 
+              name="texture-type" 
+              value={nodeForm.texture.type[0]} 
+              onChange={(e) => handleChange(nodeForm.texture.type[0], e)}
+            >
               <option value="FBS">FBS</option>
               <option value="FBN">FBN</option>
             </Form.Control>
@@ -120,9 +157,9 @@ const DiscretizationForm = ({ nodeForm, changeNodeForm, data }) => {
               className="int"
               name="texture-val"
               type="number"
-              value={nodeForm.texture.val[0][0]}
+              value={nodeForm.texture.type[0] === "FBN" ? parseInt(nodeForm.texture.val[0][0]) : parseFloat(nodeForm.texture.val[0][0])}
               placeholder={"Default: " + String(defaultValues.texture.val[0][0])}
-              onChange={handleChange}
+              onChange={(e) => handleChange(nodeForm.texture.type[0], e)}
             />
           </Col>
         </Row>
