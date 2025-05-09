@@ -35,6 +35,7 @@ export async function loadMEDDataObjects() {
   let medDataObjectsDict = {}
   try {
     // Get global data
+    const fs = require("fs")
     const db = await connectToMongoDB()
     const collection = db.collection("medDataObjects")
     const medDataObjectsArray = await collection.find().toArray()
@@ -49,7 +50,7 @@ export async function loadMEDDataObjects() {
           fs.accessSync(medDataObject.path)
           medDataObjectsDict[medDataObject.id] = medDataObject
         } catch (error) {
-          console.error(`${medDataObject.name}: not found locally`, medDataObject)
+          console.error(`${medDataObject.name}: not found locally`, medDataObject, error)
         }
       } else {
         medDataObjectsDict[medDataObject.id] = medDataObject
