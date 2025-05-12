@@ -519,7 +519,7 @@ class ExtractionNode(Node):
             scale=s)
         
         # Check range for MEDimage params
-        if (pipeline.MEDimg.params.process.hasattr("im_range") and pipeline.MEDimg.params.process.im_range):
+        if hasattr(pipeline.MEDimg.params.process, "im_range") and pipeline.MEDimg.params.process.im_range:
             im_range = deepcopy(pipeline.MEDimg.params.process.im_range)
             if(im_range[0] == "inf" or im_range[0] == "-inf"):
                 im_range[0] = -np.inf
