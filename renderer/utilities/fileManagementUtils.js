@@ -5,8 +5,8 @@ import process from "process"
 const fs = require("fs")
 const Path = require("path")
 const { parse } = require("csv-parse")
-const dfd = require("danfojs")
-const dfdNode = require("danfojs-node")
+const dfd = require("./danfo.js")
+const dfdNode = require("./danfo.js")
 var Papa = require("papaparse")
 import { ipcRenderer } from "electron"
 
