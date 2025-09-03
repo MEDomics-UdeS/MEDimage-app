@@ -544,7 +544,7 @@ class MEDimageLearning:
                                     return {"error":  "Radiomics learner: Name to save model was not provided"}
                                 model_id = name_save_model + '_' + "var1"
                                 path_model = os.path.dirname(path_results) + '/' + (model_id + '.pickle')
-                                model_dict = MEDimage.learning.ml_utils.save_model(name_type, model, "var1", path_model)
+                                model_dict = model_dict = MEDimage.learning.ml_utils.save_model(model, "None", path_model)
 
                                 # --> C. Testing phase        
                                 # C.1. Testing the XGBoost model and computing model response
