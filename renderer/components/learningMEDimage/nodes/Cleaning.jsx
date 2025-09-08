@@ -56,6 +56,7 @@ const Cleaning = ({ id, data, type }) => {
                     min={0.01}
                     max={0.99}
                     step={0.01}
+                    minFractionDigits={2}
                     incrementButtonClassName="p-button-info"
                     decrementButtonClassName='p-button-info' 
                 />
@@ -84,6 +85,7 @@ const Cleaning = ({ id, data, type }) => {
                     min={0.01}
                     max={0.99}
                     step={0.01}
+                    minFractionDigits={2}
                     incrementButtonClassName="p-button-info"
                     decrementButtonClassName='p-button-info' 
                 />
@@ -112,6 +114,7 @@ const Cleaning = ({ id, data, type }) => {
                     min={0.01}
                     max={0.99}
                     step={0.01}
+                    minFractionDigits={2}
                     incrementButtonClassName="p-button-info"
                     decrementButtonClassName='p-button-info' 
                 />

@@ -81,8 +81,9 @@ const RadiomicsLearner = ({ id, data, type }) => {
                     min={0.01}
                     max={0.99}
                     step={0.01}
+                    maxFractionDigits={2}
                     incrementButtonClassName="p-button-info"
-                    decrementButtonClassName='p-button-info' 
+                    decrementButtonClassName='p-button-info'
                 />
               </Form.Group>
 
@@ -105,13 +106,16 @@ const RadiomicsLearner = ({ id, data, type }) => {
                         updateHasWarning(data);
                         setReload(!reload);
                     }}
+                    placeholder="None"
                     mode="decimal"
                     showButtons
                     min={0.00}
                     max={0.99}
+                    maxFractionDigits={2}
                     step={0.01}
                     incrementButtonClassName="p-button-info"
-                    decrementButtonClassName='p-button-info' 
+                    decrementButtonClassName='p-button-info'
+                    allowEmpty={true}
                 />
               </Form.Group>
 

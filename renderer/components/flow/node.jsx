@@ -398,9 +398,6 @@ export const updateHasWarning = (data) => {
     if (data.internal.settings.XGBoost.nameSave === null || data.internal.settings.XGBoost.nameSave === "") {
       data.internal.hasWarning = { state: true, tooltip: <p>Save name for the model is not given!</p> }
       return
-    } else if (data.internal.settings.XGBoost.optimalThreshold === null || data.internal.settings.XGBoost.optimalThreshold === ""){
-      data.internal.hasWarning = { state: true, tooltip: <p>Model's optimal threshold is not given!</p> }
-      return
     } else if (data.internal.settings.XGBoost.optimalThreshold < 0 || data.internal.settings.XGBoost.optimalThreshold > 1){
       data.internal.hasWarning = { state: true, tooltip: <p>Model's optimal threshold must be between 0 and 1!</p> }
       return
