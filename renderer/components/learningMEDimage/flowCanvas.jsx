@@ -14,6 +14,7 @@ import { updateHasWarning } from "../flow/node.jsx"
 import { useEdgesState, useNodesState, useReactFlow } from "reactflow"
 import { FlowFunctionsContext } from "../flow/context/flowFunctionsContext.jsx"
 import { FlowResultsContext } from "../flow/context/flowResultsContext.jsx"
+import { FlowInfosContext } from "../flow/context/flowInfosContext.jsx"
 import WorkflowBase from "../flow/workflowBase.jsx"
 import { ErrorRequestContext } from "../generalPurpose/errorRequestContext.jsx"
 import { WorkspaceContext } from "../workspace/workspaceContext.jsx"
@@ -69,6 +70,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
   const [experiments, setExperiments] = useState([]) // experiments is used to store the experiments to be done in the learning experiment
   const { pageId } = useContext(PageInfosContext) // used to get the page infos such as id and config path
   const { setIsResults, isResults } = useContext(FlowResultsContext)
+  const { canRun } = useContext(FlowInfosContext) // used to get the flow infos
   const { groupNodeId, changeSubFlow, updateNode } = useContext(FlowFunctionsContext)
   const { globalData } = useContext(DataContext)
   const { port } = useContext(WorkspaceContext)
@@ -1084,7 +1086,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
               <>
                 <BtnDiv
                   buttonsList={[
-                    { type: "run", onClick: onRun },
+                    { type: "run", onClick: onRun, disabled: !canRun },
                     { type: "clear", onClick: onClear },
                     { type: "save", onClick: onSave },
                   ]}
