@@ -671,14 +671,14 @@ class MEDimageLearning:
                                     modality = experiment_label.split("_")[-1]
                                     sort_option = content["data"]["histParams"]["sortOption"]
                                     path_image = Path(path_study) / f'features_importance_histogram_{level}_{modality}_{sort_option}.png'
-                                    path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'features_importance_histogram_{level}_{modality}_{sort_option}_{pip_name}.png'
+                                    path_save = path_image.parent / f'features_importance_histogram_{level}_{modality}_{sort_option}_{pip_name}.png'
                                     path_save = shutil.copy(path_image, path_save)
 
                                     # Update Analysis dict
                                     analysis_dict = {}
                                     analysis_dict[experiment_label] = {}
                                     analysis_dict[experiment_label]["histogram"] = {}
-                                    analysis_dict[experiment_label]["histogram"]["path"] = '.' + str(path_save).split('public')[-1].replace('\\', '/')
+                                    analysis_dict[experiment_label]["histogram"]["path"] = '.' + str(path_save).replace('\\', '/')
 
                                 # Break the loop
                                 break

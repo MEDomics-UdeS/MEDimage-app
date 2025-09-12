@@ -45,7 +45,7 @@ const Design = ({ id, data, type }) => {
               </Form.Label>
                 <InputText
                     style={{width: "300px"}}
-                    value={data.setupParam.possibleSettings.defaultSettings.expName}
+                    value={data.internal.settings.expName || data.setupParam.possibleSettings.defaultSettings.expName}
                     placeholder="Ex: Problem_RadiomicsLevel_Modality"
                     onChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.expName = event.target.value;
