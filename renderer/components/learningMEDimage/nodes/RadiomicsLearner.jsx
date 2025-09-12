@@ -101,7 +101,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
                     buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.XGBoost.optimalThreshold}
                     onValueChange={(event) => {
-                        data.setupParam.possibleSettings.defaultSettings.optimalThreshold = event.target.value;
+                        data.setupParam.possibleSettings.defaultSettings.XGBoost.optimalThreshold = event.target.value;
                         data.internal.settings.XGBoost.optimalThreshold = event.target.value;
                         updateHasWarning(data);
                         setReload(!reload);
