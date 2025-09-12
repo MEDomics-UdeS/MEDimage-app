@@ -36,18 +36,18 @@ class MEDimageLearning:
         pip.append(id)  # Current node added to pip
 
         # ---------------------------------------------- NEXT NODES COMPUTE ----------------------------------------------
-        # NO OUPUT CONNECTION
+        # NO OUTPUT CONNECTION
         if not "output_1" in node_content["outputs"]:  # if no ouput connection
             pips.append(deepcopy(pip))  # Add the current pip to pips
             return pip
 
-        # ONE OUPUT CONNECTION
+        # ONE OUTPUT CONNECTION
         elif len(node_content["outputs"]["output_1"]["connections"]) == 1:
             out_node_id = node_content["outputs"]["output_1"]["connections"][0]["node"]
             out_node_content = get_node_content(out_node_id, json_scene)
             pip = self.generate_all_pips(out_node_id, out_node_content, pip, json_scene, pips, counter)
 
-        # MORE ONE OUPUT CONNECTION
+        # MORE THAN ONE OUTPUT CONNECTION
         else:
             connections = node_content["outputs"]["output_1"]["connections"]  # output connections of last node added to pip
             for connection in connections:
@@ -779,12 +779,12 @@ class MEDimageLearning:
                         
                         # Move images to public folder
                         path_image = Path(path_study) / f'{title}.png' if title else Path(path_study) / f'{metric}_heatmap.png'
-                        path_save = Path.cwd().parent / "renderer/public/images/analyze" / f'{title}_{pip_name}.png' if title else Path.cwd().parent / "renderer/public/images/analyze" / f'{metric}_heatmap_{pip_name}.png'
+                        path_image = path_image.parent / f'{title}_{pip_name}.png' if title else path_image.parent / f'{metric}_heatmap_{pip_name}.png'
                         path_save = shutil.copy(path_image, path_save)
 
                         # Update results dict with new figures
                         figures_dict["heatmap"] = {}
-                        figures_dict["heatmap"]["path"] = '.' + str(path_save).split('public')[-1].replace('\\', '/')
+                        figures_dict["heatmap"]["path"] = '.' + str(path_study).replace('\\', '/')
 
                     # Find optimal level
                     if "optimalLevel" in content["data"].keys() and content["data"]["optimalLevel"] is not None:
