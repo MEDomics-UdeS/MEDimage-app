@@ -764,22 +764,19 @@ class MEDimageLearning:
                         try:
                             result.plot_heatmap(
                                 Path(path_study), 
-                                experiment=experiment, 
-                                levels=[exp_label.split("_")[1] for exp_label in experiments_labels],
-                                modalities=list(set([exp_label.split("_")[-1] for exp_label in experiments_labels])),
+                                experiments_labels=experiments_labels,
                                 metric=metric,
                                 stat_extra=stat_extra,
                                 title=title,
                                 plot_p_values=plot_p_values,
                                 p_value_test=p_value_test,
-                                nb_split=nb_split,
                                 save=True)
                         except Exception as e:
                             return {"error": str(e)}
                         
                         # Move images to public folder
                         path_image = Path(path_study) / f'{title}.png' if title else Path(path_study) / f'{metric}_heatmap.png'
-                        path_image = path_image.parent / f'{title}_{pip_name}.png' if title else path_image.parent / f'{metric}_heatmap_{pip_name}.png'
+                        path_save = path_image.parent / f'{title}_{pip_name}.png' if title else path_image.parent / f'{metric}_heatmap_{pip_name}.png'
                         path_save = shutil.copy(path_image, path_save)
 
                         # Update results dict with new figures
@@ -799,9 +796,7 @@ class MEDimageLearning:
                         try:
                             optimal_levels = result.get_optimal_level(
                                 Path(path_study), 
-                                experiment=experiment, 
-                                levels=list(set([exp_label.split("_")[1] for exp_label in experiments_labels])),
-                                modalities=list(set([exp_label.split("_")[-1] for exp_label in experiments_labels])),
+                                experiments_labels=experiments_labels,
                                 metric=metric,
                                 p_value_test=p_value_test,
                                 nb_split=nb_split
@@ -1530,9 +1525,7 @@ class MEDimageLearning:
 
                         f.writelines("result.plot_heatmap(\n")
                         f.writelines("    Path(path_study), \n")
-                        f.writelines("    experiment=experiment, \n")
-                        f.writelines("    levels=list(set([exp_label.split('_')[1] for exp_label in experiments_labels])),\n")
-                        f.writelines("    modalities=list(set([exp_label.split('_')[-1] for exp_label in experiments_labels])),\n")
+                        f.writelines("    experiments_labels=experiments_labels, \n")
                         f.writelines("    metric=metric,\n")
                         f.writelines("    stat_extra=stat_extra,\n")
                         f.writelines("    title=title,\n")
@@ -1554,9 +1547,7 @@ class MEDimageLearning:
                         f.writelines("\n# **Finding Optimal Level**\n")
                         f.writelines("\noptimal_levels = result.get_optimal_level(\n")
                         f.writelines("    Path(path_study), \n")
-                        f.writelines("    experiment=experiment, \n")
-                        f.writelines("    levels=list(set([exp_label.split('_')[1] for exp_label in experiments_labels])),\n")
-                        f.writelines("    modalities=list(set([exp_label.split('_')[-1] for exp_label in experiments_labels])),\n")
+                        f.writelines("    experiments_labels=experiments_labels, \n")
                         f.writelines("    metric=metric,\n")
                         f.writelines("    p_value_test=p_value_test,\n")
                         f.writelines("    nb_split=nb_split\n")
