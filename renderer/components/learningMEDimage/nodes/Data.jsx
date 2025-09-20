@@ -55,6 +55,7 @@ const Data = ({ id, data, type }) => {
         }
       })
       setListWSFolders(wsFolders)
+      handleSaveFolderChange(selectedFolder) // Update the list of csv files if a folder is already selected
     }
   }
 
