@@ -1,6 +1,6 @@
-[submodule "pythonCode/submodules/MEDimage"]
-	path = pythonCode/submodules/MEDimage
-	url = git@github.com:MahdiAll99/MEDimage.git
+[submodule "pythonCode/submodules/MEDiml"]
+	path = pythonCode/submodules/MEDiml
+	url = git@github.com:MEDomicsLab/MEDiml.git
 	branch = dev_lab
 [submodule "pythonCode/submodules/MEDprofiles"]
 	path = pythonCode/submodules/MEDprofiles

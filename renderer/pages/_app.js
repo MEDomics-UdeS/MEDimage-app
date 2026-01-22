@@ -42,7 +42,7 @@ import "../styles/datatableWrapper.css"
 import "../styles/DBtreeSidebar.css"
 import "../styles/evaluation/evaluation.css"
 import "../styles/exploratory/exploratory.css"
-import "../styles/extraction/extractionMEDimage.css"
+import "../styles/extraction/extractionMEDiml.css"
 import "../styles/extraction/extractionTabular.css"
 import "../styles/flow/reactFlow.css"
 import "../styles/flow/results.css"
@@ -240,7 +240,7 @@ function App() {
     <>
       <Head>
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
-        <title>MEDomicsLab</title>
+        <title>MEDiml</title>
         {/* <script src="http://localhost:8097"></script> */}
         {/* Uncomment if you want to use React Dev tools */}
       </Head>

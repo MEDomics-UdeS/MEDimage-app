@@ -1,13 +1,13 @@
-# MEDimage-app - Develop branch 🛠️
+# MEDiml-app - Develop branch 🛠️
 
-[![GitHub issues](https://img.shields.io/github/issues/MEDomics-UdeS/MEDimage-app)]()
-[![GitHub forks](https://img.shields.io/github/forks/MEDomics-UdeS/MEDimage-app)]()
-[![GitHub stars](https://img.shields.io/github/stars/MEDomics-UdeS/MEDimage-app)]()
-[![GitHub license](https://img.shields.io/github/license/MEDomics-UdeS/MEDomicsLab)]()
+[![GitHub issues](https://img.shields.io/github/issues/MEDomicsLab/MEDiml-app)]()
+[![GitHub forks](https://img.shields.io/github/forks/MEDomicsLab/MEDiml-app)]()
+[![GitHub stars](https://img.shields.io/github/stars/MEDomicsLab/MEDiml-app)]()
+[![GitHub license](https://img.shields.io/github/license/MEDomicsLab/MEDomicsLab)]()
 
-Here is the develop branch of the MEDimage app. This branch is used to develop new features and fix bugs. The main branch is used to publish the latest stable version of the project. The develop branch is merged into the main branch when a new stable version is ready to be published.
+Here is the develop branch of the MEDiml app. This branch is used to develop new features and fix bugs. The main branch is used to publish the latest stable version of the project. The develop branch is merged into the main branch when a new stable version is ready to be published.
 
-### Main documentation 👉 [here](https://medomics-udes.gitbook.io/medimage-app-docs/). 👈
+### Main documentation 👉 [here](https://medomicslab.gitbook.io/mediml-app-docs/). 👈
 
 ### Development documentation 👇
 
@@ -16,14 +16,14 @@ Here is the develop branch of the MEDimage app. This branch is used to develop n
 ## 1. Git clone the project
 
 ```
-git clone -b develop git@github.com:MEDomics-UdeS/MEDimage-app.git      # via SSH (recommended)
-git clone -b develop https://github.com/MEDomics-UdeS/MEDimage-app.git  # via HTTPS
+git clone -b develop git@github.com:MEDomicsLab/MEDiml-app.git      # via SSH (recommended)
+git clone -b develop https://github.com/MEDomicsLab/MEDiml-app.git  # via HTTPS
 ```
 
 ## 2. Be sure to have the npm packages installed
 
 ```
-cd <.../MEDimage-app/>
+cd <.../MEDiml-app/>
 npm install
 ```
 

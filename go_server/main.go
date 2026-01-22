@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	ExtractionMEDimage "go_module/blueprints/extractionMEDimage"
-	LearningMEDimage "go_module/blueprints/learningMEDimage"
+	ExtractionMEDiml "go_module/blueprints/extractionMEDiml"
+	LearningMEDiml "go_module/blueprints/learningMEDiml"
 	Utils "go_module/src"
 	"log"
 	"net/http"
@@ -16,8 +16,8 @@ import (
 func main() {
 
 	// Here is where you add the handle functions to the server
-	LearningMEDimage.AddHandleFunc()
-	ExtractionMEDimage.AddHandleFunc()
+	LearningMEDiml.AddHandleFunc()
+	ExtractionMEDiml.AddHandleFunc()
 	Utils.CreateHandleFunc("get_server_health", handleGetServerHealth)
 	Utils.CreateHandleFunc("removeId/", handleRemoveId)
 	Utils.CreateHandleFunc("clearAll", handleClearAll)

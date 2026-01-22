@@ -29,8 +29,8 @@ import * as Icons from "react-bootstrap-icons"
 import Iframe from "react-iframe"
 import { toast } from "react-toastify"
 import { getPathSeparator, loadJsonPath } from "../../../utilities/fileManagementUtils"
-import ExtractionMEDimagePage from "../../mainPages/extractionMEDimage"
-import LearningMEDimagePage from "../../mainPages/learningMEDimage"
+import ExtractionMEDimlPage from "../../mainPages/extractionMEDiml"
+import LearningMEDimlPage from "../../mainPages/learningMEDiml"
 import DataManager from "../../mainPages/datamanager"
 import DataTableWrapperBPClass from "../../dataTypeVisualisation/dataTableWrapperBPClass"
 import DataTableFromDB from "../../dbComponents/dataTableFromDB"
@@ -666,14 +666,14 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
           return <ExtractionImagePage pageId={"ExtractionImagePage"} />
         }
       }
-    } else if (component === "extractionMEDimagePage") {
+    } else if (component === "extractionMEDimlPage") {
       const config = node.getConfig()
       if (config.uuid) {
-        return <ExtractionMEDimagePage pageId={config.uuid} />
+        return <ExtractionMEDimlPage pageId={config.uuid} />
       } else if (config.id) {
-        return <ExtractionMEDimagePage pageId={config.id} />
+        return <ExtractionMEDimlPage pageId={config.id} />
       } else {
-        return <ExtractionMEDimagePage pageId={"ExtractionMEDimagePage"} />
+        return <ExtractionMEDimlPage pageId={"ExtractionMEDimlPage"} />
       }
     } else if (component === "dataTable") {
       const config = node.getConfig()
@@ -730,14 +730,14 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
           <DataTableFromDB data={node.getConfig()} isReadOnly={(node.getConfig().extension === "view") ? true : false} />
         </>
       )
-    } else if (component === "LearningMEDimagePage") {
+    } else if (component === "LearningMEDimlPage") {
       const config = node.getConfig()
       if (config.uuid) {
-        return <LearningMEDimagePage pageId={config.uuid} />
+        return <LearningMEDimlPage pageId={config.uuid} />
       } else if (config.id) {
-        return <LearningMEDimagePage pageId={config.id} />
+        return <LearningMEDimlPage pageId={config.id} />
       } else {
-        return <LearningMEDimagePage pageId={"LearningMEDimagePage"} />
+        return <LearningMEDimlPage pageId={"LearningMEDimlPage"} />
       }
     } else if (component === "BatchExtractor") {
       if (node.getExtraData().data == null) {
@@ -898,10 +898,10 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
       if (component === "resultsPage") {
         return <span style={{ marginRight: 3 }}>📊</span>
       }
-      if (component === "extractionMEDimagePage") {
+      if (component === "extractionMEDimlPage") {
         return <span style={{ marginRight: 3 }}>📷</span>
       }
-      if (component === "LearningMEDimagePage") {
+      if (component === "LearningMEDimlPage") {
         return <span style={{ marginRight: 3 }}>📖</span>
       }
       if (component === "terminal") {

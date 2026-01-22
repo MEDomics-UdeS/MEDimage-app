@@ -138,7 +138,7 @@ dmypy.json
 .pyre/
 
 # submodules
-/flask_server/submodules/MEDimage/*
+/flask_server/submodules/MEDiml/*
 /flask_server/submodules/MEDprofiles/*
 
 
@@ -149,8 +149,8 @@ test
 /renderer/public/tmp/*
 *.idea
 /learning-tests-scene*
-flask_server/extraction_MEDimage/MEDimageApp/tmp/*
-renderer/public/pythonCode/MedLibs/MEDimageApp/tmp/*
+flask_server/extraction_MEDiml/MEDimlApp/tmp/*
+renderer/public/pythonCode/MedLibs/MEDimlApp/tmp/*
 /flask_server/local_dir/*
 renderer/public/pythonCode/local_dir/*
 renderer/public/images/checks/*

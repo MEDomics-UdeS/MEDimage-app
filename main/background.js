@@ -152,7 +152,7 @@ if (isProd) {
         {
           label: "Documentation",
           click() {
-            openWindowFromURL("https://medomics-udes.gitbook.io/medomicslab-docs")
+            openWindowFromURL("https://medomicslab.gitbook.io/medomicslab-docs")
           }
         },
         { type: "separator" },
@@ -264,6 +264,14 @@ if (isProd) {
    */
   ipcMain.handle("appGetPath", async (_event, path) => {
     return app.getPath(path)
+  })
+
+  /**
+   * @description Returns the version of the app
+   * @returns {Promise<String>} The version of the app
+   */
+  ipcMain.handle("getAppVersion", async () => {
+    return app.getVersion()
   })
 
   /**
