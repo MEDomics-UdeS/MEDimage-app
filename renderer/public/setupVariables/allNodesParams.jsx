@@ -1,12 +1,12 @@
-import learningMEDimageNodesParams from "./learningMEDimageNodesParams"
-import extractionMEDimageNodesParams from "./extractionMEDimageNodesParams"
+import learningMEDimlNodesParams from "./learningMEDimlNodesParams"
+import extractionMEDimlNodesParams from "./extractionMEDimlNodesParams"
 import featuresNodesParams from "./featuresNodesParams"
 
 /* eslint-disable camelcase */
 
 const nodesParams = {
-  learningMEDimage: learningMEDimageNodesParams,
-  extraction: extractionMEDimageNodesParams,
+  learningMEDiml: learningMEDimlNodesParams,
+  extraction: extractionMEDimlNodesParams,
   features: featuresNodesParams
 }
 

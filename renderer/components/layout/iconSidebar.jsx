@@ -129,20 +129,20 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
           <div className="medomics-layer development ">
             <div className="sidebar-icons">
               
-                {/* MEDimage Extraction Module */}
+                {/* MEDiml Extraction Module */}
                 <Nav.Link
                   className="ExtMEDimgNav btnSidebar align-center"
                   data-pr-at="right center"
                   data-pr-my="left center"
-                  data-pr-tooltip="MEDimage Extraction Module"
+                  data-pr-tooltip="MEDiml Extraction Module"
                   data-is-ext-btn
                   onClick={(event) => {
                     event.stopPropagation()
                     event.preventDefault()
-                    handleClick(event, "extractionMEDimage")
+                    handleClick(event, "extractionMEDiml")
                     setExtractionBtnstate(!extractionBtnstate)
                   }}
-                  onDoubleClick={(event) => handleDoubleClick(event, "extractionMEDimage")}
+                  onDoubleClick={(event) => handleDoubleClick(event, "extractionMEDiml")}
                 >
                   <GiDigDug style={{ height: "2rem", width: "auto" }} />
                 </Nav.Link>
@@ -159,7 +159,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
                     event.stopPropagation()
                     event.preventDefault()
                     handleDoubleClick(event, "DataManager")
-                    // handleClick(event, "extractionMEDimage")
+                    // handleClick(event, "extractionMEDiml")
                     setExtractionBtnstate(!extractionBtnstate)
                   }}
                   onDoubleClick={(event) => handleDoubleClick(event, "DataManager")}
@@ -185,20 +185,20 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
                   <FaLayerGroup style={{ height: "2rem", width: "auto" }} />
                 </Nav.Link>
 
-                {/* Machine Learning MEDimage */}
+                {/* Machine Learning MEDiml */}
                 <Nav.Link
                   className="MLMEDimgNav btnSidebar align-center"
                   data-pr-at="right center"
                   data-pr-my="left center"
-                  data-pr-tooltip="Machine Learning MEDimage"
+                  data-pr-tooltip="Machine Learning MEDiml"
                   data-is-ext-btn
                   onClick={(event) => {
                     event.stopPropagation()
                     event.preventDefault()
-                    handleClick(event, "LearningMEDimage")
+                    handleClick(event, "LearningMEDiml")
                     setExtractionBtnstate(!extractionBtnstate)
                   }}
-                  onDoubleClick={(event) => handleClick(event, "LearningMEDimage")}
+                  onDoubleClick={(event) => handleClick(event, "LearningMEDiml")}
                 >
                   <FaHeadSideVirus style={{ height: "2rem", width: "auto" }} />
                 </Nav.Link>

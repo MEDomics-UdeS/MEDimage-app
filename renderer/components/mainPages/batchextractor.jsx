@@ -7,7 +7,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import { Alert, Card, Col, Form, ProgressBar, Row } from 'react-bootstrap'
 import { toast } from 'react-toastify'
 import { requestBackend } from "../../utilities/requests"
-import DocLink from '../extractionMEDimage/docLink'
+import DocLink from '../extractionMEDiml/docLink'
 import { WorkspaceContext } from "../workspace/workspaceContext"
 import SettingsEditor from "./dataComponents/settingsEditor"
 import { Dropdown } from 'primereact/dropdown'
@@ -238,7 +238,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
     // Make a POST request to the backend API
     requestBackend(
       port, 
-      '/extraction_MEDimage/run_all/be_json', 
+      '/extraction_MEDiml/run_all/be_json', 
       {selectedSettingsFile}, 
       (response) => {
         console.log("response", response)
@@ -301,7 +301,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
     // Make a POST request to the backend API
     requestBackend(
       port, 
-      '/extraction_MEDimage/run_all/be_count', 
+      '/extraction_MEDiml/run_all/be_count', 
       requestData, 
       (response) => {
         console.log("response", response)
@@ -331,7 +331,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
     // Make a POST request to the backend API to run BatchExtractor
     requestBackend(
       port, 
-      '/extraction_MEDimage/run_all/be', 
+      '/extraction_MEDiml/run_all/be', 
       requestData, 
       (response) => {
         setRefreshEnabled(false)

@@ -94,7 +94,7 @@ components
 │   └───extractionTypes
 │           extractionDenseNet.jsx
 │
-├───extractionMEDimage
+├───extractionMEDiml
 │   │   docLink.jsx
 │   │   flowCanvas.jsx
 │   │
@@ -226,7 +226,7 @@ components
 │   │   evaluation.jsx
 │   │   exploratory.jsx
 │   │   extractionImage.jsx
-│   │   extractionMEDimage.jsx
+│   │   extractionMEDiml.jsx
 │   │   extractionText.jsx
 │   │   extractionTS.jsx
 │   │   home.jsx

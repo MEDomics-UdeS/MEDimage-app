@@ -270,9 +270,9 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
       if (item.type == "medml") {
         dispatchLayout({ type: "openInLearningModule", payload: item })
       } else if (item.type == "medimg") {
-        dispatchLayout({ type: "openInExtractionMEDimageModule", payload: item })
+        dispatchLayout({ type: "openInExtractionMEDimlModule", payload: item })
       } else if (item.type == "medimg.ml") {
-        dispatchLayout({ type: "openInLearningMEDimageModule", payload: item })
+        dispatchLayout({ type: "openInLearningMEDimlModule", payload: item })
       } else if (item.type == "medeval") {
         dispatchLayout({ type: "openInEvaluationModule", payload: item })
       } else if (item.type == "csv" || item.type == "tsv" || item.type == "xlsx" || item.type == "view") {

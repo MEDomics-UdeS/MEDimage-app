@@ -13,7 +13,7 @@ import FirstSetupModal from "../generalPurpose/installation/firstSetupModal"
 const HomePage = () => {
   const { workspace, setWorkspace, recentWorkspaces } = useContext(WorkspaceContext)
   const [hasBeenSet, setHasBeenSet] = useState(workspace.hasBeenSet)
-
+  const [appVersion, setAppVersion] = useState("")
   const [requirementsMet, setRequirementsMet] = useState(true)
 
   async function handleWorkspaceChange() {
@@ -41,6 +41,13 @@ const HomePage = () => {
     }
   }, [workspace])
 
+  // Get app's version
+  useEffect(() => {
+    ipcRenderer.invoke("getAppVersion").then((data) => {
+      setAppVersion(data)
+    })
+  }, [])
+
   // We set the recent workspaces -> We send a message to the main process to get the recent workspaces, the workspace context will be updated by the main process in _app.js
   useEffect(() => {
     ipcRenderer.send("messageFromNext", "getRecentWorkspaces")
@@ -52,8 +59,8 @@ const HomePage = () => {
         <Stack direction="vertical" gap={1} style={{ padding: "0 0 0 0", alignContent: "center" }}>
           <h2>Home page</h2>
           <Stack direction="horizontal" gap={0} style={{ padding: "0 0 0 0", alignContent: "center" }}>
-            <h1 style={{ fontSize: "5rem" }}>MEDomicsLab </h1>
-
+            <h1 style={{ fontSize: "5rem" }}>MEDiml</h1>
+            <h2 style={{ fontSize: "2rem", marginTop: "2.5rem" }}>v{appVersion}</h2>
             <Image src={myimage} alt="" style={{ height: "175px", width: "175px" }} />
           </Stack>
           {hasBeenSet ? (

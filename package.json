@@ -1,13 +1,13 @@
 {
   "private": true,
-  "name": "medimage-application",
-  "description": "MEDimage application",
+  "name": "mediml-application",
+  "description": "MEDiml application",
   "version": "0.0.1",
   "author": "MEDomicsLab Team",
   "main": "app/background.js",
   "build": {
-    "appId": "com.medimage.medapp",
-    "productName": "MEDimage-app",
+    "appId": "com.mediml.medapp",
+    "productName": "MEDiml-app",
     "artifactName": "${productName}-${version}-${os}.${ext}",
     "directories": {
       "output": "build/dist"

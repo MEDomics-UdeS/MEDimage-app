@@ -2,8 +2,8 @@ import { randomUUID } from "crypto"
 import Path from "path"
 import React, { useContext, useEffect, useState } from "react"
 import { toast } from "react-toastify"
-import { sceneDescription as extractionMEDimageSceneDescription } from "../../../../public/setupVariables/extractionMEDimageNodesParams"
-import { sceneDescription as learningMEDimageDefaultSettings } from "../../../../public/setupVariables/learningMEDimageNodesParams"
+import { sceneDescription as extractionMEDimlSceneDescription } from "../../../../public/setupVariables/extractionMEDimlNodesParams"
+import { sceneDescription as learningMEDimlDefaultSettings } from "../../../../public/setupVariables/learningMEDimlNodesParams"
 import { loadJsonPath } from "../../../../utilities/fileManagementUtils"
 import { insertMEDDataObjectIfNotExists } from "../../../mongoDB/mongoDBUtils"
 import { MEDDataObject } from "../../../workspace/NewMedDataObject"
@@ -12,13 +12,13 @@ import { WorkspaceContext } from "../../../workspace/workspaceContext"
 import FileCreationBtn from "../fileCreationBtn"
 
 const typeInfo = {
-  extractionMEDimage: {
-    title: "MEDimage Extraction",
-    ...extractionMEDimageSceneDescription
+  extractionMEDiml: {
+    title: "MEDiml Extraction",
+    ...extractionMEDimlSceneDescription
   },
-  learningMEDimage: {
-    title: "MEDimage Learning",
-    ...learningMEDimageDefaultSettings
+  learningMEDiml: {
+    title: "MEDiml Learning",
+    ...learningMEDimlDefaultSettings
   }
 }
 

@@ -1,4 +1,4 @@
-medimage-pkg
+mediml
 jupytext
 ipykernel
 pymongo==4.7.3

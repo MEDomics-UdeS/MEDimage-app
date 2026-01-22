@@ -14,7 +14,7 @@ import { requestBackend } from "../../utilities/requests"
 import { ErrorRequestContext } from "../generalPurpose/errorRequestContext"
 import { DataContext } from "../workspace/dataContext"
 import { WorkspaceContext } from "../workspace/workspaceContext"
-import DocLink from "../extractionMEDimage/docLink"
+import DocLink from "../extractionMEDiml/docLink"
 
 /**
  * @param {Object} nodeForm form associated to the discretization node
@@ -389,7 +389,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
     // Make a POST request to the backend API
     requestBackend(
       port, 
-      '/extraction_MEDimage/run_all/dm',
+      '/extraction_MEDiml/run_all/dm',
       requestData, 
       (response) => {
         console.log("response", response)
@@ -468,7 +468,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
     // Make a POST request to the backend API
     requestBackend(
       port, 
-      '/extraction_MEDimage/run_all/prechecks', 
+      '/extraction_MEDiml/run_all/prechecks', 
       requestData, (response) => {
         console.log("response", response)
         if (response.error) {
@@ -832,7 +832,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
         <Card.Header>
             <h4>Data Manager - Radiomics Pre-checks</h4>
             <DocLink 
-              linkString={"https://medomics-udes.gitbook.io/medimage-app-docs/radiomics/data-processing/radiomics-pre-checks"} 
+              linkString={"https://medomicslab.gitbook.io/MEDiml-app-docs/radiomics/data-processing/radiomics-pre-checks"} 
               name={"What are Radiomics Pre-Checks?"} 
               image={"https://www.svgrepo.com/show/521262/warning-circle.svg"} 
             />

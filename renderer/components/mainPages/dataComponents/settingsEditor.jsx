@@ -12,7 +12,7 @@ import { useContext, useRef, useState } from 'react';
 import { Col, Form, Row } from "react-bootstrap";
 import { toast } from 'react-toastify';
 import { requestBackend } from '../../../utilities/requests';
-import DocLink from '../../extractionMEDimage/docLink';
+import DocLink from '../../extractionMEDiml/docLink';
 import { WorkspaceContext } from '../../workspace/workspaceContext';
 
 function TextureParams({ModSettings, activeIndex, setActiveIndex, discretisationAlgos, indexAlgo, indexVal}) {
@@ -1596,7 +1596,7 @@ const SettingsEditor = ({ showEdit, setShowEdit, settings, pathSettings, onHideB
         setLoading(true)
         requestBackend(
             port, 
-            '/extraction_MEDimage/run_all/be_save_json',
+            '/extraction_MEDiml/run_all/be_save_json',
             {settings, pathSettings}, 
             (response) => {
                 setLoading(false)
