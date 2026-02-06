@@ -1,9 +1,12 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useContext } from "react"
+import { useState, useEffect, useContext } from "react"
 import { Offcanvas, Container, Alert } from "react-bootstrap"
 import TreeMenu from "react-simple-tree-menu"
 import { FlowInfosContext } from "../../flow/context/flowInfosContext"
 import GroupNode from "../../flow/groupNode"
+import { Button } from 'primereact/button'
+
+const Papa = require("papaparse")
 
 /**
  * @param {string} id id of the node
@@ -75,6 +78,69 @@ const ExtractionNode = ({ id, data }) => {
   }
 
   /**
+   * @description
+   * This function is used to save the results of the extraction node.
+   * It creates a JSON file and saved it in MongoDB.
+   */
+  const saveResults = () => {
+
+    const processAndDownloadCSV = (rawData) => {
+      const csvRows = []
+      // 1. Iterate through Runs (e.g., RUN_1, RUN_2)
+      Object.entries(rawData).forEach(([file, scan]) => {        
+        // 2. Iterate through scans
+        Object.entries(scan).forEach(([runId, pipelines]) => {
+          // 3. Iterate through Pipelines
+          Object.entries(pipelines).forEach(([pipelineId, content]) => {
+            const row = { Scan: file, Run: runId, Pipeline: pipelineId }
+            const features = content.features || {}
+            // 3. Clean and Flatten Features
+            Object.entries(features).forEach(([groupName, groupData]) => {
+              // Skip if this group contains an "Error" key
+              if (groupData.Error) return
+
+              Object.entries(groupData).forEach(([featureKey, featureValue]) => {
+                // Only include non-empty values (removes empty arrays like geary_c: [])
+                const isValidValue = !Array.isArray(featureValue) || featureValue.length > 0
+                
+                if (isValidValue) {
+                  row[featureKey] = featureValue
+                }
+              })
+            })
+          
+
+          // Add to rows if we actually found features
+          if (Object.keys(row).length > 2) {
+            csvRows.push(row)
+          }
+        })
+        })
+      })
+
+      // 4. Convert to CSV and Download
+      if (csvRows.length > 0) {
+        const csv = Papa.unparse(csvRows)
+        const blob = new Blob([csv], { type: 'text/csvcharset=utf-8' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        
+        link.href = url
+        link.setAttribute('download', `extraction_features_${new Date().getTime()}.csv`)
+        link.click()
+        URL.revokeObjectURL(url)
+      }
+    }
+    const results = data.internal.results
+    if (data.internal.results && Object.keys(data.internal.results).length > 0) {
+      const nodes = convertDataToNodes(data.internal.results)
+      processAndDownloadCSV(data.internal.results)
+    } else {
+      console.warn("No results available to save.")
+    }
+  }
+
+  /**
    * @returns {JSX.Element} A tree menu or a warning message
    *
    * @description
@@ -131,7 +197,19 @@ const ExtractionNode = ({ id, data }) => {
                 <Offcanvas.Header closeButton>
                   <Offcanvas.Title>Extraction results</Offcanvas.Title>
                 </Offcanvas.Header>
-                <Offcanvas.Body>{renderTree()}</Offcanvas.Body>
+                <Offcanvas.Body>
+                  <Button 
+                    label="Donwload" 
+                    icon="pi pi-save" 
+                    severity="success" 
+                    size="small"
+                    className="ml-3 mb-3" 
+                    onClick={() => {
+                      // Add your save logic here
+                      saveResults()
+                    }} 
+                  />
+                  {renderTree()}</Offcanvas.Body>
               </Offcanvas>
             </Container>
           </>
