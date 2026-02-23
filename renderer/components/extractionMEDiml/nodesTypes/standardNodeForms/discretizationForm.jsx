@@ -67,7 +67,7 @@ const DiscretizationForm = ({ nodeForm, changeNodeForm, data }) => {
   return (
     <Form className="standard-form">
       <DocLink
-        linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#discretisation"}
+        linkString={"https://mediml.readthedocs.io/en/latest/configurations_file.html#discretisation"}
         name={"Discretization documentation"}
         image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
       />

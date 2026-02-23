@@ -477,7 +477,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
         <Card.Header>
           <h4>Batch Extractor - Radiomics</h4>
           <DocLink 
-            linkString={"https://medimage.readthedocs.io/en/latest/tutorials.html#batchextractor"} 
+            linkString={"https://mediml.readthedocs.io/en/latest/tutorials.html#batchextractor"} 
             name={"What is BatchExtractor?"} 
             image={"https://www.svgrepo.com/show/521262/warning-circle.svg"} 
           />

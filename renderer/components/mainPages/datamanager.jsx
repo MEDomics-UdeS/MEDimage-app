@@ -620,7 +620,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
         <Card.Header>
             <h4>Data Manager - Process data</h4>
             <DocLink 
-              linkString={"https://medimage.readthedocs.io/en/latest/tutorials.html#datamanager"} 
+              linkString={"https://mediml.readthedocs.io/en/latest/tutorials.html#datamanager"} 
               name={"What is DataManager?"} 
               image={"https://www.svgrepo.com/show/521262/warning-circle.svg"} 
             />

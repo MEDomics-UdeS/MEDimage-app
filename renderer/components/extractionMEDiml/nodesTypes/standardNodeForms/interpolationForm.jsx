@@ -62,7 +62,7 @@ const InterpolationForm = ({ nodeForm, changeNodeForm, data }) => {
   return (
     <Form className="standard-form">
       <DocLink 
-        linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#interp"}
+        linkString={"https://mediml.readthedocs.io/en/latest/configurations_file.html#interp"}
         name={"Interpolation documentation"}
         image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
       />

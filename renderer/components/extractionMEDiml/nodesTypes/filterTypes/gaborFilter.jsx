@@ -15,7 +15,7 @@ const GaborFilter = ({ changeFilterForm, data }) => {
   return (
     <Form.Group as={Row} controlId="filter-gabor">
       <DocLink 
-        linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#gabor"} 
+        linkString={"https://mediml.readthedocs.io/en/latest/configurations_file.html#gabor"} 
         name={"Gabor filter documentation"} 
         image={"https://www.svgrepo.com/show/521262/warning-circle.svg"} 
       />
