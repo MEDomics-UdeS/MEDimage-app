@@ -101,10 +101,9 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
         {/* ------------------------------------------- Tooltips ----------------------------------------- */}
         <Tooltip target=".homeNavIcon" {...delayOptions} className="tooltip-icon-sidebar" />
         <Tooltip target=".ExtMEDimgNav" {...delayOptions} className="tooltip-icon-sidebar" />
+        <Tooltip target=".BatchExtractorNav" {...delayOptions} className="tooltip-icon-sidebar" />
         <Tooltip target=".DataManagerNav" {...delayOptions} className="tooltip-icon-sidebar" />
         <Tooltip target=".MLMEDimgNav" {...delayOptions} className="tooltip-icon-sidebar" />
-        <Tooltip target=".BatchExtractorNav" {...delayOptions} className="tooltip-icon-sidebar" />
-        <Tooltip target=".ext-MEDimg-btn" {...delayOptions} className="tooltip-icon-sidebar" />
         {/* ------------------------------------------- END Tooltips ----------------------------------------- */}
 
         {/* ------------------------------------------- ICON NAVBAR ----------------------------------------- */}
@@ -126,15 +125,14 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
           
           <NavDropdown.Divider style={{ height: "3rem" }} />
 
-          <div className="medomics-layer development ">
+          <div className="medomics-layer">
             <div className="sidebar-icons">
-              
                 {/* MEDiml Extraction Module */}
                 <Nav.Link
                   className="ExtMEDimgNav btnSidebar align-center"
                   data-pr-at="right center"
                   data-pr-my="left center"
-                  data-pr-tooltip="MEDiml Extraction Module"
+                  data-pr-tooltip="Extraction Module"
                   data-is-ext-btn
                   onClick={(event) => {
                     event.stopPropagation()
@@ -146,51 +144,60 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
                 >
                   <GiDigDug style={{ height: "2rem", width: "auto" }} />
                 </Nav.Link>
-
-                {/* DataManager */}
+            </div>
+          </div>
+          <div className="medomics-layer">
+            <div className="sidebar-icons">
+              {/* DataManager */}
               <Nav.Link
-                  className="DataManagerNav btnSidebar align-center"
-                  icon="pi pi-book"
-                  data-pr-at="right center"
-                  data-pr-my="left center"
-                  data-pr-tooltip="DataManager"
-                  data-is-ext-btn
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    event.preventDefault()
-                    handleDoubleClick(event, "DataManager")
-                    // handleClick(event, "extractionMEDiml")
-                    setExtractionBtnstate(!extractionBtnstate)
-                  }}
-                  onDoubleClick={(event) => handleDoubleClick(event, "DataManager")}
-                >
-                  <FaBriefcase style={{ height: "2rem", width: "auto" }} />
-                </Nav.Link>
-
-                {/* BatchExtractor */}
-                <Nav.Link
-                  className="BatchExtractorNav btnSidebar align-center"
-                  data-pr-at="right center"
-                  data-pr-my="left center"
-                  data-pr-tooltip="BatchExtractor"
-                  data-is-ext-btn
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    event.preventDefault()
-                    handleDoubleClick(event, "BatchExtractor")
-                    setExtractionBtnstate(!extractionBtnstate)
-                  }}
-                  onDoubleClick={(event) => handleDoubleClick(event, "BatchExtractor")}
-                >
-                  <FaLayerGroup style={{ height: "2rem", width: "auto" }} />
-                </Nav.Link>
-
+                className="DataManagerNav btnSidebar align-center"
+                icon="pi pi-book"
+                data-pr-at="right center"
+                data-pr-my="left center"
+                data-pr-tooltip="DataManager"
+                data-is-ext-btn
+                onClick={(event) => {
+                  event.stopPropagation()
+                  event.preventDefault()
+                  handleDoubleClick(event, "DataManager")
+                  // handleClick(event, "extractionMEDiml")
+                  setExtractionBtnstate(!extractionBtnstate)
+                }}
+                onDoubleClick={(event) => handleDoubleClick(event, "DataManager")}
+              >
+                <FaBriefcase style={{ height: "2rem", width: "auto" }} />
+              </Nav.Link>
+            </div>
+          </div>
+          <div className="medomics-layer">
+            <div className="sidebar-icons">
+              {/* BatchExtractor */}
+              <Nav.Link
+                className="BatchExtractorNav btnSidebar align-center"
+                data-pr-at="right center"
+                data-pr-my="left center"
+                data-pr-tooltip="BatchExtractor"
+                data-is-ext-btn
+                onClick={(event) => {
+                  event.stopPropagation()
+                  event.preventDefault()
+                  handleDoubleClick(event, "BatchExtractor")
+                  setExtractionBtnstate(!extractionBtnstate)
+                }}
+                onDoubleClick={(event) => handleDoubleClick(event, "BatchExtractor")}
+              >
+                <FaLayerGroup style={{ height: "2rem", width: "auto" }} />
+              </Nav.Link>
+            </div>
+          </div>
+          <div className="medomics-layer">
+            <div className="sidebar-icons">
                 {/* Machine Learning MEDiml */}
                 <Nav.Link
                   className="MLMEDimgNav btnSidebar align-center"
                   data-pr-at="right center"
                   data-pr-my="left center"
-                  data-pr-tooltip="Machine Learning MEDiml"
+                  data-pr-tooltip="Learning Module"
                   data-is-ext-btn
                   onClick={(event) => {
                     event.stopPropagation()
@@ -202,7 +209,6 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
                 >
                   <FaHeadSideVirus style={{ height: "2rem", width: "auto" }} />
                 </Nav.Link>
-
             </div>
           </div>
           <NavDropdown.Divider style={{ height: "3rem" }} />
