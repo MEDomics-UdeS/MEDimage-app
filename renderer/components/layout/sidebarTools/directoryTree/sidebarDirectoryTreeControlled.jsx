@@ -1,18 +1,20 @@
 /* eslint-disable no-undef */
-import { useContext, useRef, useState, useEffect } from "react"
-import { Trash, BoxArrowUpRight, Eraser, FolderPlus, ArrowClockwise, EyeFill, EyeSlashFill, ArrowRepeat, ChevronBarExpand, ChevronBarContract } from "react-bootstrap-icons"
-import { FiFolder } from "react-icons/fi"
-import { Accordion, Stack } from "react-bootstrap"
-import { ControlledTreeEnvironment, Tree } from "react-complex-tree"
-import { DataContext } from "../../../workspace/dataContext"
-import { toast } from "react-toastify"
-import { LayoutModelContext } from "../../layoutContext"
-import { useContextMenu, Menu, Item, Submenu } from "react-contexify"
-import renderItem from "./renderItem"
+import fs from "fs"
 import { Tooltip } from "primereact/tooltip"
-import { WorkspaceContext } from "../../../workspace/workspaceContext"
-import { rename, onPaste, onDeleteSequentially, createFolder, onDrop, fromJSONtoTree, evaluateIfTargetIsAChild } from "./utils"
+import { useContext, useEffect, useRef, useState } from "react"
+import { Accordion, Stack } from "react-bootstrap"
+import { ArrowClockwise, ArrowRepeat, BoxArrowUpRight, ChevronBarContract, ChevronBarExpand, Eraser, EyeFill, EyeSlashFill, FolderPlus, Trash } from "react-bootstrap-icons"
+import { ControlledTreeEnvironment, Tree } from "react-complex-tree"
+import { Item, Menu, Submenu, useContextMenu } from "react-contexify"
+import { FiFolder } from "react-icons/fi"
+import { toast } from "react-toastify"
+import { DataContext } from "../../../workspace/dataContext"
 import { MEDDataObject } from "../../../workspace/NewMedDataObject"
+import { WorkspaceContext } from "../../../workspace/workspaceContext"
+import { LayoutModelContext } from "../../layoutContext"
+import renderItem from "./renderItem"
+import { createFolder, evaluateIfTargetIsAChild, fromJSONtoTree, onDeleteSequentially, onDrop, onPaste, rename } from "./utils"
+
 /**
  * @description - This component is the sidebar tools component that will be used in the sidebar component
  * @param {Object} props - Props passed from parent component

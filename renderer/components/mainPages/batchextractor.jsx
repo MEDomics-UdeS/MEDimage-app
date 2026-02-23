@@ -247,6 +247,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
           console.error('Error:', response.error)
           toast.error('Error: ' + response.error)
           setShowEdit(false)
+          // eslint-disable-next-line no-prototype-builtins
           if (!response.error.hasOwnProperty('message')) {
             setError({"message": response.error})
           } else {
@@ -341,6 +342,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
         if (response.error) {
           console.error('Error:', response.error)
           toast.error('Error: ' + response.error)
+          // eslint-disable-next-line no-prototype-builtins
           if (!response.error.hasOwnProperty('message')) {
             setError({"message": response.error})
           } else {
