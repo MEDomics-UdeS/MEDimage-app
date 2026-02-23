@@ -1,88 +1,89 @@
-import React from "react"
-import DropzoneComponent from "../../../mainPages/dataComponents/dropzoneComponent"
-import medomicsImg from "../../../../../resources/medomics.svg"
-import * as Icon from "react-bootstrap-icons"
 import Image from "next/image"
+import React, { useEffect, useState } from "react"
+import * as Icon from "react-bootstrap-icons"
 import { PiGraph } from "react-icons/pi"
+import medomicsImg from "../../../../../resources/medomics.svg"
+import DropzoneComponent from "../../../mainPages/dataComponents/dropzoneComponent"
+import { collectionExists } from "../../../mongoDB/mongoDBUtils"
 
 const iconExtension = {
-  folder: (isExpanded) => (isExpanded ? <span style={{ paddingBottom: "0.15rem" }}>📂</span> : <span style={{ paddingBottom: "0.15rem" }}>📁</span>),
-  csv: <span className="emoji">🛢️</span>,
-  view: <span className="emoji">👁️</span>,
-  json: (
+  "folder": (isExpanded) => (isExpanded ? <span style={{ paddingBottom: "0.15rem" }}>📂</span> : <span style={{ paddingBottom: "0.15rem" }}>📁</span>),
+  "csv": <span className="emoji">🛢️</span>,
+  "view": <span className="emoji">👁️</span>,
+  "json": (
     <span>
       <Icon.Braces className="icon-offset" style={{ color: "yellow" }} />
     </span>
   ),
-  txt: (
+  "txt": (
     <span>
       <Icon.TextLeft className="icon-offset" />
     </span>
   ),
-  pdf: <span className="emoji">📕</span>,
-  html: <span className="emoji">🌐</span>,
-  medomics: (
+  "pdf": <span className="emoji">📕</span>,
+  "html": <span className="emoji">🌐</span>,
+  "medomics": (
     <span>
       <Image src={medomicsImg} width={12} height={12} alt="medomics.svg" style={{ marginRight: "0.15rem" }} />
     </span>
   ),
-  medml: <span className="emoji">🎯</span>,
-  medimg: <span className="emoji"><Image src={medomicsImg} width={18} height={18} alt="medomics.svg" style={{ marginRight: "0.15rem" }} /></span>,
+  "medml": <span className="emoji">🎯</span>,
+  "medimg": <span className="emoji"><Image src={medomicsImg} width={18} height={18} alt="medomics.svg" style={{ marginRight: "0.15rem" }} /></span>,
   "medimg.ml": <span className="emoji"><Image src={medomicsImg} width={18} height={18} alt="medomics.svg" style={{ marginRight: "0.15rem" }} /></span>,
-  medmlres: <span className="emoji">📊</span>,
-  medeval: <span className="emoji">🔬</span>,
-  zip: <span className="emoji">🔒</span>,
-  medmodel: (
+  "medmlres": <span className="emoji">📊</span>,
+  "medeval": <span className="emoji">🔬</span>,
+  "zip": <span className="emoji">🔒</span>,
+  "medmodel": (
     <span>
       <PiGraph className="icon-offset" style={{ color: "#97edfb" }} />
     </span>
   ),
-  pkl: (
+  "pkl": (
     <span>
       <PiGraph className="icon-offset" style={{ color: "#5b95ff" }} />
     </span>
   ),
-  ipynb: (
+  "ipynb": (
     <span>
       <Icon.JournalCode className="icon-offset" style={{ color: "#5b95ff" }} />
     </span>
   ),
-  png: (
+  "png": (
     <span>
       <Icon.Image className="icon-offset" style={{ color: "#5b95ff" }} />
     </span>
   ),
-  jpg: (
+  "jpg": (
     <span>
       <Icon.Image className="icon-offset" style={{ color: "#5b95ff" }} />
     </span>
   ),
-  jpeg: (
+  "jpeg": (
     <span>
       <Icon.Image className="icon-offset" style={{ color: "#5b95ff" }} />
     </span>
   ),
-  svg: (
+  "svg": (
     <span>
       <Icon.Image className="icon-offset" style={{ color: "#5b95ff" }} />
     </span>
   ),
-  rar: (
+  "rar": (
     <span>
       <Icon.ArchiveFill className="icon-offset" style={{ color: "#5b95ff" }} />
     </span>
   ),
-  dcm: (
+  "dcm": (
     <span>
       <Icon.Hospital className="icon-offset" style={{ color: "rgb(17, 231, 63)" }} />
     </span>
   ),
-  dicom: (
+  "dicom": (
     <span>
       <Icon.Hospital className="icon-offset" style={{ color: "rgb(17, 231, 63)" }} />
     </span>
   ),
-  npy: (
+  "npy": (
     <span>
       <Icon.FileEarmarkBinary className="icon-offset" style={{ color: "rgb(255, 208, 0)" }} />
     </span>
@@ -112,9 +113,23 @@ const cx = (...classNames) => classNames.filter((cn) => !!cn).join(" ")
  * @param {Function} additionalParams.displayMenu - function to display the context menu
  * @returns {React.ReactNode} - the rendered item
  */
-const renderItem = ({ item, depth, children, title, context, arrow }, additionalParams) => {
+const RenderItem = ({ item, depth, children, title, context, arrow }, additionalParams) => {
   const InteractiveComponent = context.isRenaming ? "div" : "button"
   const type = context.isRenaming ? undefined : "button"
+  // 1. Create a state to hold the actual value
+  const [itemInMongoDB, setItemInMongoDB] = useState(false)
+
+  // 2. Use useEffect to resolve the promise
+  useEffect(() => {
+    let isMounted = true; 
+    
+    collectionExists(item.index).then((result) => {
+      if (isMounted) {
+        setItemInMongoDB(result); // Update state with the actual boolean/value
+      }
+    });
+    return () => { isMounted = false; }; // Cleanup to prevent memory leaks
+  }, [item.index]); // Re-run if the item index changes
 
   const folderItemContent = (
     <li
@@ -255,6 +270,8 @@ const renderItem = ({ item, depth, children, title, context, arrow }, additional
                       🔒
                     </span>
                   )}
+                  {additionalParams.showMongoDetails && itemInMongoDB && <img src="https://cdn3.emoji.gg/emojis/21146-mongodb.png" width="16px" height="16px" alt="mongodb" />}
+                  {additionalParams.showMongoDetails && item.path && <img src="https://www.freeiconspng.com/uploads/floppy-save-icon--23.png" width="16px" height="16px" alt="local" />}
                 </div>
               </InteractiveComponent>
             </div>
@@ -266,4 +283,4 @@ const renderItem = ({ item, depth, children, title, context, arrow }, additional
   )
 }
 
-export default renderItem
+export default RenderItem
