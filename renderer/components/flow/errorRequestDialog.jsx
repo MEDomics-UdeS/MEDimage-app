@@ -20,9 +20,28 @@ const ErrorRequestDialog = () => {
   // Helper to extract the string message safely
   const getErrorMessage = () => {
     // If error.message is a string, use it. If it's an object with a message property, use that.
-    const msg = typeof error?.message === 'string' 
-      ? error.message 
-      : error?.message?.message
+    let parsedError = error
+    if (typeof error === 'string') {
+      try {
+        parsedError = JSON.parse(error)
+        let msg = typeof parsedError?.message === 'string' 
+          ? parsedError.message 
+          : parsedError?.message?.message
+        return msg || "An unknown error occurred"
+      } catch (e) {
+        // If parsing fails, treat the original string as the message
+        return error
+      }
+    }
+    try {
+      parsedError = JSON.stringify(error)
+    } catch (e) {
+      return "An unknown error occurred"
+    }
+
+    const msg = typeof parsedError?.message === 'string' 
+      ? parsedError.message 
+      : parsedError?.message?.message
     
     return msg || "An unknown error occurred"
   }

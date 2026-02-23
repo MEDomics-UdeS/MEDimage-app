@@ -27,9 +27,12 @@ function ErrorRequestProvider({ children }) {
   useEffect(() => {
     let parsedError = error
     if (typeof error === "string") {
-      parsedError = JSON.parse(error)
+      try{
+        parsedError = JSON.parse(error)
+      } catch (e) {
+        parsedError = {toast: error}
+      }
     }
-    console.log("Error request:", parsedError)
     if (Object.keys(parsedError).length !== 0) {
       if (parsedError.toast) {
         if (parsedError.go_kill) {
