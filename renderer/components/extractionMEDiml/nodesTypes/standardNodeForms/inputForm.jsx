@@ -132,7 +132,7 @@ const InputForm = ({ nodeForm, changeNodeForm, enableView }) => {
   return (
     <div className="inputFile">
       <DocLink
-        linkString={"https://medimage.readthedocs.io/en/latest/tutorials.html#medscan-class"}
+        linkString={"https://mediml.readthedocs.io/en/latest/tutorials.html#medscan-class"}
         name={"What is a MEDscan object?"}
         image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
       />

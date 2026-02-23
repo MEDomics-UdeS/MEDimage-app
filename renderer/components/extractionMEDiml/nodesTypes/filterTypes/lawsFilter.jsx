@@ -36,7 +36,7 @@ const LawsFilter = ({ changeFilterForm, data }) => {
   return (
     <Form.Group as={Row} controlId="filter-laws">
       <DocLink 
-        linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#laws"} 
+        linkString={"https://mediml.readthedocs.io/en/latest/configurations_file.html#laws"} 
         name={"Laws filter documentation"} 
         image={"https://www.svgrepo.com/show/521262/warning-circle.svg"} 
       />

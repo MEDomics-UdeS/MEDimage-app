@@ -15,7 +15,7 @@ const MeanFilter = ({ changeFilterForm, data }) => {
   return (
     <Form.Group as={Row} controlId="filter-mean">
       <DocLink 
-        linkString={"https://medimage.readthedocs.io/en/latest/configurations_file.html#mean"} 
+        linkString={"https://mediml.readthedocs.io/en/latest/configurations_file.html#mean"} 
         name={"Mean filter documentation"}
         image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
       />

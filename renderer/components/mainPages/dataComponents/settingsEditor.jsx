@@ -59,7 +59,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
             <Form.Group as={Row} controlId="filter-mean">
       <DocLink
         linkString={
-          "https://medimage.readthedocs.io/en/latest/configuration_file.html#mean"
+          "https://mediml.readthedocs.io/en/latest/configuration_file.html#mean"
         }
         name={"Mean filter documentation"}
         image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
@@ -146,7 +146,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
         <Form.Group as={Row} controlId="filter-log">
         <DocLink
             linkString={
-            "https://medimage.readthedocs.io/en/latest/configuration_file.html#log"
+            "https://mediml.readthedocs.io/en/latest/configuration_file.html#log"
             }
             name={"Log filter documentation"}
             image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
@@ -248,7 +248,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
             <Form.Group as={Row} controlId="filter-laws">
       <DocLink
         linkString={
-          "https://medimage.readthedocs.io/en/latest/configuration_file.html#laws"
+          "https://mediml.readthedocs.io/en/latest/configuration_file.html#laws"
         }
         name={"Laws filter documentation"}
         image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
@@ -443,7 +443,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
     <Form.Group as={Row} controlId="filter-gabor">
       <DocLink
         linkString={
-          "https://medimage.readthedocs.io/en/latest/configuration_file.html#gabor"
+          "https://mediml.readthedocs.io/en/latest/configuration_file.html#gabor"
         }
         name={"Gabor filter documentation"}
         image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
@@ -591,7 +591,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
         <Form.Group as={Row} controlId="filter-wavelet">
         <DocLink
             linkString={
-            "https://medimage.readthedocs.io/en/latest/configuration_file.html#wavelet"
+            "https://mediml.readthedocs.io/en/latest/configuration_file.html#wavelet"
             }
             name={"Wavelet filter documentation"}
             image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
