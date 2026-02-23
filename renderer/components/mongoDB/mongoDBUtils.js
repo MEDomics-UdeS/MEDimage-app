@@ -1,4 +1,7 @@
-const { MongoClient, GridFSBucket } = require("mongodb")
+/* eslint-disable no-unused-vars, no-case-declarations, camelcase */
+import { toast } from "react-toastify"
+
+const { MongoClient } = require("mongodb")
 const fs = require("fs")
 const Papa = require("papaparse")
 
@@ -11,6 +14,12 @@ let client
  * @description Establish a connection to MongoDB data database
  * @returns Connection to the data database
  */
+
+function stripIds(doc = {}) {
+  const { _id, id, ...rest } = doc;
+  return rest;
+}
+
 export async function connectToMongoDB() {
   if (!client) {
     client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -28,6 +37,23 @@ export async function connectToMongoDB() {
 export async function updateMEDDataObjectName(id, newName) {
   const db = await connectToMongoDB()
   const result = await db.collection("medDataObjects").updateOne({ id: id }, { $set: { name: newName } })
+  return result.modifiedCount > 0
+}
+
+/**
+ * @description Update the type of a MEDDataObject specified by id in the DB
+ * @param {String} id Id of the MEDDataObject to update
+ * @param {String} newType New type for the MEDDataObject to update
+ * @returns bool true if succeed
+ */
+export async function updateMEDDataObjectType(id, newType) {
+  const db = await connectToMongoDB()
+  // Check if type has alphabetic characters only
+  if (newType.match(/[a-z]/)) {
+    console.error("Type can only contain alphabetic characters")
+    return false
+  }
+  const result = await db.collection("medDataObjects").updateOne({ id: id }, { $set: { type: newType } })
   return result.modifiedCount > 0
 }
 
@@ -81,7 +107,7 @@ export async function insertMEDDataObjectIfNotExists(medData, path = null, jsonD
   }
 
   // Add path to medData if not null and not already present
-  if (path && !medData.path) {
+  if (path !== null && path !== undefined && typeof path === "string" && path.trim() !== "" && !medData.path) {
     medData.path = path
   }
 
@@ -140,6 +166,20 @@ export async function insertMEDDataObjectIfNotExists(medData, path = null, jsonD
       case "jpg":
         await insertJPGIntoCollection(path, medData.id)
         break
+      case "json":
+        // Check if file exists
+        if (!fs.existsSync(path)) {
+          console.error(`File at path ${path} does not exist`)
+          break
+        }
+        const fileContent = fs.readFileSync(path, "utf8")
+        const jsonContent = JSON.parse(fileContent)
+        const dataCollection = db.collection(medData.id)
+        const result = await dataCollection.insertMany(Array.isArray(jsonContent) ? jsonContent : [jsonContent])
+        if (!result.insertedCount > 0) {
+          console.error(`No JSON data inserted for MEDDataObject with id ${medData.id}`)
+        }
+        break
       default:
         break
     }
@@ -169,6 +209,19 @@ async function insertPKLIntoCollection(filePath, collectionName) {
   const collection = db.collection(collectionName)
 
   const pklContent = fs.readFileSync(filePath)
+  
+  // Check size of the file
+  const fileSize = fs.statSync(filePath).size
+  const maxBSONSize = 16 * 1024 * 1024 // 16MB
+  if (fileSize > maxBSONSize) {
+    console.warn(`PKL file ${filePath} size exceeds the maximum BSON document size of 16MB and will not be inserted in the database`)
+    toast.warn(`PKL file ${filePath} size exceeds the maximum BSON document size of 16MB and only the path will be saved in the database.`)
+    const document = { model_path: filePath }
+    const result = await collection.insertOne(document)
+    console.log(`PKL file path inserted with _id: ${result.insertedId}`)
+    return
+  }
+
   const document = { pklContent: pklContent }
 
   const result = await collection.insertOne(document)
@@ -178,22 +231,94 @@ async function insertPKLIntoCollection(filePath, collectionName) {
 
 /**
  * Uploads a large CSV file to MongoDB by storing it in chunks.
+ * Ensures only valid columns are inserted (based on first row).
+ *
  * @param {String} filePath - The path to the CSV file.
- * @param {String} collectionName - The name of the MongoDB collection to store the chunks.
+ * @param {String} collectionName - The name of the MongoDB collection.
  */
-let globalBucket = null
 async function insertBigCSVIntoCollection(filePath, collectionName) {
   const db = await connectToMongoDB()
-  const bucket = new GridFSBucket(db, { bucketName: collectionName })
-  globalBucket = bucket
-  fs.createReadStream(filePath)
-    .pipe(bucket.openUploadStream(filePath))
-    .on("error", function (error) {
-      console.error("Error uploading file to GridFS", error)
-    })
-    .on("finish", function () {
-      console.log("File upload to GridFS complete")
-    })
+  const collection = db.collection(collectionName)
+
+  let allowedColumns = null
+  const batchSize = 1000 // Represents the number of rows that will be inserted in the MongoDB every step.
+  let batch = []
+
+  Papa.parse(fs.createReadStream(filePath), {
+  header: true,
+  dynamicTyping: true,
+  skipEmptyLines: true,
+  transformHeader: (h) => (h || '').trim(),   // NEW
+  transform: (value) => {
+    // Handle all NaN representations
+    const nanStrings = ['nan', 'NaN', 'NAN', 'null', 'Null', 'NULL', 'none', 'None', 'NONE', '']
+    
+    if (typeof value === 'string' && nanStrings.includes(value.toLowerCase())) {
+      return null
+    }
+    
+    // Handle numeric NaN (if dynamicTyping already converted some)
+    if (typeof value === 'number' && isNaN(value)) {
+      return null
+    }
+    
+    return value
+  },
+  step: (results, parser) => {
+    const row = results.data;
+
+    if (!allowedColumns && Object.keys(row).length > 0) {
+      allowedColumns = Object.keys(row);
+    }
+
+    // Additional cleanup for any remaining NaN values
+    const cleanedRow = stripIds(
+      Object.fromEntries(
+        Object.entries(row)
+          .filter(([key]) => allowedColumns.includes(key))
+          .map(([key, value]) => {
+            // Final NaN cleanup for any values that slipped through
+            if (value === null || value === undefined) {
+              return [key, null]
+            } else if (typeof value === 'number' && isNaN(value)) {
+              return [key, null]
+            } else if (typeof value === 'string' && value.toLowerCase() === 'nan') {
+              return [key, null]
+            }
+            return [key, value]
+          })
+      )
+    );
+
+    batch.push(cleanedRow);
+
+    if (batch.length >= batchSize) {
+      parser.pause();
+      collection.insertMany(batch)
+        .then(() => { batch = []; parser.resume(); })
+        .catch((error) => { console.error("Error inserting batch:", error); parser.abort(); });
+    }
+  },
+    complete: () => {
+      // When parsing is complete, check if any rows remain to be inserted.
+      if (batch.length > 0) {
+        collection
+          .insertMany(batch)
+          .then(() => {
+            console.log("Final batch inserted")
+            console.log("CSV parsing complete")
+          })
+          .catch((error) => {
+            console.error("Error inserting final batch:", error)
+          })
+      } else {
+        console.log("CSV parsing complete")
+      }
+    },
+    error: (error) => {
+      console.error("Error parsing CSV:", error)
+    }
+  })
 }
 
 /**
@@ -215,9 +340,33 @@ async function insertCSVIntoCollection(filePath, collectionName) {
       Papa.parse(fs.createReadStream(filePath), {
         header: true,
         dynamicTyping: true, // Automatically convert numeric fields to numbers
+        transform: (value) => {
+          // Handle all NaN representations
+          const nanStrings = ['nan', 'NaN', 'NAN', 'null', 'Null', 'NULL', 'none', 'None', 'NONE', '']
+          
+          if (typeof value === 'string' && nanStrings.includes(value.toLowerCase())) {
+            return null
+          }
+          
+          // Handle numeric NaN (if dynamicTyping already converted some)
+          if (typeof value === 'number' && isNaN(value)) {
+            return null
+          }
+          
+          return value
+        },
         complete: async (results) => {
           try {
-            const result = await collection.insertMany(results.data)
+            // Additional cleanup for any remaining NaN values
+            const cleanedData = results.data.map(row => {
+              const cleanRow = {}
+              for (const [key, value] of Object.entries(row)) {
+                cleanRow[key] = (typeof value === 'number' && isNaN(value)) ? null : value
+              }
+              return cleanRow
+            })
+            
+            const result = await collection.insertMany(cleanedData)
             console.log(`CSV data inserted with ${result.insertedCount} documents`)
             resolve(result)
           } catch (error) {
@@ -230,7 +379,7 @@ async function insertCSVIntoCollection(filePath, collectionName) {
       })
     })
   } else {
-    insertBigCSVIntoCollection(filePath, collectionName)
+    await insertBigCSVIntoCollection(filePath, collectionName)
   }
 }
 
@@ -308,14 +457,20 @@ export async function overwriteMEDDataObjectProperties(id, newData) {
  */
 export async function overwriteMEDDataObjectContent(id, jsonData) {
   try {
-    const db = await connectToMongoDB()
-    const collection = db.collection(id)
-    await collection.deleteMany({})
-    await collection.insertMany(jsonData)
-    return true
+    const db = await connectToMongoDB();
+    const collection = db.collection(id);
+    await collection.deleteMany({});
+
+    // remove any lingering _id / id fields before re-insert
+    const cleaned = (jsonData || []).map(stripIds);
+
+    if (cleaned.length) {
+      await collection.insertMany(cleaned);
+    }
+    return true;
   } catch (error) {
-    console.error("Error in overwriteMEDDataObjectContent", error)
-    return false
+    console.error("Error in overwriteMEDDataObjectContent", error);
+    return false;
   }
 }
 
@@ -377,36 +532,35 @@ export async function deleteMEDDataObject(id) {
  * @returns {Array} An array of column names
  */
 export async function getCollectionColumns(collectionId) {
-  const db = await connectToMongoDB()
-  const collection = db.collection(collectionId)
+  try {
+    const db = await connectToMongoDB();
+    const collection = db.collection(collectionId);
 
-  // Use aggregation to get keys in the order they appear
-  const result = await collection
-    .aggregate([
-      { $project: { keys: { $objectToArray: "$$ROOT" } } },
-      { $unwind: "$keys" },
-      { $group: { _id: null, keys: { $push: "$keys.k" } } },
-      {
-        $project: {
-          _id: 0,
-          keys: {
-            $reduce: {
-              input: "$keys",
-              initialValue: [],
-              in: { $cond: [{ $in: ["$$this", "$$value"] }, "$$value", { $concatArrays: ["$$value", ["$$this"]] }] }
-            }
-          }
-        }
-      }
-    ])
-    .toArray()
-
-  if (result.length > 0) {
-    return result[0].keys.filter((key) => key !== "_id")
+    // Look across multiple docs to capture sparse columns, and exclude _id at source
+    const cursor = collection.find({}, { projection: { _id: 0 } }).limit(200);
+    const keys = new Set();
+    for await (const doc of cursor) {
+      Object.keys(doc || {}).forEach(k => {
+        if (k && k !== '_id' && k !== 'id') keys.add(k);
+      });
+    }
+    return Array.from(keys).sort();
+  } catch (error) {
+    console.error("Error fetching collection columns:", error);
+    return [];
   }
-
-  return []
 }
+
+export async function getCollectionRows(collectionId, limit = 10000) {
+  const db = await connectToMongoDB();
+  const collection = db.collection(collectionId);
+  const docs = await collection
+    .find({}, { projection: { _id: 0 } })
+    .limit(limit)
+    .toArray();
+  return docs.map(stripIds);
+}
+
 
 /**
  * @description Get the tags of a collection specified by id
@@ -417,11 +571,26 @@ export async function getCollectionTags(collectionId) {
   let tagsUUID = localStorage.getItem("tagsUUID") ? localStorage.getItem("tagsUUID") : "column_tags"
   const db = await connectToMongoDB()
   const collection = db.collection(tagsUUID)
-  
+
   // eslint-disable-next-line camelcase
   const result = await collection.find({ collection_id: collectionId })
 
   return result
+}
+
+/**
+ * @description Get the row tags of a collection specified by id
+ * @param {String} collectionId Id of the collection to retrieve row tags from
+ * @returns {Array} An array of row tags
+ */
+export async function getCollectionRowTags(collectionId) {
+  const db = await connectToMongoDB()
+  const tags = await db.collection('row_tags').find({ collectionName: collectionId }).toArray()
+  if (tags.length === 0) {
+    console.error(`No tags found for collection ${collectionId}`)
+    return []
+  }
+  return tags
 }
 
 /**
@@ -469,6 +638,18 @@ export async function downloadCollectionToFile(collectionId, filePath, type) {
     const imageBuffer = Buffer.from(imageDocument.data.buffer)
     fs.writeFileSync(filePath, imageBuffer)
     console.log(`Collection ${collectionId} has been downloaded as PNG to ${filePath}`)
+  } else if (type === "pkl") {
+    // Check if documents have the 'model' field
+    let buffer = null
+    if (Object.keys(documents[0]).length > 0 && documents[0].model) {
+      buffer = Buffer.from(documents[0].model.buffer)
+    } else {
+      buffer = Buffer.from(documents[0].base64, 'base64')
+    }
+    
+    // Convert base64 to buffer
+    const pklBuffer = Buffer.from(buffer)
+    fs.writeFileSync(filePath, pklBuffer)
   } else {
     throw new Error("Unsupported file type")
   }
@@ -479,20 +660,10 @@ export async function downloadCollectionToFile(collectionId, filePath, type) {
  * @param {*} collectionName
  * @returns
  */
-export const collectionExists = async (collectionName, dbname = "data") => {
-  const mongoUrl = "mongodb://127.0.0.1:54017"
-  const client = new MongoClient(mongoUrl)
-  try {
-    await client.connect()
-    const db = client.db(dbname)
-    const collections = await db.listCollections().toArray()
-    return collections.some((collection) => collection.name === collectionName)
-  } catch (error) {
-    console.error("Error checking if collection exists:", error)
-    throw error
-  } finally {
-    await client.close()
-  }
+export async function collectionExists(collectionName) {
+  const db = await connectToMongoDB()
+  const collections = await db.listCollections({ name: collectionName }).toArray()
+  return collections.length > 0
 }
 
 /**
@@ -506,6 +677,19 @@ export async function findMEDDataObjectByName(name) {
   const query = { name: name }
   const document = await collection.findOne(query)
   return document
+}
+
+/**
+ * @description Get MEDDataObjects specified by name from the DB in case of multiple objects with identical names
+ * @param {*} name
+ * @returns
+ */
+export async function findMEDDataObjectsByName(name) {
+  const db = await connectToMongoDB()
+  const collection = db.collection("medDataObjects")
+  const query = { name: name }
+  const documents = await collection.find(query)
+  return documents
 }
 
 /**
@@ -541,48 +725,80 @@ export async function getPathFromMEDDataObject(id) {
 }
 
 /**
- * @description Convert the data of a collection stored use GridFS for viewing as a csv file
- * @param {*} globalData
- * @param {*} item
+ * @description Get the size of a collection specified by id
+ * @param {*} collectionId
  * @returns
  */
-export async function ConvertBinaryToOriginalData(globalData, item) {
-  if (!globalBucket) {
-    console.error("GridFSBucket not initialized")
-    return
-  }
+export async function getCollectionSize(collectionId) {
   const db = await connectToMongoDB()
-  const fileDocument = await db.collection(item.index + ".files").findOne({ filename: globalData[item.index].path })
-  console.log("fileDocument", fileDocument)
-  if (!fileDocument) {
-    console.error("File not found in GridFS")
-    return
-  }
-  const downloadStream = globalBucket.openDownloadStream(fileDocument._id)
-  let chunks = []
+  const stats = await db.command({ collStats: collectionId })
+  return stats.size
+}
 
-  downloadStream.on("data", (chunk) => {
-    chunks.push(chunk) // Collect chunks from the stream
-  })
-  downloadStream.on("end", () => {
-    db.collection(item.index).insertMany(
-      chunks.map((chunk, index) => ({
-        index,
-        data: Buffer.from(chunk, "base64").toString("utf-8") // Decode each chunk
-      })),
-      (error) => {
-        if (error) {
-          console.error("Failed to insert chunks:", error)
-        } else {
-          console.log("Inserted chunks into new MongoDB collection")
-        }
-        db.close()
+/**
+ * @description Get all the collections in the database
+ * @returns
+ */
+export async function getAllCollections() {
+  const db = await connectToMongoDB()
+  return await db.listCollections().toArray()
+}
+
+/**
+ * @description Compute class imbalance statistics for a dataset
+ * @param {String} collectionId MongoDB collection id
+ * @param {String} target Target column name
+ * @returns {Object|null} classStats
+ */
+export async function getDatasetClassStats(collectionId, target) {
+  try {
+    const db = await connectToMongoDB()
+    const collection = db.collection(collectionId)
+
+    // Read only the target column to keep it lightweight
+    const cursor = collection.find({}, { projection: { _id: 0, [target]: 1 } })
+
+    const counts = new Map()
+
+    for await (const doc of cursor) {
+      const value = doc[target]
+      if (value === undefined || value === null) continue
+      counts.set(value, (counts.get(value) || 0) + 1)
+    }
+
+    // Only binary classification
+    if (counts.size !== 2) {
+      return null
+    }
+
+    // Minority class = positive class
+    let posLabel = null
+    let nPos = Infinity
+    let nNeg = 0
+
+    for (const [label, count] of counts.entries()) {
+      if (count < nPos) {
+        posLabel = label
+        nPos = count
       }
-    )
-  })
+    }
 
-  downloadStream.on("error", (error) => {
-    console.error("Stream error:", error)
-  })
-  return
+    for (const [label, count] of counts.entries()) {
+      if (label !== posLabel) {
+        nNeg = count
+      }
+    }
+
+    if (!nPos || nPos === 0) return null
+
+    return {
+      pos_label: String(posLabel),
+      n_pos: nPos,
+      n_neg: nNeg,
+      fraction_neg_pos: nNeg / nPos
+    }
+  } catch (error) {
+    console.error("Error computing dataset class stats:", error)
+    return null
+  }
 }
