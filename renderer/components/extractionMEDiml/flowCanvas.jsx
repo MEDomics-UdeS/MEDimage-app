@@ -52,7 +52,7 @@ const staticNodesParams = nodesParams
  * @returns {JSX.Element} A workflow component as defined in /flow
  *
  * @description
- * Component used to display the workflow of the extraction tab of MEDomicsLab.
+ * Component used to display the workflow of the extraction tab of MEDiml-app.
  */
 const FlowCanvas = ({ workflowType, setWorkflowType }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]) // nodes array, setNodes is used to update the nodes array, onNodesChange is a callback hook that is executed when the nodes array is changed
