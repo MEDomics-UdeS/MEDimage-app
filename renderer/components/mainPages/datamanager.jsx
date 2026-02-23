@@ -213,11 +213,8 @@ const DataManager = ({ pageId, configPath = "" }) => {
         const isDirectory = fs.statSync(fullPath).isDirectory();
   
         if (isDirectory) {
-          if (fullPath.split('/').at(-1).split('-').length > 1) {
-            
-          }
-          else {
-          folderCount++; // Increment the count for the immediate subfolder
+          if (fullPath.split('/').at(-1).split('-').length <= 1) {
+            folderCount++; // Increment the count for the immediate subfolder
           }
   
           // Recursively count subfolders within this subfolder
@@ -613,7 +610,6 @@ const DataManager = ({ pageId, configPath = "" }) => {
 
   return (
     <>
-    {console.log("selected save folder", selectedSaveFolder)}
     <div>
     <Card>
       <Card.Body>
