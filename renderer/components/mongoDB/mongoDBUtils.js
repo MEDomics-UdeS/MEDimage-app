@@ -479,10 +479,20 @@ export async function downloadCollectionToFile(collectionId, filePath, type) {
  * @param {*} collectionName
  * @returns
  */
-export async function collectionExists(collectionName) {
-  const db = await connectToMongoDB()
-  const collections = await db.listCollections({ name: collectionName }).toArray()
-  return collections.length > 0
+export const collectionExists = async (collectionName, dbname = "data") => {
+  const mongoUrl = "mongodb://127.0.0.1:54017"
+  const client = new MongoClient(mongoUrl)
+  try {
+    await client.connect()
+    const db = client.db(dbname)
+    const collections = await db.listCollections().toArray()
+    return collections.some((collection) => collection.name === collectionName)
+  } catch (error) {
+    console.error("Error checking if collection exists:", error)
+    throw error
+  } finally {
+    await client.close()
+  }
 }
 
 /**
