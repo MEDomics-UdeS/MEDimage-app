@@ -143,7 +143,7 @@ const SettingsPage = (pageId = "settings") => {
 
   const startMongo = () => {
     let workspacePath = workspace.workingDirectory.path
-    const mongoConfigPath = path.join(workspacePath, ".medomics", "mongod.conf")
+    const mongoConfigPath = path.join(workspacePath, ".mediml", "mongod.conf")
     let mongod = getMongoDBPath()
     let mongoResult = spawn(mongod, ["--config", mongoConfigPath])
 
@@ -199,8 +199,8 @@ const SettingsPage = (pageId = "settings") => {
       return null
     } else if (process.platform === "darwin") {
       if (process.env.NODE_ENV === "production") {
-        if (fs.existsSync(path.join(process.env.HOME, ".medomics", "mongodb", "bin", "mongod"))) {
-          return path.join(process.env.HOME, ".medomics", "mongodb", "bin", "mongod")
+        if (fs.existsSync(path.join(process.env.HOME, ".mediml", "mongodb", "bin", "mongod"))) {
+          return path.join(process.env.HOME, ".mediml", "mongodb", "bin", "mongod")
         }
       } else {
         return "mongod"
@@ -221,8 +221,8 @@ const SettingsPage = (pageId = "settings") => {
       }
       console.error("mongod not found in /usr/bin/mongod")
       
-      if (fs.existsSync("/home/"+process.env.USER+"/.medomics/mongodb/bin/mongod")) {
-        return "/home/"+process.env.USER+"/.medomics/mongodb/bin/mongod"
+      if (fs.existsSync("/home/"+process.env.USER+"/.mediml/mongodb/bin/mongod")) {
+        return "/home/"+process.env.USER+"/.mediml/mongodb/bin/mongod"
       }
       return null
 

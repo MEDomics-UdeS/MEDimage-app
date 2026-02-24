@@ -37,13 +37,13 @@ npm install
 
 ## 4. Python environment
 
-The python environment is installed automatically once you download the app in your user folder under the folder `.medomics`. If you face any issue with the python environment, go to the applicaton settings page, click **Show first setup modal** and click **Start Setup**.
+The python environment is installed automatically once you download the app in your user folder under the folder `.mediml`. If you face any issue with the python environment, go to the applicaton settings page, click **Show first setup modal** and click **Start Setup**.
 
 
-When developping python code, you may need to install new packages. To do so, you can open the terminal from the `.medomics` folder and install the packages using the following commands:
+When developping python code, you may need to install new packages. To do so, you can open the terminal from the `.mediml` folder and install the packages using the following commands:
 
 ```
-cd <USER_PATH>\.medomics\python
+cd <USER_PATH>\.mediml\python
 python -m pip install <package_name>
 ```
 

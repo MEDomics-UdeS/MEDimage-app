@@ -6,7 +6,7 @@ LOG_FILE=/tmp/medomics_preinstall.log
 
 xcode-select --install
 
-MEDOMICS_DIR=~/.medomics
+MEDOMICS_DIR=~/.mediml
 echo "Creating directory $MEDOMICS_DIR" >>$LOG_FILE
 if [ ! -d "$MEDOMICS_DIR" ]; then
     mkdir $MEDOMICS_DIR

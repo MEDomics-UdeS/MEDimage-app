@@ -5,7 +5,7 @@
 LOG_FILE=/tmp/medomics_postinstall.log
 
 # Default MEDomics configuration directory
-MEDOMICS_DIR=~/.medomics
+MEDOMICS_DIR=~/.mediml
 
 # Name of the requirements file
 REQUIREMENTS_FILE=merged_requirements.txt
