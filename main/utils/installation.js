@@ -64,10 +64,10 @@ const util = require("util")
 const exec = util.promisify(require("child_process").exec)
 
 export const checkRequirements = async () => {
-  // Check if .medomics directory exists
-  let medomicsDirExists = fs.existsSync(path.join(app.getPath("home"), ".medomics"))
+  // Check if .mediml directory exists
+  let medomicsDirExists = fs.existsSync(path.join(app.getPath("home"), ".mediml"))
   if (!medomicsDirExists) {
-    fs.mkdirSync(path.join(app.getPath("home"), ".medomics"))
+    fs.mkdirSync(path.join(app.getPath("home"), ".mediml"))
   }
   let mongoDBInstalled = getMongoDBPath()
   let pythonInstalled = getBundledPythonEnvironment()
@@ -152,12 +152,12 @@ export const installMongoDB = async () => {
       let downloadMongoDBPromise = exec(`curl -o ${downloadPath} ${downloadUrl}`)
       execCallbacksForChildWithNotifications(downloadMongoDBPromise.child, "Downloading MongoDB installer", mainWindow)
       await downloadMongoDBPromise
-      // Install MongoDB in the .medomics directory in the user's home directory
+      // Install MongoDB in the .mediml directory in the user's home directory
       ubuntuVersion = ubuntuVersion.replace(".", "")
-      let command = `tar -xvzf ${downloadPath} -C ${process.env.HOME}/.medomics/ && mv ${process.env.HOME}/.medomics/mongodb-linux-${architecture}-ubuntu${ubuntuVersion}-${mongoDBVersion} ${process.env.HOME}/.medomics/mongodb`
+      let command = `tar -xvzf ${downloadPath} -C ${process.env.HOME}/.mediml/ && mv ${process.env.HOME}/.mediml/mongodb-linux-${architecture}-ubuntu${ubuntuVersion}-${mongoDBVersion} ${process.env.HOME}/.mediml/mongodb`
       let installMongoDBPromise = exec(command)
 
-      // let installMongoDBPromise = exec(`tar -xvzf ${downloadPath} && mv mongodb-linux-${architecture}-ubuntu${ubuntuVersion}-7.0.15 ${process.env.HOME}/.medomics/mongodb`)
+      // let installMongoDBPromise = exec(`tar -xvzf ${downloadPath} && mv mongodb-linux-${architecture}-ubuntu${ubuntuVersion}-7.0.15 ${process.env.HOME}/.mediml/mongodb`)
       execCallbacksForChildWithNotifications(installMongoDBPromise.child, "Installing MongoDB", mainWindow)
       await installMongoDBPromise
 

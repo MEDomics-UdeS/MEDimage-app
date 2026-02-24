@@ -260,12 +260,12 @@ class MEDimlExtraction:
 
             # Set workspace
             if "workspace" in self.json_config and self.json_config["workspace"] != "":
-                new_path = Path(self.json_config["workspace"]) / ".medomics" / "tmp"
+                new_path = Path(self.json_config["workspace"]) / ".mediml" / "tmp"
                 UPLOAD_FOLDER = self.__update_upload_folder(new_path)
 
                 # Check if the workspace exists, if not create it
                 if not os.path.isdir(UPLOAD_FOLDER):
-                    return {"error": "The workspace path provided is not valid (.medomics/tmp/ folder is missing)"}
+                    return {"error": "The workspace path provided is not valid (.mediml/tmp/ folder is missing)"}
         
             # Verify if the extraction workflow object exists and load it
             if "extractionWorkflow.pkl" in os.listdir(UPLOAD_FOLDER):
@@ -358,11 +358,11 @@ class MEDimlExtraction:
             
             # Initialize the dictionary to store the file informations
             up_file_infos = {}
-            new_path = Path(self.json_config['workspace']) / ".medomics"
+            new_path = Path(self.json_config['workspace']) / ".mediml"
             
             # Check if the path exists and update it
             if not os.path.isdir(new_path):
-                return {"error": "The workspace path provided is not valid (.medomics folder is missing)"}
+                return {"error": "The workspace path provided is not valid (.mediml folder is missing)"}
 
             # Check if the tmp folder exists, if not create it
             new_path = new_path / "tmp"
@@ -435,7 +435,7 @@ class MEDimlExtraction:
             
             # Check and set worksapce
             if "workspace" in self.json_config and self.json_config["workspace"] != "":
-                new_path = Path(self.json_config["workspace"]) / ".medomics" / "tmp"
+                new_path = Path(self.json_config["workspace"]) / ".mediml" / "tmp"
                 UPLOAD_FOLDER = self.__update_upload_folder(new_path)
 
             # Create a new extraction workflow object from the json_scene
