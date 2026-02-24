@@ -1026,7 +1026,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
               />
             </Col>
             <Col>
-              <InputText placeholder="Costum (optional)" onChange={(e) => setCostumWildCard(e.target.value)}/>
+              <InputText placeholder="Costum" onChange={(e) => setCostumWildCard(e.target.value)}/>
             </Col>
           </Row>
         </Form>
