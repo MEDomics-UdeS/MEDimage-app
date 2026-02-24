@@ -52,7 +52,8 @@ const DataManager = ({ pageId, configPath = "" }) => {
   const [showPreChecksImages, setShowPreChecksImages] = useState(false) // used to display the offcanvas
   const handleOffCanvasClose = () => setShowOffCanvas(false) // used to close the offcanvas
   const handleOffCanvasShow = () => setShowOffCanvas(true) // used to show the offcanvas
-  const [preChecksImages, setPreChecksImages] = useState([]) // used to display the offcanvas  
+  const [preChecksImages, setPreChecksImages] = useState([]) // used to display the offcanvas
+  const [preChecksImagesUrls, setPreChecksImagesUrls] = useState([]) // used to display the offcanvas
   const [useWorkspace, setUseWorkspace] = useState(true) // A boolean variable to control the use of the workspace
   const [useWorkspacePC, setUseWorkspacePC] = useState(true) // A boolean variable to control the use of the workspace for pre-checks
 
@@ -198,9 +199,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
   };
 
   const itemTemplate = (item) => {
-    const nativeImage = require("electron").nativeImage
-    const image = nativeImage.createFromPath(item.itemImageSrc)
-    return <Image src={image.toDataURL()} height="500" alt={item.alt} preview downloadable/>
+    return <Image src={item.itemImageSrc} height="500" alt={item.alt} preview downloadable/>
   }
 
   const fs = require('fs');
@@ -541,6 +540,30 @@ const DataManager = ({ pageId, configPath = "" }) => {
       setRefreshEnabledPreChecks(false);
     };
   }, [refreshEnabledPreChecks]); // The empty dependency array ensures this effect runs only once when the component mounts
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      const imagePromises = preChecksImages.map((filePath, modelName) => {
+        if (filePath.itemImageSrc) {
+          return new Promise((resolve) => {
+            const nativeImage = require("electron").nativeImage
+            const image = nativeImage.createFromPath(filePath.itemImageSrc)
+            const dataUrl = image.resize({ width: 2000 }).toDataURL()
+            const thumbnail = image.resize({ width: 100 }).toDataURL() // Create a thumbnail with a width of 100px
+            resolve({
+              itemImageSrc: dataUrl,
+              thumbnailImageSrc: thumbnail,
+              alt: filePath.alt,
+            })
+          })
+        }
+      })
+      const results = await Promise.all(imagePromises)
+      setPreChecksImagesUrls(results)
+    }
+    
+    preChecksImages.length > 0 && fetchImages() // Call but don't try to assign to variable
+  }, [preChecksImages])
 
   /**
    * @returns {JSX.Element} A tree menu or a warning message
@@ -1071,10 +1094,10 @@ const DataManager = ({ pageId, configPath = "" }) => {
       position={'right'}
       onHide={() => setShowPreChecksImages(false)}
     >
-      {((preChecksImages.length !== 0) && 
-        (<Galleria value={preChecksImages} style={{ maxWidth: '640px' }} showThumbnails={false} showIndicators item={itemTemplate} />)
+      {((preChecksImagesUrls.length !== 0) && 
+        (<Galleria value={preChecksImagesUrls} style={{ maxWidth: '640px' }} showThumbnails={false} showIndicators item={itemTemplate} />)
       )}
-      {((preChecksImages.length === 0) && 
+      {((preChecksImagesUrls.length === 0) && 
         (<Alert variant="danger" className="warning-message">
           <b>No results available</b>
         </Alert>)
