@@ -12,7 +12,7 @@ import { useContext, useRef, useState } from 'react';
 import { Col, Form, Row } from "react-bootstrap";
 import { toast } from 'react-toastify';
 import { requestBackend } from '../../../utilities/requests';
-import DocLink from '../../extractionMEDimage/docLink';
+import DocLink from '../../extractionMEDiml/docLink';
 import { WorkspaceContext } from '../../workspace/workspaceContext';
 
 function TextureParams({ModSettings, activeIndex, setActiveIndex, discretisationAlgos, indexAlgo, indexVal}) {
@@ -59,7 +59,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
             <Form.Group as={Row} controlId="filter-mean">
       <DocLink
         linkString={
-          "https://medimage.readthedocs.io/en/latest/configuration_file.html#mean"
+          "https://mediml.readthedocs.io/en/latest/configuration_file.html#mean"
         }
         name={"Mean filter documentation"}
         image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
@@ -146,7 +146,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
         <Form.Group as={Row} controlId="filter-log">
         <DocLink
             linkString={
-            "https://medimage.readthedocs.io/en/latest/configuration_file.html#log"
+            "https://mediml.readthedocs.io/en/latest/configuration_file.html#log"
             }
             name={"Log filter documentation"}
             image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
@@ -248,7 +248,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
             <Form.Group as={Row} controlId="filter-laws">
       <DocLink
         linkString={
-          "https://medimage.readthedocs.io/en/latest/configuration_file.html#laws"
+          "https://mediml.readthedocs.io/en/latest/configuration_file.html#laws"
         }
         name={"Laws filter documentation"}
         image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
@@ -443,7 +443,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
     <Form.Group as={Row} controlId="filter-gabor">
       <DocLink
         linkString={
-          "https://medimage.readthedocs.io/en/latest/configuration_file.html#gabor"
+          "https://mediml.readthedocs.io/en/latest/configuration_file.html#gabor"
         }
         name={"Gabor filter documentation"}
         image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
@@ -591,7 +591,7 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
         <Form.Group as={Row} controlId="filter-wavelet">
         <DocLink
             linkString={
-            "https://medimage.readthedocs.io/en/latest/configuration_file.html#wavelet"
+            "https://mediml.readthedocs.io/en/latest/configuration_file.html#wavelet"
             }
             name={"Wavelet filter documentation"}
             image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
@@ -1596,7 +1596,7 @@ const SettingsEditor = ({ showEdit, setShowEdit, settings, pathSettings, onHideB
         setLoading(true)
         requestBackend(
             port, 
-            '/extraction_MEDimage/run_all/be_save_json',
+            '/extraction_MEDiml/run_all/be_save_json',
             {settings, pathSettings}, 
             (response) => {
                 setLoading(false)

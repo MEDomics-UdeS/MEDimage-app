@@ -1,4 +1,4 @@
-import React, { useContext } from "react"
+import { useContext } from "react"
 import { ErrorRequestContext } from "../generalPurpose/errorRequestContext"
 import { Dialog } from "primereact/dialog"
 import { Button } from "primereact/button"
@@ -15,12 +15,43 @@ import { toast } from "react-toastify"
  * 2. Use the context member setError to set the error
  */
 const ErrorRequestDialog = () => {
-  const { error, showError, setShowError } = useContext(ErrorRequestContext) // used to get the flow infos
+  const { error, showError, setShowError } = useContext(ErrorRequestContext)
+
+  // Helper to extract the string message safely
+  const getErrorMessage = () => {
+    // If error.message is a string, use it. If it's an object with a message property, use that.
+    let parsedError = error
+    if (typeof error === 'string') {
+      try {
+        parsedError = JSON.parse(error)
+        let msg = typeof parsedError?.message === 'string' 
+          ? parsedError.message 
+          : parsedError?.message?.message
+        return msg || "An unknown error occurred"
+      } catch (e) {
+        // If parsing fails, treat the original string as the message
+        return error
+      }
+    }
+    try {
+      parsedError = JSON.stringify(error)
+    } catch (e) {
+      return "An unknown error occurred"
+    }
+
+    const msg = typeof parsedError?.message === 'string' 
+      ? parsedError.message 
+      : parsedError?.message?.message
+    
+    return msg || "An unknown error occurred"
+  }
+
+  const displayMessage = getErrorMessage()
 
   return (
     <>
       <Dialog
-        header="Error occured during execution"
+        header="Error occurred during execution"
         visible={showError}
         style={{ width: "70vw" }}
         onHide={() => setShowError(false)}
@@ -32,7 +63,10 @@ const ErrorRequestDialog = () => {
       >
         <Row className="error-dialog-header">
           <Col md="auto">
-            <h5>{error.message && error.message[0].toUpperCase() + error.message.slice(1)}</h5>
+            {/* Safe access with optional chaining and fallback */}
+            <h5>
+              {displayMessage.charAt(0).toUpperCase() + displayMessage.slice(1)}
+            </h5>
           </Col>
           <Col>
             <Button
@@ -41,13 +75,16 @@ const ErrorRequestDialog = () => {
               text
               severity="secondary"
               onClick={() => {
-                navigator.clipboard.writeText(error.message && error.message)
+                navigator.clipboard.writeText(displayMessage)
                 toast.success("Copied to clipboard")
               }}
             />
           </Col>
         </Row>
-        <pre>{error.stack_trace && error.stack_trace}</pre>
+        {/* Axios error stack is usually in error.message.stack or error.stack_trace */}
+        <pre className="mt-3" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+          {error?.message?.stack || error?.stack_trace || "No stack trace available"}
+        </pre>
       </Dialog>
     </>
   )

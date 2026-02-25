@@ -7,7 +7,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import { Alert, Card, Col, Form, ProgressBar, Row } from 'react-bootstrap'
 import { toast } from 'react-toastify'
 import { requestBackend } from "../../utilities/requests"
-import DocLink from '../extractionMEDimage/docLink'
+import DocLink from '../extractionMEDiml/docLink'
 import { WorkspaceContext } from "../workspace/workspaceContext"
 import SettingsEditor from "./dataComponents/settingsEditor"
 import { Dropdown } from 'primereact/dropdown'
@@ -48,6 +48,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
   const [showRadiomicsResults, setShowRadiomicsResults] = useState(false) // used to display the extraction results
   const [showEdit, setShowEdit] = useState(false) // used to display the extraction results
   const [nodes, setNodes] = useState([])
+  const [useWorkspace, setUseWorkspace] = useState(true) // A boolean variable to control the use of the workspace
 
   useEffect(() => {
     updateWSfolder()
@@ -238,7 +239,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
     // Make a POST request to the backend API
     requestBackend(
       port, 
-      '/extraction_MEDimage/run_all/be_json', 
+      '/extraction_MEDiml/run_all/be_json', 
       {selectedSettingsFile}, 
       (response) => {
         console.log("response", response)
@@ -247,6 +248,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
           console.error('Error:', response.error)
           toast.error('Error: ' + response.error)
           setShowEdit(false)
+          // eslint-disable-next-line no-prototype-builtins
           if (!response.error.hasOwnProperty('message')) {
             setError({"message": response.error})
           } else {
@@ -301,7 +303,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
     // Make a POST request to the backend API
     requestBackend(
       port, 
-      '/extraction_MEDimage/run_all/be_count', 
+      '/extraction_MEDiml/run_all/be_count', 
       requestData, 
       (response) => {
         console.log("response", response)
@@ -331,7 +333,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
     // Make a POST request to the backend API to run BatchExtractor
     requestBackend(
       port, 
-      '/extraction_MEDimage/run_all/be', 
+      '/extraction_MEDiml/run_all/be', 
       requestData, 
       (response) => {
         setRefreshEnabled(false)
@@ -341,6 +343,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
         if (response.error) {
           console.error('Error:', response.error)
           toast.error('Error: ' + response.error)
+          // eslint-disable-next-line no-prototype-builtins
           if (!response.error.hasOwnProperty('message')) {
             setError({"message": response.error})
           } else {
@@ -477,35 +480,37 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
         <Card.Header>
           <h4>Batch Extractor - Radiomics</h4>
           <DocLink 
-            linkString={"https://medimage.readthedocs.io/en/latest/tutorials.html#batchextractor"} 
+            linkString={"https://mediml.readthedocs.io/en/latest/tutorials.html#batchextractor"} 
             name={"What is BatchExtractor?"} 
             image={"https://www.svgrepo.com/show/521262/warning-circle.svg"} 
           />
         </Card.Header>
 
       <Form method="post" encType="multipart/form-data" className="inputFile">
+
+      {/* Check whether to use the workspace or not*/}
+      <Row className="form-group-box">
+        <Form.Label htmlFor="file">Use current workspace data (recommanded)</Form.Label>
+        <i>If this is checked, the data available in the workspace will be used instead of local data.</i>
+        <Col style={{ width: "150px" }}>
+          <InputSwitch
+            checked={useWorkspace}
+            onChange={(e) => setUseWorkspace(e.value)}
+          />
+        </Col>
+      </Row>
+
       {/* UPLOAD NPY DATASET FOLDER*/}
-        <Row className="form-group-box">
-          <Tooltip target=".npy-folder"/>
-          <Form.Label 
-            className="npy-folder" 
-            data-pr-tooltip="Path to the folder containing the NPY dataset to use for radiomics features extraction"
-            data-pr-position="bottom"
-            htmlFor="file">
-              NPY dataset folder (MEDscan objects)
-          </Form.Label>
-          <Col>
-            <h6>Select a local foler</h6>
-            <Form.Group controlId="enterFile">
-              <Form.Control
-                name="path_read"
-                type="file"
-                webkitdirectory="true"
-                directory="true"
-                onChange={handleReadFolderChange}
-              />
-            </Form.Group>
-          </Col>
+      <Row className="form-group-box">
+        <Tooltip target=".npy-folder"/>
+        <Form.Label 
+          className="npy-folder" 
+          data-pr-tooltip="Path to the folder containing the NPY dataset to use for radiomics features extraction"
+          data-pr-position="bottom"
+          htmlFor="file">
+            NPY dataset folder (MEDscan objects)
+        </Form.Label>
+        {useWorkspace ? (
           <Col>
             <Tooltip target=".csv-file-ws"/>
             <h6>Select from workspace</h6>
@@ -520,7 +525,21 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
               placeholder="Select a folder"
             />
           </Col>
-        </Row>
+            ) : (
+          <Col>
+            <h6>Select a local foler</h6>
+            <Form.Group controlId="enterFile">
+              <Form.Control
+                name="path_read"
+                type="file"
+                webkitdirectory="true"
+                directory="true"
+                onChange={handleReadFolderChange}
+              />
+            </Form.Group>
+          </Col>
+        )}
+      </Row>
 
         {/* UPLOAD SETTINGS FILE*/}
         <Row className="form-group-box">
@@ -532,47 +551,51 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
             htmlFor="file">
               Settings File
           </Form.Label>
-          <Col>
-            <h6>Load a Local File</h6>
-            <Form.Group controlId="enterFile">
-              <Form.Control
-                accept='.json'
-                name="path_params"
-                type="file"
-                onChange={handleSettingsFileChange}
+          {useWorkspace ? (
+            <Col>
+              <Tooltip target=".csv-file-ws"/>
+              <h6>Select From Workspace</h6>
+              <Dropdown
+                style={{ maxWidth: "100%", height: "auto", width: "auto" }}
+                filter
+                value={selectedSettingsFile}
+                onChange={(e) => setSelectedSettingsFile(e.value)}
+                options={listSettingsFiles}
+                optionLabel="name"
+                display="chip"
+                placeholder="Select a file"
               />
-            </Form.Group>
-          </Col>
-          <Col>
-            <Tooltip target=".csv-file-ws"/>
-            <h6>Select From Workspace</h6>
-            <Dropdown
-              style={{ maxWidth: "100%", height: "auto", width: "auto" }}
-              filter
-              value={selectedSettingsFile}
-              onChange={(e) => setSelectedSettingsFile(e.value)}
-              options={listSettingsFiles}
-              optionLabel="name"
-              display="chip"
-              placeholder="Select a file"
-            />
-          </Col>
-          <Col>
-          <h6>Edit the selected file</h6>
-            <Button
-              type="button"
-              severity="info"
-              label="Edit"
-              name="EditSettingsButton"
-              onClick={handleEditClick}
-              disabled={(!selectedSettingsFile)}
-              loading={loadingEdit}
-              icon="pi pi-pencil"
-              iconPos="left"
-              raised
-              rounded
-            />
-          </Col>
+            </Col>
+             ) : (
+            <Col>
+              <h6>Load a Local File</h6>
+              <Form.Group controlId="enterFile">
+                <Form.Control
+                  accept='.json'
+                  name="path_params"
+                  type="file"
+                  onChange={handleSettingsFileChange}
+                />
+              </Form.Group>
+            </Col>
+            
+            )}
+            <Col>
+            <h6>Edit the selected file</h6>
+              <Button
+                type="button"
+                severity="info"
+                label="Edit"
+                name="EditSettingsButton"
+                onClick={handleEditClick}
+                disabled={(!selectedSettingsFile)}
+                loading={loadingEdit}
+                icon="pi pi-pencil"
+                iconPos="left"
+                raised
+                rounded
+              />
+            </Col>
         </Row>
       </Form>  
 
@@ -586,18 +609,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
           htmlFor="file">
             Path to CSV File
         </Form.Label>
-          <Col>
-            <h6>Select a Local File</h6>
-            <Form.Group controlId="enterFile">
-              <Form.Control
-                name="path_csv"
-                type="file"
-                webkitdirectory="true"
-                directory="true"
-                onChange={handleCSVFileChange}
-              />
-            </Form.Group>
-          </Col>
+        {useWorkspace ? (
           <Col>
             <Tooltip target=".csv-file-ws"/>
             <h6>Select From Workspace</h6>
@@ -611,7 +623,20 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
               display="chip"
               placeholder="Select a file"
             />
+          </Col> ) :(
+          <Col>
+            <h6>Select a Local File</h6>
+            <Form.Group controlId="enterFile">
+              <Form.Control
+                name="path_csv"
+                type="file"
+                webkitdirectory="true"
+                directory="true"
+                onChange={handleCSVFileChange}
+              />
+            </Form.Group>
           </Col>
+          )}
         </Row>
 
         {/* UPLOAD SAVING FOLDER*/}
@@ -624,18 +649,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
             htmlFor="file">
               Save folder
           </Form.Label>
-          <Col>
-          <h6>Select a Local Folder</h6>
-            <Form.Group controlId="enterFile">
-              <Form.Control
-                name="path_save"
-                type="file"
-                webkitdirectory="true"
-                directory="true"
-                onChange={handleSaveFolderChange}
-              />
-            </Form.Group>
-          </Col>
+        {useWorkspace ? (
           <Col>
             <Tooltip target=".csv-file-ws"/>
             <h6>Select From Workspace</h6>
@@ -649,7 +663,20 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
               display="chip"
               placeholder="Select a folder"
             />
+          </Col> ) :(
+          <Col>
+          <h6>Select a Local Folder</h6>
+            <Form.Group controlId="enterFile">
+              <Form.Control
+                name="path_save"
+                type="file"
+                webkitdirectory="true"
+                directory="true"
+                onChange={handleSaveFolderChange}
+              />
+            </Form.Group>
           </Col>
+          )}
         </Row>
 
       {/* NUMBER OF BATCH*/}

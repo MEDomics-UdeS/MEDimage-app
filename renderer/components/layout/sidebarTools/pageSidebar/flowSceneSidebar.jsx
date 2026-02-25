@@ -1,9 +1,9 @@
 import { randomUUID } from "crypto"
 import Path from "path"
-import React, { useContext, useEffect, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import { toast } from "react-toastify"
-import { sceneDescription as extractionMEDimageSceneDescription } from "../../../../public/setupVariables/extractionMEDimageNodesParams"
-import { sceneDescription as learningMEDimageDefaultSettings } from "../../../../public/setupVariables/learningMEDimageNodesParams"
+import { sceneDescription as extractionMEDimlSceneDescription } from "../../../../public/setupVariables/extractionMEDimlNodesParams"
+import { sceneDescription as learningMEDimlDefaultSettings } from "../../../../public/setupVariables/learningMEDimlNodesParams"
 import { loadJsonPath } from "../../../../utilities/fileManagementUtils"
 import { insertMEDDataObjectIfNotExists } from "../../../mongoDB/mongoDBUtils"
 import { MEDDataObject } from "../../../workspace/NewMedDataObject"
@@ -12,13 +12,13 @@ import { WorkspaceContext } from "../../../workspace/workspaceContext"
 import FileCreationBtn from "../fileCreationBtn"
 
 const typeInfo = {
-  extractionMEDimage: {
-    title: "MEDimage Extraction",
-    ...extractionMEDimageSceneDescription
+  extractionMEDiml: {
+    title: "MEDiml Extraction",
+    ...extractionMEDimlSceneDescription
   },
-  learningMEDimage: {
-    title: "MEDimage Learning",
-    ...learningMEDimageDefaultSettings
+  learningMEDiml: {
+    title: "MEDiml Learning",
+    ...learningMEDimlDefaultSettings
   }
 }
 
@@ -37,7 +37,13 @@ const FlowSceneSidebar = ({ type }) => {
   useEffect(() => {
     let localExperimentList = []
     for (const experimentId of globalData["EXPERIMENTS"].childrenIDs) {
-      localExperimentList.push(globalData[experimentId].name)
+      if (globalData[experimentId].name === "EXTRACTION" || globalData[experimentId].name === "LEARNING") {
+        for (const sceneId of globalData[experimentId].childrenIDs) {
+          localExperimentList.push(globalData[sceneId].name)
+        }
+      } else {
+        localExperimentList.push(globalData[experimentId].name)
+      }
     }
     setExperimentList(localExperimentList)
   }, [workspace, globalData]) // We log the workspace when it changes
@@ -97,7 +103,6 @@ const FlowSceneSidebar = ({ type }) => {
         })
         await insertMEDDataObjectIfNotExists(learningFolder)
       }
-      // Create scene folder
       sceneFolder = new MEDDataObject({
         id: randomUUID(),
         name: sceneName,
@@ -119,7 +124,6 @@ const FlowSceneSidebar = ({ type }) => {
         })
         await insertMEDDataObjectIfNotExists(extractionFolder)
       }
-      // Create scene folder
       sceneFolder = new MEDDataObject({
         id: randomUUID(),
         name: sceneName,
@@ -129,7 +133,6 @@ const FlowSceneSidebar = ({ type }) => {
         inWorkspace: true
       })
     } else {
-      // Create scene folder
       sceneFolder = new MEDDataObject({
         id: randomUUID(),
         name: sceneName,
@@ -205,6 +208,9 @@ const FlowSceneSidebar = ({ type }) => {
 
     // Load everything in globalData
     MEDDataObject.updateWorkspaceDataObject()
+
+    // Success toast
+    toast.success("Scene created successfully")
   }
 
   return (

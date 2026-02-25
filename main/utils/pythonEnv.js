@@ -147,15 +147,15 @@ export function getBundledPythonEnvironment() {
 
   let bundledPythonPath = null
 
-  // Check if the python path can be found in the .medomics directory
-  let medomicsDirExists = fs.existsSync(path.join(app.getPath("home"), ".medomics", "python"))
+  // Check if the python path can be found in the .mediml directory
+  let medomicsDirExists = fs.existsSync(path.join(app.getPath("home"), ".mediml", "python"))
 
   if (process.env.NODE_ENV === "production") {
-    // Get the user path followed by .medomics
+    // Get the user path followed by .mediml
     let userPath = getHomePath()
-    let medomicsPath = path.join(userPath, ".medomics")
+    let medomicsPath = path.join(userPath, ".mediml")
 
-    // Check if the .medomics directory exists
+    // Check if the .mediml directory exists
     if (fs.existsSync(medomicsPath)) {
       // Check if the python directory exists
       let pythonPath = path.join(medomicsPath, "python")
@@ -163,14 +163,14 @@ export function getBundledPythonEnvironment() {
         bundledPythonPath = pythonPath
       }
     } else {
-      // Create the .medomics directory
+      // Create the .mediml directory
       fs.mkdirSync(medomicsPath)
     }
 
-    bundledPythonPath = path.join(userPath, ".medomics", "python")
+    bundledPythonPath = path.join(userPath, ".mediml", "python")
   } else {
     if (medomicsDirExists) {
-      bundledPythonPath = path.join(getHomePath(), ".medomics", "python")
+      bundledPythonPath = path.join(getHomePath(), ".mediml", "python")
     } else {
       bundledPythonPath = path.join(process.cwd(), "python")
     }
@@ -313,10 +313,10 @@ export async function installBundledPythonExecutable(mainWindow) {
     console.log("getHomePath(): ", getHomePath())
     let userPath = getHomePath()
 
-    medomicsPath = path.join(userPath, ".medomics")
+    medomicsPath = path.join(userPath, ".mediml")
     pythonParentFolderExtractString = "-C " + medomicsPath
     let pythonPath = path.join(medomicsPath, "python")
-    // Check if the .medomics directory exists
+    // Check if the .mediml directory exists
     if (fs.existsSync(medomicsPath)) {
       // Check if the python directory exists
       if (fs.existsSync(pythonPath)) {
@@ -325,7 +325,7 @@ export async function installBundledPythonExecutable(mainWindow) {
         fs.mkdirSync(pythonPath)
       }
     } else {
-      // Create the .medomics directory
+      // Create the .mediml directory
       fs.mkdirSync(medomicsPath)
       fs.mkdirSync(pythonPath)
     }
