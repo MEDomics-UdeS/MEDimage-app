@@ -696,10 +696,10 @@ export function getMongoDBPath() {
     console.error("mongod not found")
     return null
   } else if (process.platform === "darwin") {
-    // Check if it is installed in the .medomics directory
-    const binPath = path.join(process.env.HOME, ".medomics", "mongodb", "bin", "mongod")
+    // Check if it is installed in the .mediml directory
+    const binPath = path.join(process.env.HOME, ".mediml", "mongodb", "bin", "mongod")
     if (fs.existsSync(binPath)) {
-      console.log("mongod found in .medomics directory")
+      console.log("mongod found in .mediml directory")
       return binPath
     }
     if (process.env.NODE_ENV !== "production") {
@@ -746,8 +746,8 @@ export function getMongoDBPath() {
       return "/usr/local/lib/mongodb/bin/mongod"
     }
 
-    if (fs.existsSync(process.env.HOME + "/.medomics/mongodb/bin/mongod")) {
-      return process.env.HOME + "/.medomics/mongodb/bin/mongod"
+    if (fs.existsSync(process.env.HOME + "/.mediml/mongodb/bin/mongod")) {
+      return process.env.HOME + "/.mediml/mongodb/bin/mongod"
     }
     return null
   } else {
