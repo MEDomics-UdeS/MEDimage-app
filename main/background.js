@@ -696,52 +696,60 @@ export function getMongoDBPath() {
     console.error("mongod not found")
     return null
   } else if (process.platform === "darwin") {
-    // Check if it is installed in the .mediml directory    
-      const binPath = path.join(process.env.HOME, ".mediml", "mongodb", "bin", "mongod")
-      if (fs.existsSync(binPath)) {
-        console.log("mongod found in .mediml directory")
-        return binPath
-      }
-    if (process.env.NODE_ENV !== "production") {
-
-    // Check if mongod is in the process.env.PATH
-    const paths = process.env.PATH.split(path.delimiter)
-    for (let i = 0; i < paths.length; i++) {
-      const binPath = path.join(paths[i], "mongod")
-      if (fs.existsSync(binPath)) {
-        console.log("mongod found in PATH")
-        return binPath
-      }
-    }
-    // Check if mongod is in the default installation path on macOS - /usr/local/bin/mongod
-    const binPath = "/usr/local/bin/mongod"
+    // Check if it is installed in the .medomics directory
+    const binPath = path.join(process.env.HOME, ".medomics", "mongodb", "bin", "mongod")
     if (fs.existsSync(binPath)) {
+      console.log("mongod found in .medomics directory")
       return binPath
     }
-  }
+    if (process.env.NODE_ENV !== "production") {
+      // Check if mongod is in the process.env.PATH
+      const paths = process.env.PATH.split(path.delimiter)
+      for (let i = 0; i < paths.length; i++) {
+        const binPath = path.join(paths[i], "mongod")
+        if (fs.existsSync(binPath)) {
+          console.log("mongod found in PATH")
+          return binPath
+        }
+      }
+      // Check if mongod is in the default installation path on macOS - /usr/local/bin/mongod
+      const binPath = "/usr/local/bin/mongod"
+      if (fs.existsSync(binPath)) {
+        return binPath
+      }
+    }
     console.error("mongod not found")
     return null
   } else if (process.platform === "linux") {
     // Check if mongod is in the process.env.PATH
     const paths = process.env.PATH.split(path.delimiter)
     for (let i = 0; i < paths.length; i++) {
+      console.log(`Checking for mongod in: index ${i}, path ${paths[i]}`)
       const binPath = path.join(paths[i], "mongod")
+      console.log(`Checking if mongod exists at: ${binPath}`)
       if (fs.existsSync(binPath)) {
         return binPath
       }
     }
-    console.error("mongod not found in PATH"+paths)
+    console.error("mongod not found in PATH" + paths)
     // Check if mongod is in the default installation path on Linux - /usr/bin/mongod
     if (fs.existsSync("/usr/bin/mongod")) {
       return "/usr/bin/mongod"
     }
-    console.error("mongod not found in /usr/bin/mongod")
-    
-    if (fs.existsSync("/home/"+process.env.USER+"/.mediml/mongodb/bin/mongod")) {
-      return "/home/"+process.env.USER+"/.mediml/mongodb/bin/mongod"
+
+    // Check the tarball install location used by after-install.sh
+    if (fs.existsSync("/usr/local/bin/mongod")) {
+      return "/usr/local/bin/mongod"
+    }
+
+    if (fs.existsSync("/usr/local/lib/mongodb/bin/mongod")) {
+      return "/usr/local/lib/mongodb/bin/mongod"
+    }
+
+    if (fs.existsSync(process.env.HOME + "/.medomics/mongodb/bin/mongod")) {
+      return process.env.HOME + "/.medomics/mongodb/bin/mongod"
     }
     return null
-
   } else {
     return "mongod"
   }
