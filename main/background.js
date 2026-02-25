@@ -226,18 +226,11 @@ if (isProd) {
         // Kill the process on the port
         // killProcessOnPort(serverPort)
       } else if (process.platform === "darwin") {
-        await new Promise((resolve, reject) => {
+        await new Promise((resolve) => {
           exec("pkill -f mongod", (error, stdout, stderr) => {
-            if (error) {
-              console.error(`exec error: ${error}`)
-              reject(error)
-            }
-            console.log(`stdout: ${stdout}`)
-            console.error(`stderr: ${stderr}`)
             resolve()
           })
-        }
-      )
+        })
       } else {
         try {
           execSync("killall mongod")
@@ -508,6 +501,48 @@ ipcMain.handle("checkMongoDBisInstalled", async (event) => {
 
 ipcMain.on("restartApp", (event, data, args) => {
   app.relaunch()
+  app.quit()
+})
+
+let isQuitting = false
+
+app.on("before-quit", async (event) => {
+  if (isQuitting) return // Already handling quit
+  
+  event.preventDefault()
+  isQuitting = true
+  
+  console.log("App quitting — cleaning up terminals and services...")
+  
+  try {
+    // Wait for all PTY processes to exit gracefully (up to 3 seconds)
+    // This prevents the node-pty SIGABRT crash caused by thread::join()
+    // blocking during teardown when child processes haven't exited yet
+    await terminalManager.cleanupAsync(3000)
+  } catch (error) {
+    console.error("Error during terminal cleanup:", error)
+    // Fallback: force-kill synchronously
+    terminalManager.cleanup()
+  }
+  
+  // Stop MongoDB
+  try {
+    await stopMongoDB(mongoProcess)
+  } catch (error) {
+    console.warn("Error stopping MongoDB:", error)
+  }
+  
+  // Stop the server
+  if (MEDconfig.runServerAutomatically) {
+    try {
+      serverProcess.kill()
+      console.log("serverProcess killed")
+    } catch (error) {
+      console.log("serverProcess already killed")
+    }
+  }
+  
+  console.log("Cleanup complete, quitting app")
   app.quit()
 })
 
