@@ -1,18 +1,20 @@
 /* eslint-disable no-undef */
-import React, { useContext, useRef, useState, useEffect } from "react"
-import { Trash, BoxArrowUpRight, Eraser, FolderPlus, ArrowClockwise, EyeFill, EyeSlashFill, ArrowRepeat } from "react-bootstrap-icons"
-import { FiFolder } from "react-icons/fi"
-import { Accordion, Stack } from "react-bootstrap"
-import { ControlledTreeEnvironment, Tree } from "react-complex-tree"
-import { DataContext } from "../../../workspace/dataContext"
-import { toast } from "react-toastify"
-import { LayoutModelContext } from "../../layoutContext"
-import { useContextMenu, Menu, Item, Submenu } from "react-contexify"
-import renderItem from "./renderItem"
+import fs from "fs"
 import { Tooltip } from "primereact/tooltip"
-import { WorkspaceContext } from "../../../workspace/workspaceContext"
-import { rename, onPaste, onDeleteSequentially, createFolder, onDrop, fromJSONtoTree, evaluateIfTargetIsAChild } from "./utils"
+import { useContext, useEffect, useRef, useState } from "react"
+import { Accordion, Stack } from "react-bootstrap"
+import { ArrowClockwise, ArrowRepeat, BoxArrowUpRight, ChevronBarContract, ChevronBarExpand, Eraser, EyeFill, EyeSlashFill, FolderPlus, Trash } from "react-bootstrap-icons"
+import { ControlledTreeEnvironment, Tree } from "react-complex-tree"
+import { Item, Menu, Submenu, useContextMenu } from "react-contexify"
+import { FiFolder } from "react-icons/fi"
+import { toast } from "react-toastify"
+import { DataContext } from "../../../workspace/dataContext"
 import { MEDDataObject } from "../../../workspace/NewMedDataObject"
+import { WorkspaceContext } from "../../../workspace/workspaceContext"
+import { LayoutModelContext } from "../../layoutContext"
+import renderItem from "./renderItem"
+import { createFolder, evaluateIfTargetIsAChild, fromJSONtoTree, onDeleteSequentially, onDrop, onPaste, rename } from "./utils"
+
 /**
  * @description - This component is the sidebar tools component that will be used in the sidebar component
  * @param {Object} props - Props passed from parent component
@@ -34,10 +36,12 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
   const [cutItems, setCutItems] = useState([]) // This state is used to keep track of the items that have been cut
   const [isHovering, setIsHovering] = useState(false) // This state is used to know if the mouse is hovering the directory tree
   const [showHiddenFiles, setShowHiddenFiles] = useState(false) // This state is used to know if the user wants to see hidden files or not
+  const [showMongoDetails, setShowMongoDetails] = useState(true) // This state is used to know if the user wants to see indicator for files saved in MongoDB or not
   const [isAccordionShowing, setIsAccordionShowing] = useState(true) // This state is used to know if the accordion is collapsed or not
   const [isDialogShowing, setIsDialogShowing] = useState(false) // This state is used to know if the dialog is showing or not
   const [dirTree, setDirTree] = useState({}) // We get the directory tree from the workspace
   const [isDropping, setIsDropping] = useState(false) // Set if the item is getting dropped something in (for elements outside of the tree)
+  const [isDirectoryTreeFocused, setIsDirectoryTreeFocused] = useState(false) // New state to track focus on the directory tree
 
   const { globalData } = useContext(DataContext) // We get the global data from the context to retrieve the directory tree of the workspace, thus retrieving the data files
   const { dispatchLayout, developerMode } = useContext(LayoutModelContext)
@@ -109,7 +113,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
     // For mac, add Enter key to rename
     // If os is mac and enter key is pressed
     if (navigator.platform.indexOf("Mac") > -1) {
-      if (event.code === "Enter" && !isDialogShowing) {
+      if (event.code === "Enter" && !isDialogShowing && isDirectoryTreeFocused) {
         // We check if the dialog is showing to avoid renaming when the user is in the process of deleting a file
         if (tree.current !== undefined) {
           if (tree.current.isRenaming) {
@@ -219,9 +223,6 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
         case "openLearningModule":
           dispatchLayout({ type: "openInLearningModule", payload: props })
           break
-        case "openInJSONViewer":
-          dispatchLayout({ type: "openInJSONViewer", payload: props })
-          break
         case "open":
           onOpen(props.index)
           break
@@ -242,15 +243,22 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
           if (globalData[props.index]) {
             if (globalData[props.index].path) {
               // eslint-disable-next-line no-undef
-              require("electron").shell.showItemInFolder(globalData[props.index].path)
+              if (fs.existsSync(globalData[props.index].path)) {
+                require("electron").shell.showItemInFolder(globalData[props.index].path)
+              } else {
+                if (fs.existsSync(globalData[globalData[props.index].parentID].path)) {
+                  require("electron").shell.showItemInFolder(globalData[globalData[props.index].parentID].path)
+                  toast.warn("Warning: The item is not saved locally, opening the folder in the workspace")
+                } else {
+                  toast.error("Error: No path found. The item is not saved locally")
+                }
+              }
             } else {
-              toast.error("Error: No path found. The item is not saved locally")
+              toast.error("No path found. The item is not saved locally")
             }
           } else {
-            toast.error("Error: No item selected")
+            toast.error("No item selected")
           }
-          break
-        default:
           break
       }
     } else {
@@ -270,15 +278,13 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
       if (item.type == "medml") {
         dispatchLayout({ type: "openInLearningModule", payload: item })
       } else if (item.type == "medimg") {
-        dispatchLayout({ type: "openInExtractionMEDimageModule", payload: item })
+        dispatchLayout({ type: "openInExtractionMEDimlModule", payload: item })
       } else if (item.type == "medimg.ml") {
-        dispatchLayout({ type: "openInLearningMEDimageModule", payload: item })
+        dispatchLayout({ type: "openInLearningMEDimlModule", payload: item })
       } else if (item.type == "medeval") {
         dispatchLayout({ type: "openInEvaluationModule", payload: item })
       } else if (item.type == "csv" || item.type == "tsv" || item.type == "xlsx" || item.type == "view") {
         dispatchLayout({ type: "openInDataTableFromDBViewer", payload: item })
-      } else if (item.type == "json") {
-        dispatchLayout({ type: "openInJSONViewer", payload: item })
       } else if (item.type == "py" || item.type == "ipynb") {
         dispatchLayout({ type: "openInCodeEditor", payload: item })
       } else if (item.type == "png" || item.type == "jpg" || item.type == "jpeg" || item.type == "gif" || item.type == "svg") {
@@ -460,13 +466,33 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
                         <EyeSlashFill size={"1rem"} className="context-menu-icon refresh-icon" data-pr-at="right bottom" data-pr-tooltip="Show hidden files" data-pr-my="left top" />
                       )}
                     </a>
+                    <a
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        // Hide the tooltip before executing the action
+                        tooltipRefs.toggleDetails.current.hide()
+                        setShowMongoDetails(!showMongoDetails)
+                      }}
+                    >
+                      {showMongoDetails && <ChevronBarContract size={"1rem"} className="context-menu-icon toggle-details-icon" data-pr-at="right bottom" data-pr-tooltip="Hide Local/MongoDB details" data-pr-my="left top" />}
+                      {!showMongoDetails && (
+                        <ChevronBarExpand size={"1rem"} className="context-menu-icon toggle-details-icon" data-pr-at="right bottom" data-pr-tooltip="Show Local/MongoDB details" data-pr-my="left top" />
+                      )}
+                    </a>
                   </>
                 ) /* We display the add folder icon only if the mouse is hovering the directory tree and if the accordion is not collapsed*/
               }
             </Stack>
           </Accordion.Header>
           <Accordion.Body className="sidebar-acc-body" onEnter={() => setIsAccordionShowing(true)} onExit={() => setIsAccordionShowing(false)}>
-            <div className="directory-tree" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
+            <div 
+              className="directory-tree"
+              onMouseEnter={() => setIsHovering(true)}
+              onMouseLeave={() => setIsHovering(false)}
+              onFocus={() => setIsDirectoryTreeFocused(true)}
+              onBlur={() => setIsDirectoryTreeFocused(false)}
+            >
               <ControlledTreeEnvironment
                 ref={environment}
                 items={dirTree}
@@ -476,6 +502,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
                     MENU_ID,
                     displayMenu,
                     isHovering,
+                    showMongoDetails,
                     onDBClickItem,
                     setSelectedItems,
                     setIsDropping,
@@ -500,7 +527,9 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
                 canRename={true}
                 canDragAndDrop={false}
                 onRenameItem={handleNameChange}
-                onDrop={onDrop}
+                onDrop={(items, target) => {
+                  onDrop(items, target, tree.current, globalData, workspace.workingDirectory.path, setIsDropping)
+                }}
                 isHovering={isHovering}
               >
                 <Tree treeId="tree-2" rootItem="ROOT" treeLabel="Tree Example" ref={tree} />
@@ -519,9 +548,6 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
               </>
             }
           >
-            <Item id="openInJSONViewer" onClick={handleContextMenuAction}>
-              JSON Viewer (default)
-            </Item>
             <Item id="openInDataTableFromDBViewer" onClick={handleContextMenuAction}>
               DataTable Viewer
             </Item>

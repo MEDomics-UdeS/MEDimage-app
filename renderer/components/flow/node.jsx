@@ -9,7 +9,7 @@ import * as Icon from "react-bootstrap-icons"
 import { AiOutlineInfoCircle } from "react-icons/ai"
 import { BsPlay } from "react-icons/bs"
 import { BsPause } from "react-icons/bs"
-import { IoClose } from "react-icons/io5"
+import { IoClose, IoDuplicateOutline } from "react-icons/io5"
 import EditableLabel from "react-simple-editlabel"
 import { toast } from "react-toastify"; // https://www.npmjs.com/package/react-toastify
 import { defaultValueFromType } from "../../utilities/learning/inputTypesUtils"
@@ -41,11 +41,11 @@ import NodeWrapperResults from "./nodeWrapperResults"
  * Note: all JSX.Element props are not mandatory
  * Note: see Powerpoint for additionnal
  */
-const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClickCustom, isGroupNode, nodeLink = "https://medomics-udes.gitbook.io/medimage-app-docs" }) => {
+const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClickCustom, isGroupNode, nodeLink = "https://medomicslab.gitbook.io/MEDiml-app-docs" }) => {
   const [nodeName, setNodeName] = useState(data.internal.name) // used to store the name of the node
   const { flowInfos, canRun } = useContext(FlowInfosContext) // used to get the flow infos
   const { showResultsPane } = useContext(FlowResultsContext) // used to get the flow results
-  const { updateNode, onDeleteNode, runNode } = useContext(FlowFunctionsContext) // used to get the function to update the node
+  const { updateNode, onDeleteNode, runNode, onDuplicateNode } = useContext(FlowFunctionsContext) // used to get the function to update the node
   const op = useRef(null)
 
   // update warnings when the node is loaded
@@ -126,6 +126,14 @@ const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClick
               </div>
 
               <div className="btn-node-div">
+                {/* here are the buttons to duplicate and run the node*/}
+                <IoDuplicateOutline
+                  className="btn-duplicate-node"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDuplicateNode(id)
+                  }}
+                />
                 {/* here are the buttons to delete and run the node*/}
                 <IoClose
                   className="btn-close-node"

@@ -57,7 +57,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: windows-built
-          path: ./build/dist/MEDimage-app-${{ env.VERSION }}-win.exe
+          path: ./build/dist/MEDiml-app-${{ env.VERSION }}-win.exe
         env:
           VERSION: ${{ steps.get-tag.outputs.VERSION }}
 
@@ -108,7 +108,7 @@ jobs:
           echo "::set-output name=VERSION::${VERSION#v}"
 
       - name: Rename Linux
-        run: mv ./build/dist/MEDimage-app-${{ env.VERSION }}-linux.deb ./build/dist/MEDimage-app-${{ env.VERSION }}-ubuntu.deb
+        run: mv ./build/dist/MEDiml-app-${{ env.VERSION }}-linux.deb ./build/dist/MEDiml-app-${{ env.VERSION }}-ubuntu.deb
         env:
           VERSION: ${{ steps.get-tag.outputs.VERSION }}
 
@@ -116,7 +116,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: linux-built-ubuntu
-          path: ./build/dist/MEDimage-app-${{ env.VERSION }}-ubuntu.deb
+          path: ./build/dist/MEDiml-app-${{ env.VERSION }}-ubuntu.deb
         env:
           VERSION: ${{ steps.get-tag.outputs.VERSION }}
 
@@ -227,7 +227,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: mac-built
-          path: ./build/dist/MEDimage-app-${{ env.VERSION }}-mac.dmg
+          path: ./build/dist/MEDiml-app-${{ env.VERSION }}-mac.dmg
         env:
           VERSION: ${{ steps.get-tag.outputs.VERSION }}
 
@@ -269,13 +269,13 @@ jobs:
           ls -R
 
       - name: zip Windows
-        run: zip -r MEDimage-app-PythonEnv-win.zip ./requirements.txt ./create_conda_env_win.bat
+        run: zip -r MEDiml-app-PythonEnv-win.zip ./requirements.txt ./create_conda_env_win.bat
 
       - name: zip Linux
-        run: zip -r MEDimage-app-PythonEnv-linux.zip ./requirements.txt ./create_conda_env_linux.sh
+        run: zip -r MEDiml-app-PythonEnv-linux.zip ./requirements.txt ./create_conda_env_linux.sh
 
       - name: zip Mac
-        run: zip -r MEDimage-app-PythonEnv-mac.zip ./create_conda_env_mac.sh ./requirements_mac.txt
+        run: zip -r MEDiml-app-PythonEnv-mac.zip ./create_conda_env_mac.sh ./requirements_mac.txt
       - name: Get tag name
         id: get-tag
         run: |
@@ -286,17 +286,17 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ./MEDimage-app-${{ env.VERSION }}-win.exe
-            ./MEDimage-app-${{ env.VERSION }}-ubuntu.deb
-            ./MEDimage-app-${{ env.VERSION }}-mac.dmg
-            ./MEDimage-app-PythonEnv-win.zip
-            ./MEDimage-app-PythonEnv-linux.zip
-            ./MEDimage-app-PythonEnv-mac.zip
-          name: MEDimage-app-${{ env.VERSION }}
+            ./MEDiml-app-${{ env.VERSION }}-win.exe
+            ./MEDiml-app-${{ env.VERSION }}-ubuntu.deb
+            ./MEDiml-app-${{ env.VERSION }}-mac.dmg
+            ./MEDiml-app-PythonEnv-win.zip
+            ./MEDiml-app-PythonEnv-linux.zip
+            ./MEDiml-app-PythonEnv-mac.zip
+          name: MEDiml-app-${{ env.VERSION }}
           body: |
-            MEDimage-app-${{ env.VERSION }}
-            This is a full release of MEDimage-app. This release includes the MEDimage application and the Python environment.
-            Refer to the [Documentation](https://medomics-udes.gitbook.io/MEDimage-app-docs/)
+            MEDiml-app-${{ env.VERSION }}
+            This is a full release of MEDiml-app. This release includes the MEDiml application and the Python environment.
+            Refer to the [Documentation](https://medomicslab.gitbook.io/mediml-app-docs/)
             ${{ github.ref }}
           draft: true
           prerelease: false

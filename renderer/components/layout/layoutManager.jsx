@@ -5,8 +5,8 @@ import Image from "next/image"
 import resizable from "../../styles/resizable.module.css"
 import IconSidebar from "../layout/iconSidebar"
 import Home from "../mainPages/home"
-import ExtractionMEDimagePage from "../mainPages/extractionMEDimage"
-import LearningMEDimagePage from "../mainPages/learningMEDimage"
+import ExtractionMEDimlPage from "../mainPages/extractionMEDiml"
+import LearningMEDimlPage from "../mainPages/learningMEDiml"
 import HomeSidebar from "./sidebarTools/pageSidebar/homeSidebar"
 import GeneralModuleSidebar from "./sidebarTools/pageSidebar/generalModuleSidebar"
 import ExplorerSidebar from "./sidebarTools/pageSidebar/explorerSidebar"
@@ -113,10 +113,10 @@ const LayoutManager = (props) => {
       switch (activeSidebarItem) {
         case "home":
           return <Home />
-        case "extractionMEDimage":
-          return <ExtractionMEDimagePage pageId="1234" />
-        case "learningMEDimage":
-          return <LearningMEDimagePage pageId="4321" />
+        case "extractionMEDiml":
+          return <ExtractionMEDimlPage pageId="1234" />
+        case "learningMEDiml":
+          return <LearningMEDimlPage pageId="4321" />
         default:
       }
     }
@@ -126,16 +126,16 @@ const LayoutManager = (props) => {
     switch (activeSidebarItem) {
       case "home":
         return <HomeSidebar />
-      case "extractionMEDimage":
+      case "extractionMEDiml":
         return (
-          <GeneralModuleSidebar pageTitle="MEDimage Extraction">
-            <FlowSceneSidebar type="extractionMEDimage" />
+          <GeneralModuleSidebar pageTitle="MEDiml Extraction">
+            <FlowSceneSidebar type="extractionMEDiml" />
           </GeneralModuleSidebar>
         )
-      case "LearningMEDimage":
+      case "LearningMEDiml":
         return (
-          <GeneralModuleSidebar pageTitle="MEDimage Learning">
-            <FlowSceneSidebar type="learningMEDimage" />
+          <GeneralModuleSidebar pageTitle="MEDiml Learning">
+            <FlowSceneSidebar type="learningMEDiml" />
           </GeneralModuleSidebar>
         )
       case "evaluation":

@@ -6,7 +6,7 @@ import { FlowInfosProvider, FlowInfosContext } from "./context/flowInfosContext"
 import { FlowResultsContext, FlowResultsProvider } from "./context/flowResultsContext"
 import { FlowFunctionsProvider } from "./context/flowFunctionsContext"
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels"
-import ResultsPaneMEDimage from "./results/resultsPaneMEDimage"
+import ResultsPaneMEDiml from "./results/resultsPaneMEDiml"
 
 /**
  *
@@ -17,7 +17,7 @@ import ResultsPaneMEDimage from "./results/resultsPaneMEDimage"
  * @description This component is the base for all the flow pages. It contains the sidebar, the flow and the results pane.
  *
  */
-const FlowPageBaseWithFlowInfos = ({ children, workflowType, id, LearningMEDimage=false, ExtraPages=null, reload, setReload }) => {
+const FlowPageBaseWithFlowInfos = ({ children, workflowType, id, LearningMEDiml=false, ExtraPages=null, reload, setReload }) => {
   // here is the use of the context to update the flowInfos
   const [isDragging, setIsDragging] = useState(false)
   const { updateFlowInfos, showAvailableNodes } = useContext(FlowInfosContext)
@@ -96,7 +96,7 @@ const FlowPageBaseWithFlowInfos = ({ children, workflowType, id, LearningMEDimag
               }}
             >
             <>
-            {<ResultsPaneMEDimage />}
+            {<ResultsPaneMEDiml />}
             </>
             </Panel>
           </PanelGroup>

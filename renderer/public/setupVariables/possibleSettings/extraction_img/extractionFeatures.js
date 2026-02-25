@@ -1,6 +1,6 @@
 const extractionFeatures = {
   morph: {
-    MEDimageName: "morph",
+    MEDimlName: "morph",
     associatedFeatures: {
       a_dens_aabb: "Area density aabb",
       a_dens_aee: "Area density aee",
@@ -34,14 +34,14 @@ const extractionFeatures = {
     }
   },
   li: {
-    MEDimageName: "local_intensity",
+    MEDimlName: "local_intensity",
     associatedFeatures: {
       peak_global: "Global intensity peak",
       peak_local: "Local intensity peak"
     }
   },
   is_stat: {
-    MEDimageName: "stats",
+    MEDimlName: "stats",
     associatedFeatures: {
       cov: "Coefficient of variation",
       energy: "Energy",
@@ -64,7 +64,7 @@ const extractionFeatures = {
     }
   },
   ih: {
-    MEDimageName: "intensity_histogram",
+    MEDimlName: "intensity_histogram",
     associatedFeatures: {
       cov: "Coefficient of variation",
       entropy: "Entropy",
@@ -92,7 +92,7 @@ const extractionFeatures = {
     }
   },
   ivh: {
-    MEDimageName: "int_vol_hist",
+    MEDimlName: "int_vol_hist",
     associatedFeatures: {
       i10: "Intensity at volume fraction 10",
       i10_minus_i90: "Intensity at volume fraction difference",
@@ -103,7 +103,7 @@ const extractionFeatures = {
     }
   },
   glcm: {
-    MEDimageName: "glcm",
+    MEDimlName: "glcm",
     associatedFeatures: {
       auto_corr: "Autocorrelation",
       clust_prom: "Cluster prominence",
@@ -133,7 +133,7 @@ const extractionFeatures = {
     }
   },
   gldzm: {
-    MEDimageName: "gldzm",
+    MEDimlName: "gldzm",
     associatedFeatures: {
       gl_var: "Grey level variance",
       glnu: "Grey level non-uniformity",
@@ -154,7 +154,7 @@ const extractionFeatures = {
     }
   },
   glrlm: {
-    MEDimageName: "glrlm",
+    MEDimlName: "glrlm",
     associatedFeatures: {
       gl_var: "Grey level variance",
       glnu: "Grey level non-uniformity",
@@ -175,7 +175,7 @@ const extractionFeatures = {
     }
   },
   glszm: {
-    MEDimageName: "glszm",
+    MEDimlName: "glszm",
     associatedFeatures: {
       gl_var: "Grey level variance",
       glnu: "Grey level non-uniformity",
@@ -196,7 +196,7 @@ const extractionFeatures = {
     }
   },
   ngldm: {
-    MEDimageName: "ngldm",
+    MEDimlName: "ngldm",
     associatedFeatures: {
       dc_energy: "Dependence count energy",
       dc_entr: "Dependence count entropy",
@@ -217,7 +217,7 @@ const extractionFeatures = {
     }
   },
   ngtdm: {
-    MEDimageName: "ngtdm",
+    MEDimlName: "ngtdm",
     associatedFeatures: {
       busyness: "Busyness",
       coarseness: "Coarseness",

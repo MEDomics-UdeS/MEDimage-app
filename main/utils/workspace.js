@@ -188,9 +188,9 @@ function createFolder(folderString) {
   }
 }
 
-// Function to create the .medomics directory and necessary files
+// Function to create the .mediml directory and necessary files
 export const createMedomicsDirectory = (directoryPath) => {
-  const medomicsDir = path.join(directoryPath, ".medomics")
+  const medomicsDir = path.join(directoryPath, ".mediml")
   const mongoDataDir = path.join(medomicsDir, "MongoDBdata")
   const mongoConfigPath = path.join(medomicsDir, "mongod.conf")
 

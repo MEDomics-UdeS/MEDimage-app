@@ -3,6 +3,7 @@ import { Dialog } from 'primereact/dialog'
 import { Dropdown } from "primereact/dropdown"
 import { Galleria } from 'primereact/galleria'
 import { Image } from "primereact/image"
+import { InputSwitch } from "primereact/inputswitch"
 import { InputText } from 'primereact/inputtext'
 import { MultiSelect } from 'primereact/multiselect'
 import { Tooltip } from 'primereact/tooltip'
@@ -11,10 +12,10 @@ import { Alert, Card, Col, Container, Form, Offcanvas, ProgressBar, Row } from '
 import Table from 'react-bootstrap/Table'
 import { toast } from 'react-toastify'
 import { requestBackend } from "../../utilities/requests"
+import DocLink from "../extractionMEDiml/docLink"
 import { ErrorRequestContext } from "../generalPurpose/errorRequestContext"
 import { DataContext } from "../workspace/dataContext"
 import { WorkspaceContext } from "../workspace/workspaceContext"
-import DocLink from "../extractionMEDimage/docLink"
 
 /**
  * @param {Object} nodeForm form associated to the discretization node
@@ -27,7 +28,7 @@ import DocLink from "../extractionMEDimage/docLink"
  */
 const DataManager = ({ pageId, configPath = "" }) => {
   const { port } = useContext(WorkspaceContext)
-  const { setError } = useContext(ErrorRequestContext)
+  const { setError, setShowError } = useContext(ErrorRequestContext)
   const { globalData } = useContext(DataContext) // Get the workspace data
   const [progress, setProgress] = useState(0)
   const [refreshEnabled, setRefreshEnabled] = useState(false) // A boolean variable to control refresh
@@ -51,7 +52,10 @@ const DataManager = ({ pageId, configPath = "" }) => {
   const [showPreChecksImages, setShowPreChecksImages] = useState(false) // used to display the offcanvas
   const handleOffCanvasClose = () => setShowOffCanvas(false) // used to close the offcanvas
   const handleOffCanvasShow = () => setShowOffCanvas(true) // used to show the offcanvas
-  const [preChecksImages, setPreChecksImages] = useState([]) // used to display the offcanvas  
+  const [preChecksImages, setPreChecksImages] = useState([]) // used to display the offcanvas
+  const [preChecksImagesUrls, setPreChecksImagesUrls] = useState([]) // used to display the offcanvas
+  const [useWorkspace, setUseWorkspace] = useState(true) // A boolean variable to control the use of the workspace
+  const [useWorkspacePC, setUseWorkspacePC] = useState(true) // A boolean variable to control the use of the workspace for pre-checks
 
   useEffect(() => {
     updateWSfolder()
@@ -195,9 +199,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
   };
 
   const itemTemplate = (item) => {
-    const nativeImage = require("electron").nativeImage
-    const image = nativeImage.createFromPath(item.itemImageSrc)
-    return <Image src={image.toDataURL()} height="500" alt={item.alt} preview downloadable/>
+    return <Image src={item.itemImageSrc} height="500" alt={item.alt} preview downloadable/>
   }
 
   const fs = require('fs');
@@ -213,11 +215,8 @@ const DataManager = ({ pageId, configPath = "" }) => {
         const isDirectory = fs.statSync(fullPath).isDirectory();
   
         if (isDirectory) {
-          if (fullPath.split('/').at(-1).split('-').length > 1) {
-            
-          }
-          else {
-          folderCount++; // Increment the count for the immediate subfolder
+          if (fullPath.split('/').at(-1).split('-').length <= 1) {
+            folderCount++; // Increment the count for the immediate subfolder
           }
   
           // Recursively count subfolders within this subfolder
@@ -389,16 +388,21 @@ const DataManager = ({ pageId, configPath = "" }) => {
     // Make a POST request to the backend API
     requestBackend(
       port, 
-      '/extraction_MEDimage/run_all/dm',
+      '/extraction_MEDiml/run_all/dm',
       requestData, 
       (response) => {
         console.log("response", response)
         setRefreshEnabled(false)
-        if (response.error) {          
+        if (response.error) {   
+          if (response.error.message) {
+            toast.error(response.error.message)
+          } else {
+            toast.error(response.error)
+          }
           setProgress(0)
-          toast.error(response.error.message)
           setError(response.error)
-          console.log("error", response.error)
+          console.error("error", response.error)
+          setShowError(true)
 
         } else {
           // Handle the response from the backend if needed
@@ -468,7 +472,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
     // Make a POST request to the backend API
     requestBackend(
       port, 
-      '/extraction_MEDimage/run_all/prechecks', 
+      '/extraction_MEDiml/run_all/prechecks', 
       requestData, (response) => {
         console.log("response", response)
         if (response.error) {
@@ -536,6 +540,30 @@ const DataManager = ({ pageId, configPath = "" }) => {
       setRefreshEnabledPreChecks(false);
     };
   }, [refreshEnabledPreChecks]); // The empty dependency array ensures this effect runs only once when the component mounts
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      const imagePromises = preChecksImages.map((filePath, modelName) => {
+        if (filePath.itemImageSrc) {
+          return new Promise((resolve) => {
+            const nativeImage = require("electron").nativeImage
+            const image = nativeImage.createFromPath(filePath.itemImageSrc)
+            const dataUrl = image.resize({ width: 2000 }).toDataURL()
+            const thumbnail = image.resize({ width: 100 }).toDataURL() // Create a thumbnail with a width of 100px
+            resolve({
+              itemImageSrc: dataUrl,
+              thumbnailImageSrc: thumbnail,
+              alt: filePath.alt,
+            })
+          })
+        }
+      })
+      const results = await Promise.all(imagePromises)
+      setPreChecksImagesUrls(results)
+    }
+    
+    preChecksImages.length > 0 && fetchImages() // Call but don't try to assign to variable
+  }, [preChecksImages])
 
   /**
    * @returns {JSX.Element} A tree menu or a warning message
@@ -613,19 +641,30 @@ const DataManager = ({ pageId, configPath = "" }) => {
 
   return (
     <>
-    {console.log("selected save folder", selectedSaveFolder)}
     <div>
     <Card>
       <Card.Body>
         <Card.Header>
             <h4>Data Manager - Process data</h4>
             <DocLink 
-              linkString={"https://medimage.readthedocs.io/en/latest/tutorials.html#datamanager"} 
+              linkString={"https://mediml.readthedocs.io/en/latest/tutorials.html#datamanager"} 
               name={"What is DataManager?"} 
               image={"https://www.svgrepo.com/show/521262/warning-circle.svg"} 
             />
         </Card.Header>
       <Form className="inputFile">
+      {/* Check if workspace is gonna be used or not*/}
+      <Row className="form-group-box">
+        <Form.Label htmlFor="file">Use Workspace Data (Recommanded)</Form.Label>
+        <i>If this is checked, the data available in the workspace will be used instead of local data.</i>
+        <Col style={{ width: "150px" }}>
+          <InputSwitch
+            checked={useWorkspace}
+            onChange={(e) => setUseWorkspace(e.value)}
+          />
+        </Col>
+      </Row>
+
       {/* UPLOAD DICOM DATASET FOLDER*/}
         <Row className="form-group-box">
           <Tooltip target=".dcm-path"/>
@@ -636,31 +675,31 @@ const DataManager = ({ pageId, configPath = "" }) => {
             htmlFor="file">
               DICOM dataset folder
           </Form.Label>
-          <Col style={{ width: "150px" }}>
-            <h6>Load from workspace</h6>
-            <Dropdown
-              style={{ maxWidth: "100%", height: "auto", width: "auto" }}
-              filter
-              value={selectedDcmFolder}
-              onChange={(e) => setSelectedDcmFolder(e.value)}
-              options={listWSFolders}
-              optionLabel="name"
-              display="chip"
-              placeholder="Select a folder"
-            />
-          </Col>
-          <Col style={{ width: "150px" }}>
-            <h6>Load from a local path</h6>
-            <Form.Group controlId="enterFile">
-              <Form.Control
-                name="pathDicoms"
-                type="file"
-                webkitdirectory="true"
-                directory="true"
-                onChange={handleDcmFolderChange}
+          {useWorkspace ? (
+            <Col style={{ width: "150px" }}>
+              <Dropdown
+                style={{ maxWidth: "100%", height: "auto", width: "auto" }}
+                filter
+                value={selectedDcmFolder}
+                onChange={(e) => setSelectedDcmFolder(e.value)}
+                options={listWSFolders}
+                optionLabel="name"
+                display="chip"
+                placeholder="Select a folder"
               />
-            </Form.Group>
-          </Col>
+            </Col> ) : (
+            <Col style={{ width: "150px" }}>
+              <Form.Group controlId="enterFile">
+                <Form.Control
+                  name="pathDicoms"
+                  type="file"
+                  webkitdirectory="true"
+                  directory="true"
+                  onChange={handleDcmFolderChange}
+                />
+              </Form.Group>
+            </Col> 
+          )}
         </Row>
 
         {/* UPLOAD NIfTI DATASET FOLDER*/}
@@ -673,31 +712,31 @@ const DataManager = ({ pageId, configPath = "" }) => {
             htmlFor="file">
               NIfTI dataset folder
           </Form.Label>
-          <Col style={{ width: "150px" }}>
-            <h6>Load from workspace</h6>
-            <Dropdown
-              style={{ maxWidth: "100%", height: "auto", width: "auto" }}
-              filter
-              value={selectedNiftiFolder}
-              onChange={(e) => setSelectedNiftiFolder(e.value)}
-              options={listWSFolders}
-              optionLabel="name"
-              display="chip"
-              placeholder="Select a folder"
-            />
-          </Col>
-          <Col style={{ width: "150px" }}>
-            <h6>Load from a local path</h6>
-            <Form.Group controlId="enterFile">
-              <Form.Control
-                name="pathNiftis"
-                type="file"
-                webkitdirectory="true"
-                directory="true"
-                onChange={handleNiftiFolderChange}
+          {useWorkspace ? (
+            <Col style={{ width: "150px" }}>
+              <Dropdown
+                style={{ maxWidth: "100%", height: "auto", width: "auto" }}
+                filter
+                value={selectedNiftiFolder}
+                onChange={(e) => setSelectedNiftiFolder(e.value)}
+                options={listWSFolders}
+                optionLabel="name"
+                display="chip"
+                placeholder="Select a folder"
               />
-            </Form.Group>
-          </Col>
+            </Col> ) : (
+            <Col style={{ width: "150px" }}>
+              <Form.Group controlId="enterFile">
+                <Form.Control
+                  name="pathNiftis"
+                  type="file"
+                  webkitdirectory="true"
+                  directory="true"
+                  onChange={handleNiftiFolderChange}
+                />
+              </Form.Group>
+            </Col>
+          )}
         </Row>
 
         {/* UPLOAD SAVING FOLDER*/}
@@ -710,31 +749,34 @@ const DataManager = ({ pageId, configPath = "" }) => {
             htmlFor="file">
               Saving Options
           </Form.Label>
-          <Col style={{ width: "150px" }}>
-            <h6>Save in workspace</h6>
-            <Dropdown
-              style={{ maxWidth: "100%", height: "auto", width: "auto" }}
-              filter
-              value={selectedSaveFolder}
-              onChange={(e) => setSelectedSaveFolder(e.value)}
-              options={listWSFolders}
-              optionLabel="name"
-              display="chip"
-              placeholder="Select Saving Folder"
-            />
-          </Col>
-          <Col style={{ width: "150px" }}>
-            <h6>Save in a local path</h6>
-            <Form.Group controlId="enterFile">
-              <Form.Control
-                name="pathSave"
-                type="file"
-                webkitdirectory="true"
-                directory="true"
-                onChange={handleSaveFolderChange}
+          {useWorkspace ? (
+            <Col style={{ width: "150px" }}>
+              <h6>Save in workspace</h6>
+              <Dropdown
+                style={{ maxWidth: "100%", height: "auto", width: "auto" }}
+                filter
+                value={selectedSaveFolder}
+                onChange={(e) => setSelectedSaveFolder(e.value)}
+                options={listWSFolders}
+                optionLabel="name"
+                display="chip"
+                placeholder="Select Saving Folder"
               />
-            </Form.Group>
-          </Col>
+            </Col>
+          ) : (
+            <Col style={{ width: "150px" }}>
+              <h6>Save in a local path</h6>
+              <Form.Group controlId="enterFile">
+                <Form.Control
+                  name="pathSave"
+                  type="file"
+                  webkitdirectory="true"
+                  directory="true"
+                  onChange={handleSaveFolderChange}
+                />
+              </Form.Group>
+            </Col>
+          )}
           {/* NUMBER OF BATCH*/}
           <Col>
             <Tooltip target=".nbatch"/>
@@ -832,123 +874,134 @@ const DataManager = ({ pageId, configPath = "" }) => {
         <Card.Header>
             <h4>Data Manager - Radiomics Pre-checks</h4>
             <DocLink 
-              linkString={"https://medomics-udes.gitbook.io/medimage-app-docs/radiomics/data-processing/radiomics-pre-checks"} 
+              linkString={"https://medomicslab.gitbook.io/MEDiml-app-docs/radiomics/data-processing/radiomics-pre-checks"} 
               name={"What are Radiomics Pre-Checks?"} 
               image={"https://www.svgrepo.com/show/521262/warning-circle.svg"} 
             />
         </Card.Header>
 
+        {/* Check if workspace is gonna be used or not*/}
         <Row className="form-group-box">
-          <h6>Use Workspace Data</h6>
+          <Form.Label htmlFor="file">Use Workspace Data (Recommanded)</Form.Label>
+          <i>If this is checked, the data available in the workspace will be used instead of local data.</i>
           <Col style={{ width: "150px" }}>
-            <Tooltip target=".csv-file-ws"/>
-            <h6 
-              className="csv-file-ws"
-              data-pr-tooltip="CSV file containing the scans to check and their associated ROI (Region of Interest)"
-              data-pr-position="bottom"
-            >
-              CSV from workspace
-            </h6>
-            <Dropdown
-              style={{ maxWidth: "100%", height: "auto", width: "auto" }}
-              filter
-              value={selectedCSVFile}
-              onChange={(e) => setSelectedCSVFile(e.value)}
-              options={listCSVFiles}
-              optionLabel="name"
-              display="chip"
-              placeholder="Select a file"
+            <InputSwitch
+              checked={useWorkspacePC}
+              onChange={(e) => setUseWorkspacePC(e.value)}
             />
           </Col>
-          <Col style={{ width: "150px" }}>
-            <Tooltip target=".npy-dataset-ws"/>
-            <h6 
-              className="npy-dataset-ws"
-              data-pr-tooltip="Folder containing the .npy files to check"
-              data-pr-position="bottom"
-            >
-              NPY dataset from workspace
-            </h6>
-            <Dropdown
-              style={{ maxWidth: "100%", height: "auto", width: "auto" }}
-              filter
-              value={selectedNpyFolder}
-              onChange={(e) => setSelectedNpyFolder(e.value)}
-              options={listWSFolders}
-              optionLabel="name"
-              display="chip"
-              placeholder="Select a folder"
-            />
-          </Col>
-          <Col style={{ width: "150px" }}>
-            <Tooltip target=".npy-dataset-ws"/>
-            <h6 
-              className="npy-dataset-ws"
-              data-pr-tooltip="Folder containing the .npy files to check"
-              data-pr-position="bottom"
-            >
-              Save in workspace
-            </h6>
-            <Dropdown
-              style={{ maxWidth: "100%", height: "auto", width: "auto" }}
-              filter
-              value={selectedSavePreChecksFolder}
-              onChange={(e) => setSelectedSavePreChecksFolder(e.value)}
-              options={listWSFolders}
-              optionLabel="name"
-              display="chip"
-              placeholder="Select Saving Folder"
-            />
-          </Col>
+        </Row>
 
-          {/* ADD SEPERATOR*/}
-          <hr style={{display:"inline-block", marginTop:"15px"}}></hr>
-          <h6>Or - Use Local Data</h6>
-
-          <Col style={{ width: "150px" }}>
-            <Form method="post" encType="multipart/form-data" className="inputFile">
-              {/* UPLOAD CSV FILE*/}
-              <Tooltip target=".csv-file"/>
-              <Form.Label 
-                className="csv-file" 
+        {useWorkspacePC ?  (
+          <Row className="form-group-box">
+            <Col style={{ width: "150px" }}>
+              <Tooltip target=".csv-file-ws"/>
+              <h6 
+                className="csv-file-ws"
                 data-pr-tooltip="CSV file containing the scans to check and their associated ROI (Region of Interest)"
                 data-pr-position="bottom"
-                htmlFor="file">
-                  Local CSV File
-              </Form.Label>
-              <Form.Group controlId="enterFile">
-                <Form.Control
-                  name="pathCSV"
-                  type="file"
-                  onChange={handleCSVFileChange}
-                />
-              </Form.Group>
-            </Form>
-          </Col>
-
-          {/* UPLOAD SAVING FOLDER*/}
-          <Col style={{ width: "150px" }}>
-            <Form method="post" encType="multipart/form-data" className="inputFile">
-              <Tooltip target=".npy-path"/>
-              <Form.Label 
-                className="npy-path" 
-                data-pr-tooltip="Path to the folder containing the .npy files to check (If empty, path save will be used)"
+              >
+                CSV from workspace
+              </h6>
+              <Dropdown
+                style={{ maxWidth: "100%", height: "auto", width: "auto" }}
+                filter
+                value={selectedCSVFile}
+                onChange={(e) => setSelectedCSVFile(e.value)}
+                options={listCSVFiles}
+                optionLabel="name"
+                display="chip"
+                placeholder="Select a file"
+              />
+            </Col>
+            <Col style={{ width: "150px" }}>
+              <Tooltip target=".npy-dataset-ws"/>
+              <h6 
+                className="npy-dataset-ws"
+                data-pr-tooltip="Folder containing the .npy files to check"
                 data-pr-position="bottom"
-                htmlFor="file">
-                  NPY dataset folder
-              </Form.Label>
-              <Form.Group controlId="enterFile">
-                <Form.Control
-                  name="pathNpy"
-                  type="file"
-                  webkitdirectory="true"
-                  directory="true"
-                  onChange={handleNpyFolderChange}
-                />
-              </Form.Group>
-            </Form>
-          </Col>
-      </Row>   
+              >
+                NPY dataset from workspace
+              </h6>
+              <Dropdown
+                style={{ maxWidth: "100%", height: "auto", width: "auto" }}
+                filter
+                value={selectedNpyFolder}
+                onChange={(e) => setSelectedNpyFolder(e.value)}
+                options={listWSFolders}
+                optionLabel="name"
+                display="chip"
+                placeholder="Select a folder"
+              />
+            </Col>
+            <Col style={{ width: "150px" }}>
+              <Tooltip target=".npy-dataset-ws"/>
+              <h6 
+                className="npy-dataset-ws"
+                data-pr-tooltip="Folder containing the .npy files to check"
+                data-pr-position="bottom"
+              >
+                Save in workspace
+              </h6>
+              <Dropdown
+                style={{ maxWidth: "100%", height: "auto", width: "auto" }}
+                filter
+                value={selectedSavePreChecksFolder}
+                onChange={(e) => setSelectedSavePreChecksFolder(e.value)}
+                options={listWSFolders}
+                optionLabel="name"
+                display="chip"
+                placeholder="Select Saving Folder"
+              />
+            </Col>
+          </Row> ) : (
+              
+          <Row className="form-group-box">
+            <Col style={{ width: "150px" }}>
+              <Form method="post" encType="multipart/form-data" className="inputFile">
+                {/* UPLOAD CSV FILE*/}
+                <Tooltip target=".csv-file"/>
+                <Form.Label 
+                  className="csv-file" 
+                  data-pr-tooltip="CSV file containing the scans to check and their associated ROI (Region of Interest)"
+                  data-pr-position="bottom"
+                  htmlFor="file">
+                    Local CSV File
+                </Form.Label>
+                <Form.Group controlId="enterFile">
+                  <Form.Control
+                    name="pathCSV"
+                    type="file"
+                    onChange={handleCSVFileChange}
+                  />
+                </Form.Group>
+              </Form>
+            </Col>
+
+            {/* UPLOAD SAVING FOLDER*/}
+            <Col style={{ width: "150px" }}>
+              <Form method="post" encType="multipart/form-data" className="inputFile">
+                <Tooltip target=".npy-path"/>
+                <Form.Label 
+                  className="npy-path" 
+                  data-pr-tooltip="Path to the folder containing the .npy files to check (If empty, path save will be used)"
+                  data-pr-position="bottom"
+                  htmlFor="file">
+                    NPY dataset folder
+                </Form.Label>
+                <Form.Group controlId="enterFile">
+                  <Form.Control
+                    name="pathNpy"
+                    type="file"
+                    webkitdirectory="true"
+                    directory="true"
+                    onChange={handleNpyFolderChange}
+                  />
+                </Form.Group>
+              </Form>
+            </Col>
+          </Row>   
+        )}
       
       {/* WILD CARDS*/}
       <Form>
@@ -996,7 +1049,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
               />
             </Col>
             <Col>
-              <InputText placeholder="Costum (optional)" onChange={(e) => setCostumWildCard(e.target.value)}/>
+              <InputText placeholder="Costum" onChange={(e) => setCostumWildCard(e.target.value)}/>
             </Col>
           </Row>
         </Form>
@@ -1041,10 +1094,10 @@ const DataManager = ({ pageId, configPath = "" }) => {
       position={'right'}
       onHide={() => setShowPreChecksImages(false)}
     >
-      {((preChecksImages.length !== 0) && 
-        (<Galleria value={preChecksImages} style={{ maxWidth: '640px' }} showThumbnails={false} showIndicators item={itemTemplate} />)
+      {((preChecksImagesUrls.length !== 0) && 
+        (<Galleria value={preChecksImagesUrls} style={{ maxWidth: '640px' }} showThumbnails={false} showIndicators item={itemTemplate} />)
       )}
-      {((preChecksImages.length === 0) && 
+      {((preChecksImagesUrls.length === 0) && 
         (<Alert variant="danger" className="warning-message">
           <b>No results available</b>
         </Alert>)
