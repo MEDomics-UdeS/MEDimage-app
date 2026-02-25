@@ -223,9 +223,6 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
         case "openLearningModule":
           dispatchLayout({ type: "openInLearningModule", payload: props })
           break
-        case "openInJSONViewer":
-          dispatchLayout({ type: "openInJSONViewer", payload: props })
-          break
         case "open":
           onOpen(props.index)
           break
@@ -288,8 +285,6 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
         dispatchLayout({ type: "openInEvaluationModule", payload: item })
       } else if (item.type == "csv" || item.type == "tsv" || item.type == "xlsx" || item.type == "view") {
         dispatchLayout({ type: "openInDataTableFromDBViewer", payload: item })
-      } else if (item.type == "json") {
-        dispatchLayout({ type: "openInJSONViewer", payload: item })
       } else if (item.type == "py" || item.type == "ipynb") {
         dispatchLayout({ type: "openInCodeEditor", payload: item })
       } else if (item.type == "png" || item.type == "jpg" || item.type == "jpeg" || item.type == "gif" || item.type == "svg") {
@@ -553,9 +548,6 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
               </>
             }
           >
-            <Item id="openInJSONViewer" onClick={handleContextMenuAction}>
-              JSON Viewer (default)
-            </Item>
             <Item id="openInDataTableFromDBViewer" onClick={handleContextMenuAction}>
               DataTable Viewer
             </Item>
