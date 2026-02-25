@@ -94,8 +94,6 @@ function LayoutModelProvider({ children, layoutModel, setLayoutModel }) {
           return openHtmlViewer(action)
         case "openInModelViewer":
           return openModelViewer(action)
-        case "openInJSONViewer":
-          return openInJSONViewer(action)
         /*********** OPEN *****************/
         case "openExtractionMEDimlModule":
           return openExtractionMEDiml(action)
@@ -237,34 +235,6 @@ function LayoutModelProvider({ children, layoutModel, setLayoutModel }) {
     }
   }
 
-  function openInputToolsDB(action, component) {
-    let thoseProps = action.payload.data
-    console.log("OPEN INPUT TOOLS DB", thoseProps)
-    let isAlreadyIn = checkIfIDIsInLayoutModel(thoseProps.data.uuid, layoutModel)
-    overwriteMEDDataObjectProperties(thoseProps.data.uuid, thoseProps.data)
-    if (!isAlreadyIn) {
-      const newChild = {
-        type: "tab",
-        helpText: thoseProps.data.path + "/" + thoseProps.data.uuid,
-        name: thoseProps.data.name + " Input Tools",
-        id: thoseProps.data.name + " Input Tools",
-        component: component,
-        config: { thoseProps }
-      }
-      let layoutRequestQueueCopy = [...layoutRequestQueue]
-      layoutRequestQueueCopy.push({ type: "ADD_TAB", payload: newChild })
-      setLayoutRequestQueue(layoutRequestQueueCopy)
-
-      if (component == "learningPage" || component == "extractionMEDimlPage" || component == "LearningMEDimlPage") {
-        const nextlayoutModel = { ...layoutModel }
-        // To add a new child to the layout model, we need to add it to the children array (layoutModel.layout.children[x].children)
-        // ****IMPORTANT**** For the hook to work, we need to create a new array and not modify the existing one
-        const newChildren = [...layoutModel.layout.children[0].children, newChild]
-        nextlayoutModel.layout.children[0].children = newChildren
-      }
-    }
-  }
-
   /**
    * @summary Generic function that adds a tab without a medDataObject to the layout model
    * @params {Object} action - The action passed on by the dispatchLayout function
@@ -288,15 +258,6 @@ function LayoutModelProvider({ children, layoutModel, setLayoutModel }) {
       layoutRequestQueueCopy.push({ type: "ADD_TAB", payload: newChild })
       setLayoutRequestQueue(layoutRequestQueueCopy)
     }
-  }
-
-  /**
-   * @summary Function that adds a tab of the JSON Viewer Module to the layout model
-   * @params {Object} action - The action passed on by the dispatchLayout function
-   */
-  const openInJSONViewer = (action) => {
-    console.log("OPEN IN JSON VIEWER", action)
-    openInDotDotDot(action, "jsonViewer")
   }
 
   /**
