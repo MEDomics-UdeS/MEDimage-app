@@ -1,7 +1,7 @@
 import extractionMEDimlDefaultSettings from "./possibleSettings/extractionMEDiml/extractionMEDimlDefaultSettings"
 
 export const sceneDescription = {
-  extension: "medimg",
+  extension: "medext",
   externalFolders: [],
   internalFolders: []
 }
