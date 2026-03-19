@@ -805,30 +805,35 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
             now: 0,
             currentLabel: ""
           })
-          toast.error(response.error)
-          console.log("error", response.error)
-          // check if error has message or not
-          if (response.error.message){
-            console.log("error message", response.error.message)
-            setError(response.error)
-          } else {
-            console.log("error no message", response.error)
+          if (typeof response.error === "string") {
+            toast.error(response.error)
+            console.log("error", response.error)
             setError({
               "message": response.error
             })
+          } else if (Object.keys(response.error).includes("message")) {
+          // check if error has message or not
+            console.error("error", response.error.message)
+            toast.error(response.error.message)
+            setError(response.error)
+          } else if (Object.keys(response.error).includes("toast")) {
+            // check if error has message or not
+            console.error("error", response.error.toast)
+            toast.error(response.error.toast)
+            setError(response.error.toast)
           }
           setShowError(true)
         }
-        },
-        (error) => {
-          setIsProgressUpdating(false)
-          setProgress({
-            now: 0,
-            currentLabel: ""
-          })
-          toast.error("Error detected while running the experiment", error)
-          console.log("error detected", error)
-          setError(error)
+      },
+      (error) => {
+        setIsProgressUpdating(false)
+        setProgress({
+          now: 0,
+          currentLabel: ""
+        })
+        toast.error("Error detected while running the experiment", error)
+        console.log("error detected", error)
+        setError(error)
       }
     )
   }, [nodes, edges, reactFlowInstance])
