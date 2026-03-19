@@ -37,7 +37,11 @@ const FlowSceneSidebar = ({ type }) => {
   useEffect(() => {
     let localExperimentList = []
     for (const experimentId of globalData["EXPERIMENTS"].childrenIDs) {
-      if (globalData[experimentId].name === "EXTRACTION" || globalData[experimentId].name === "LEARNING") {
+      if (globalData[experimentId].name === "EXTRACTION" && type === "extractionMEDiml") {
+        for (const sceneId of globalData[experimentId].childrenIDs) {
+          localExperimentList.push(globalData[sceneId].name)
+        }
+      } else if (globalData[experimentId].name === "LEARNING" && type === "learningMEDiml") {
         for (const sceneId of globalData[experimentId].childrenIDs) {
           localExperimentList.push(globalData[sceneId].name)
         }
