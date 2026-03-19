@@ -57,7 +57,7 @@ const Split = ({ id, data, type }) => {
       let keys = Object.keys(globalData)
       let wsFolders = []
       keys.forEach((key) => {
-        if (globalData[key].type === "directory" && !globalData[key].name.startsWith(".")) {
+        if (globalData[key].type === "directory" && !globalData[key]?.path?.includes(".medomics") && !globalData[key]?.path?.includes(".mediml")) {
           wsFolders.push({ name: globalData[key].name, value: globalData[key].path })
         }
       })
