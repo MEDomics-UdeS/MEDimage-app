@@ -1,3 +1,4 @@
+/* eslint-disable no-prototype-builtins */
 import { Accordion, AccordionTab } from 'primereact/accordion'
 import { Button } from 'primereact/button'
 import { Column } from 'primereact/column'
@@ -65,9 +66,7 @@ const ResultsPaneMEDiml = () => {
 
     // extract selected pipelines
     let pipIndexes = generatedPipelines.map((pip) => pip.name.split(" ")[1] - 1)
-    console.log("pipIndexes", pipIndexes)
     let pipsToGenerate = pipIndexes.map((pipIndex) => selectedPipelines[pipIndex])
-    console.log("pipsToGenerate", pipsToGenerate)
     return {
       "nodes": newFlow.nodes,
       "pips": pipsToGenerate,
@@ -107,19 +106,19 @@ const ResultsPaneMEDiml = () => {
               exec(`jupyter notebook --port=${portNotebook} ${pathNotebook}`,
                   function (error, stdout, stderr) {
                       console.log('stdout: ' + stdout);
-                      console.log('stderr: ' + stderr);
+                      console.error('stderr: ' + stderr);
                       if (error !== null) {
-                          console.log('exec error: ' + error);
+                          console.error('exec error: ' + error);
                       }
                   });
                 }
             catch (error) {
-              console.log("Error detected while opening the notebook", error)
+              console.error("Error detected while opening the notebook", error)
             }
             
           } else {
             toast.error(response.error)
-            console.log("error", response.error)
+            console.error("error", response.error)
           }
           },
           (error) => {
@@ -146,7 +145,6 @@ const ResultsPaneMEDiml = () => {
 
     // Else
     try {    
-      console.log("renderAccordions data", data)
       return data.map((pipelines, indexPip) => {
         return (
           <Accordion key={`AccordionPips-${indexPip}`}>
@@ -179,21 +177,12 @@ const ResultsPaneMEDiml = () => {
   };
   
   const renderAccordionTabs = (item, index, isResults) => {
-    console.log("item renderAccordionTabs", item)
-    console.log("index renderAccordionTabs", index)
-    console.log("expNames", expNames)
     return Object.keys(item).map((currentExp, _) => {
-      console.log("currentExp", currentExp)
-      console.log("expNames[index]", expNames[index])
       if (expNames.includes(currentExp)){
-        console.log("went it")
         return Object.keys(item[currentExp]).map((key, dataIdx) => {
-          console.log("item[currentExp]", item[currentExp])
           let values = item[currentExp][key];
-          console.log("values", values)
 
           let keysList = Object.keys(values);
-          console.log("keysList", keysList)
 
           // Add experiment name to the list of keys
           if (expNames.length > 0) {
@@ -209,7 +198,7 @@ const ResultsPaneMEDiml = () => {
           // If no metrics are found, display a warning
           if (!values || keysList.length === 0 || (expNames.length > 0 && keysList.length === 1)){
             return (
-              <Accordion>
+              <Accordion key={key}>
                 <AccordionTab key={`AccordionTab-${index}-${dataIdx}`} header={key}>
                   <div style={{ color: 'red' }}>Warning: Values are empty or undefined.</div>
                 </AccordionTab>
@@ -219,11 +208,11 @@ const ResultsPaneMEDiml = () => {
           
           // Display the metrics in a table
           return (
-            <Accordion>
+            <Accordion key={key}>
               <AccordionTab disabled={!isResults} key={`AccordionTab-${dataIdx+index+1}`} header={key}>
                 <DataTable value={[values]}>
                   {keysList.map((key1, columnIndex) => (
-                    <Column key={key1} field={key1} header={key1} style={columnIndex % 2 === 0 ? { backgroundColor: 'lightgray' } : { backgroundColor: 'lightblue' }}/>
+                    <Column key={key1} field={key1} header={key1} style={columnIndex % 2 !== 0 && { backgroundColor: 'lightblue' }}/>
                   ))}
                 </DataTable>
               </AccordionTab>
@@ -271,12 +260,9 @@ const ResultsPaneMEDiml = () => {
       }
       keysList = keysList.reduce((a, b) => a.filter(c => b.includes(c)));
 
-      console.log("keysList 225", keysList)
-
       // Fill values for Data Table
       let keyIndex = 0;
       for (const key of keysList) {
-        console.log("key 225", key)
         values[keyIndex] = []
         for (let index = 0; index < data.length; index++) {
             let item = data[index];
@@ -308,9 +294,6 @@ const ResultsPaneMEDiml = () => {
 
           /*const item = data[index];
           if (Object.keys(item[expNames[index]][key]).length > 1){
-            console.log("keyIndex ", keyIndex)
-            console.log("key ", key)
-            console.log("item[expNames[index]][key]", item[expNames[index]][key])
             values[keyIndex][index] = item[expNames[index]][key];
             MetricsKeysList = Object.keys(item[expNames[index]][key]);*/
         
@@ -398,13 +381,11 @@ const ResultsPaneMEDiml = () => {
         if (node.type === "Analyze"){
           // Images
           if (node.data.internal.results.hasOwnProperty("figures")){
-            console.log("Found figures", node.data.internal.results.figures)
             // Heatmap
             if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
               if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
                 if (node.data.internal.results.figures.heatmap.hasOwnProperty("path")){
                     setHeatMap(node.data.internal.results.figures.heatmap.path)
-                    console.log("pushing heatMaps", node.data.internal.results.figures.heatmap.path)
                 }
               }
             }
@@ -413,49 +394,23 @@ const ResultsPaneMEDiml = () => {
               if (node.data.internal.results.figures.hasOwnProperty("treeplot")){
                 if (node.data.internal.results.figures.treeplot.hasOwnProperty("treeplot")){
                     setTreePlot(node.data.internal.results.figures.treeplot.path)
-                    console.log("pushing treeplot", node.data.internal.results.figures.treeplot.path)
                 }
               }
             }
           }
           // Results - Metrics
           if (node.data.internal.results.hasOwnProperty("results_avg")){
-            console.log("Found results_avg", node.data.internal.results)
             setSelectedResults(node.data.internal.results.results_avg)
-            /*node.data.internal.results.results_avg.map((result, index) => {
-              console.log("result map", result)
-              if (experiments.length > 0){
-                console.log("HOW 1")
-                if (!experiments.includes(Object.keys(result)[0])){
-                  console.log("HOW 2")
-                  experiments.push(Object.keys(result)[0])
-                }
-              }
-              else {
-                console.log("HOW 3")
-                experiments.push(Object.keys(result)[0])
-              }
-            })*/
             // Histograms
             try{
-              console.log("BEEN HERE")
               for (let index = 0; index < node.data.internal.results.results_avg.length; index++) {
-                console.log("BEEN HERE 2")
                 Object.entries(node.data.internal.results.results_avg[index]).map((item, _) => {
-                  console.log("BEEN HERE 3")
-                  console.log("item BEEN", item[1])
                   Object.entries(item[1]).map((itemAnalysis, _) => {
-                    console.log("BEEN HERE 4")
-                    console.log("BEEN itemAnalysis", itemAnalysis)
                     Object.entries(itemAnalysis[1]).map((resultAnalysis, _) => {
-                      console.log("BEEN HERE 5")
-                      console.log("BEEN resultAnalysis", resultAnalysis)
                       let result = resultAnalysis[1];
-                      console.log("BEEN histogram test result", result)
                           if (result.hasOwnProperty("histogram")){
                             if (result.histogram.hasOwnProperty("path")){
                               if(!histograms.includes(result.histogram.path)){
-                                console.log("BEENpushing histogram", result.histogram.path)
                                 histograms.push(result.histogram.path)
                               }
                             }
@@ -465,15 +420,13 @@ const ResultsPaneMEDiml = () => {
                 });
               }
             } catch (error) {
-              console.log("Error detected while processing histograms", error)
+              console.error("Error detected while processing histograms", error)
             }
           }
           if (node.data.internal.results.hasOwnProperty("pips")){
-            console.log("Found pip", node.data.internal.results.pips)
             setSelectedPipelines(node.data.internal.results.pips)
           }
           if (node.data.internal.results.hasOwnProperty("experiments")){
-            console.log("Found experiments", node.data.internal.results.experiments)
             setExpNames(node.data.internal.results.experiments)
           }
         }
@@ -485,10 +438,8 @@ const ResultsPaneMEDiml = () => {
   }, [flowContent])
 
   const getPipelinesName = () => {
-    console.log("expNames", expNames)
     if (selectedPipelines.length > 0){
       return selectedPipelines.map((_, index) => {
-        console.log("option", "pipeline " + index)
         return { name: "pipeline " + (index + 1) };
       });
     }
