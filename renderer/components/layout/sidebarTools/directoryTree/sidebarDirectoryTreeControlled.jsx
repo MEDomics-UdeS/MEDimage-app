@@ -277,9 +277,9 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
       console.log("item", item)
       if (item.type == "medml") {
         dispatchLayout({ type: "openInLearningModule", payload: item })
-      } else if (item.type == "medimg") {
+      } else if (item.type == "medext") {
         dispatchLayout({ type: "openInExtractionMEDimlModule", payload: item })
-      } else if (item.type == "medimg.ml") {
+      } else if (item.type == "mediml") {
         dispatchLayout({ type: "openInLearningMEDimlModule", payload: item })
       } else if (item.type == "medeval") {
         dispatchLayout({ type: "openInEvaluationModule", payload: item })

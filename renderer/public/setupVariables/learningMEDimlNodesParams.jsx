@@ -2,7 +2,7 @@ import learningMEDimlDefaultSettings from "./possibleSettings/learningMEDiml/lea
 /* eslint-disable */
 
 export const sceneDescription = {
-  extension: "medimg.ml",
+  extension: "mediml",
   externalFolders: ["models", "notebooks"],
   internalFolders: []
 }
