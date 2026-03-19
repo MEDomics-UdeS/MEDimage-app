@@ -55,7 +55,11 @@ const Data = ({ id, data, type }) => {
         }
       })
       setListWSFolders(wsFolders)
-      handleSaveFolderChange(selectedFolder) // Update the list of csv files if a folder is already selected
+      if (selectedFolder) {
+        handleSaveFolderChange(selectedFolder)
+      } else if (data.internal.settings.path) {
+        handleSaveFolderChange(data.internal.settings.path)
+      }
     }
   }
 
@@ -140,7 +144,7 @@ const Data = ({ id, data, type }) => {
             </Form.Group>
 
             {/* select features files */}
-            {(listCSVFiles.length ===0 && selectedFolder !== "") && (
+            {(listCSVFiles.length === 0 && selectedFolder !== "") && (
                 <Alert variant="warning" style={{ marginTop: "10px" }}>
                   No features files found in the selected folder.
                 </Alert>
