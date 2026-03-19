@@ -88,7 +88,7 @@ const SettingsPage = (pageId = "settings") => {
     // })
     checkMongoIsRunning()
     checkServer()
-  }, [])
+  }, [pythonEmbedded])
 
   /**
    * Save the settings in the main process
