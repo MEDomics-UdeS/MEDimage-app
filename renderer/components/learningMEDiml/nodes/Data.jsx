@@ -35,8 +35,8 @@ const Data = ({ id, data, type }) => {
       data.setupParam.possibleSettings.defaultSettings.path = data.internal.settings.path
       setSelectedFolder(data.internal.settings.path)
     }
-    if (data.internal.settings.csv_files && data.internal.settings.csv_files.length > 0) {
-      setListCSVFiles(data.internal.settings.csv_files)
+    if (data.setupParam.csv_files && data.setupParam.csv_files.length > 0) {
+      setListCSVFiles(data.setupParam.csv_files)
     }
     updateWSfolder()
   }, [])
@@ -78,7 +78,7 @@ const Data = ({ id, data, type }) => {
     setListCSVFiles(csvFiles)
     data.setupParam.possibleSettings.defaultSettings.path = directoryPath
     data.internal.settings.path = directoryPath
-    data.internal.settings.csv_files = csvFiles
+    data.setupParam.csv_files = csvFiles
     updateHasWarning(data)
     setReload(!reload)
   }
