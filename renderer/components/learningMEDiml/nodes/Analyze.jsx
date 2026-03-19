@@ -1,13 +1,11 @@
-import React from "react"
-import Node from "../../flow/node"
-import { Form, Row, Col } from "react-bootstrap"
-import { InputText } from 'primereact/inputtext';
-import {useState} from 'react';
-import { Tooltip } from 'primereact/tooltip';
 import { Checkbox } from 'primereact/checkbox';
-import { Card } from 'primereact/card';
 import { Dropdown } from 'primereact/dropdown';
 import { InputSwitch } from 'primereact/inputswitch';
+import { InputText } from 'primereact/inputtext';
+import { Tooltip } from 'primereact/tooltip';
+import { useState } from 'react';
+import { Form, Row } from "react-bootstrap";
+import Node from "../../flow/node";
 
 
 /**
@@ -48,7 +46,6 @@ const Analyze = ({ id, data, type }) => {
                         onChange={(event) => {
                           // check if the file is already in the list if yes remove it
                           if (data.internal.settings.histogram) {
-                            console.log("remove")
                             data.internal.settings.histogram = false;
                           } else {
                             data.internal.settings.histogram = true;
@@ -64,7 +61,6 @@ const Analyze = ({ id, data, type }) => {
                         onChange={(event) => {
                           // check if the file is already in the list if yes remove it
                           if (data.internal.settings.heatmap) {
-                            console.log("remove")
                             data.internal.settings.heatmap = false;
                           } else {
                             data.internal.settings.heatmap = true;
@@ -80,7 +76,6 @@ const Analyze = ({ id, data, type }) => {
                         onChange={(event) => {
                           // check if the file is already in the list if yes remove it
                           if (data.internal.settings.tree) {
-                            console.log("remove")
                             data.internal.settings.tree = false;
                           } else {
                             data.internal.settings.tree = true;
@@ -102,7 +97,7 @@ const Analyze = ({ id, data, type }) => {
                   </Form.Label>
                     <br></br>
                     <InputSwitch 
-                        checked={data.setupParam.possibleSettings.defaultSettings.optimalLevel}
+                        checked={data.internal.settings.optimalLevel}
                         onChange={(event) => {
                             data.setupParam.possibleSettings.defaultSettings.optimalLevel = event.target.value;
                             data.internal.settings.optimalLevel = event.target.value;
