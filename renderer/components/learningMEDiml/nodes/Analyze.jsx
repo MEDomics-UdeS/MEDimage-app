@@ -35,7 +35,6 @@ const Analyze = ({ id, data, type }) => {
         nodeSpecific={
           <>
             {/* Show segmentation warning when there is no roisList or the roisList is empty */}
-            {console.log("internal Analyze", data.internal.settings)}
             {
               <Row className="form-group-box">
               <Row className="form-group-box">
