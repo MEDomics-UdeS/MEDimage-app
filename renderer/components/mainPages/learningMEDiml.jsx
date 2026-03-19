@@ -13,7 +13,6 @@ const LearningMEDimlPage = ({ pageId, configPath = "" }) => {
 
   return (
     <>
-      {console.log("LearningMEDimlPage flow type: ", flowType)}
       <ModulePage pageId={pageId} configPath={configPath}>
         <FlowPageBase workflowType={flowType} id={pageId} LearningMEDiml={true}>
           <FlowCanvas id={pageId} workflowType={flowType} setWorkflowType={setFlowType} />
