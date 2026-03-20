@@ -27,11 +27,11 @@ import { PageInfosContext } from "../mainPages/moduleBasics/pageInfosContext.jsx
 import Analyze from "./nodes/Analyze.jsx"
 import Cleaning from "./nodes/Cleaning.jsx"
 import Data from "./nodes/Data.jsx"
-import Design from "./nodes/Design.jsx"
+import Split from "./nodes/Split.jsx"
 import FeatureReduction from "./nodes/FeatureReduction.jsx"
 import Normalization from "./nodes/Normalization.jsx"
 import RadiomicsLearner from "./nodes/RadiomicsLearner.jsx"
-import Split from "./nodes/Split.jsx"
+import Design from "./nodes/Design.jsx"
 
 // Import node parameters
 import nodesParams from "../../public/setupVariables/allNodesParams.jsx"
@@ -70,7 +70,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
   const [resultsFolder, setResultsFolder] = useState([])   // resultsFolder is used to store the path to the machine learning results
   const [experiments, setExperiments] = useState([]) // experiments is used to store the experiments to be done in the learning experiment
   const { pageId } = useContext(PageInfosContext) // used to get the page infos such as id and config path
-  const { setIsResults, isResults } = useContext(FlowResultsContext)
+  const { setIsResults, isResults, updateFlowResults } = useContext(FlowResultsContext)
   const { canRun } = useContext(FlowInfosContext) // used to get the flow infos
   const { groupNodeId, changeSubFlow, updateNode } = useContext(FlowFunctionsContext)
   const { globalData } = useContext(DataContext)
@@ -148,6 +148,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
         if (configToLoad) {
           let jsonContent = await getCollectionData(configToLoad)
           updateScene(jsonContent[0])
+          updateFlowResults(jsonContent[0], pageId)
           toast.success("Config file has been loaded successfully")
         } else {
           console.log("No config file found for this page, base workflow will be used")
