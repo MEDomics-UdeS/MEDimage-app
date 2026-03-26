@@ -122,7 +122,7 @@ const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClick
             <>
               <div className="align-center">
                 <img src={`/icon/${flowInfos.type}/` + `${data.internal.img.replaceAll(" ", "_")}`} alt={data.internal.img} className="icon-nodes" />
-                {data.internal.name}
+                {data.setupParam.title}
               </div>
 
               <div className="btn-node-div">

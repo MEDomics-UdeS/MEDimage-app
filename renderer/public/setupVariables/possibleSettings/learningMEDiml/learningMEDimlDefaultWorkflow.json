@@ -40,7 +40,7 @@
             "split_data"
           ],
           "img": "split.png",
-          "title": "Split",
+          "title": "Design",
           "possibleSettings": {
             "defaultSettings": {
               "path_outcome_file": "",
@@ -110,7 +110,7 @@
             "design_data"
           ],
           "img": "optimize.png",
-          "title": "Design",
+          "title": "Split",
           "possibleSettings": {
             "defaultSettings": {
               "expName": "",

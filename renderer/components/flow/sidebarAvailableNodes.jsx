@@ -54,7 +54,7 @@ const SidebarAvailableNodes = ({ title, sidebarType }) => {
                   onDragStart={(event) =>
                     onDragStart(event, {
                       nodeType: `${node.type}`,
-                      name: `${node.title}`,
+                      name: `${node.type}`,
                       image: `${node.img}`
                     })
                   }

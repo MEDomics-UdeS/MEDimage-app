@@ -15,8 +15,8 @@ const nodesParams = {
     nbOutput: 1,
     input: [],
     output: ["split_data"],
-    img: "split.png",
-    title: "Split",
+    img: "optimize.png",
+    title: "Design",
     possibleSettings: {
       defaultSettings: learningMEDimlDefaultSettings.split
     }
@@ -28,8 +28,8 @@ const nodesParams = {
     nbOutput: 1,
     input: ["split_data"],
     output: ["design_data"],
-    img: "optimize.png",
-    title: "Design",
+    img: "split.png",
+    title: "Split",
     possibleSettings: {
       defaultSettings: learningMEDimlDefaultSettings.design
     }
