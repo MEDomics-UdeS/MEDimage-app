@@ -2,6 +2,7 @@ const learningMEDimlDefaultSettings = {
   // split
   split : {
     path_outcome_file: "",
+    path_ws_experiments: "",
     outcome_name: "",
     path_save_experiments: "",
     method: "all_learn",
@@ -10,7 +11,7 @@ const learningMEDimlDefaultSettings = {
   // design
   design : {
     expName: "",
-    testSets: ["cv"],
+    active_method: "cv",
     Random: {
       method: "SubSampling",
       nSplits: 10,

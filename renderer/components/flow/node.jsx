@@ -304,7 +304,7 @@ export const updateHasWarning = (data) => {
     if (data.internal.settings.expName === "") {
       data.internal.hasWarning = { state: true, tooltip: <p>No experiment name is given!</p> }
       return
-    } else if (data.internal.settings.testSets[0].toLowerCase() === "cv"){
+    } else if (data.internal.settings?.active_method?.toLowerCase() === "cv"){
       if (data.internal.settings.cv.nSplits === null || data.internal.settings.cv.nSplits === "") {
         data.internal.hasWarning = { state: true, tooltip: <p>No number of folds is given!</p> }
         return
@@ -318,7 +318,7 @@ export const updateHasWarning = (data) => {
         data.internal.hasWarning = { state: false }
         return
       }
-    } else if (data.internal.settings.testSets[0].toLowerCase() === "random"){
+    } else if (data.internal.settings?.active_method?.toLowerCase() === "random"){
       if (data.internal.settings.Random.nSplits === null || data.internal.settings.Random.nSplits === "") {
         data.internal.hasWarning = { state: true, tooltip: <p>No number of splits is given!</p> }
         return

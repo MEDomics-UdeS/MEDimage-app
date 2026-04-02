@@ -147,6 +147,8 @@ export async function insertMEDDataObjectIfNotExists(medData, path = null, jsonD
   // Insert MEDdataObject data (if contains data)
   if (jsonData) {
     const dataCollection = db.collection(medData.id)
+    console.log(`Debug dataCollection ${JSON.stringify(dataCollection)}`)
+    console.log(`Debug 1 jsonData ${JSON.stringify(jsonData)} to insert in collection ${medData.id}`)
     const result = await dataCollection.insertMany(jsonData)
     console.log(`Data inserted with ${result.insertedCount} documents`)
   } else if (path) {
@@ -175,6 +177,7 @@ export async function insertMEDDataObjectIfNotExists(medData, path = null, jsonD
         const fileContent = fs.readFileSync(path, "utf8")
         const jsonContent = JSON.parse(fileContent)
         const dataCollection = db.collection(medData.id)
+        console.log(`Debug jsonContent ${JSON.stringify(jsonContent)} to insert in collection ${medData.id}`)
         const result = await dataCollection.insertMany(Array.isArray(jsonContent) ? jsonContent : [jsonContent])
         if (!result.insertedCount > 0) {
           console.error(`No JSON data inserted for MEDDataObject with id ${medData.id}`)
@@ -189,6 +192,7 @@ export async function insertMEDDataObjectIfNotExists(medData, path = null, jsonD
     const targetCollection = db.collection(medData.id)
 
     const documentsToCopy = await sourceCollection.find({}).toArray()
+    console.log(`Debug documentsToCopy ${documentsToCopy} documents in collection ${copyId} to copy to collection ${medData.id}`)
     if (documentsToCopy.length > 0) {
       const result = await targetCollection.insertMany(documentsToCopy)
       console.log(`Copied ${result.insertedCount} documents from collection ${copyId} to ${medData.id}`)

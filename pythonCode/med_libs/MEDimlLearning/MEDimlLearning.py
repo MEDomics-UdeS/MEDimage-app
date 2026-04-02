@@ -31,6 +31,12 @@ class MEDimlLearning:
 
         return dict
     
+    def __find_base_files(self, path_base_files):
+        path_base_files = Path(path_base_files)
+        if Path(path_base_files / "baseFiles").exists():
+            return path_base_files / "baseFiles"
+        return self.__find_base_files(path_base_files.parent)
+
     def generate_all_pips(self, id: str, node_content, pip, json_scene, pips, counter):
         # -------------------------------------------------- NODE ADD ---------------------------------------------------
         pip.append(id)  # Current node added to pip
@@ -159,7 +165,7 @@ class MEDimlLearning:
                             if not designed_experiment:
                                 self.set_progress(label=f"Pip {str(pip_idx+1)} | Designing experiment")
                                 # Initialization
-                                path_settings = Path.cwd() / "flask_server" / "learning_MEDiml" / "settings"
+                                path_settings = self.__find_base_files(Path.cwd()) / "ml_settings.yml"
                                 desing_settings = {}
 
                                 # Retrieve data from json request
@@ -175,25 +181,28 @@ class MEDimlLearning:
                                 
                                 # Fill design settings
                                 desing_settings['design'] = content["data"]
-                                method_desing = desing_settings['design']['testSets'][0]
+                                method_desing = desing_settings['design']['active_method']
                                 nb_split = desing_settings['design'][method_desing]['nSplits'] if 'nSplits' in desing_settings['design'][method_desing].keys() else 10
 
+                                print("debug path study : ", path_study)
                                 # Initialize the DesignExperiment class
-                                experiment = MEDiml.learning.DesignExperiment(path_study, path_settings, experiment_label)
+                                experiment = MEDiml.learning.DesignExperiment(path_study, Path(path_study).parent, path_settings, experiment_label)
 
                                 # Generate the machine learning experiment
-                                tests_dict = experiment.create_experiment(desing_settings)
+                                experiment_dict = experiment.create_experiment(desing_settings)
 
                                 paths_splits = []
-                                for run in tests_dict.keys():
-                                    paths_splits.append(tests_dict[run])
+                                for run in experiment_dict.keys():
+                                    paths_splits.append(experiment_dict[run])
                                 
                                 # Set up the split counter
                                 split_counter = 0
                                 designed_experiment = True
                                 self.set_progress(now=10)
                         except Exception as e:
-                            return {"error": str(e)}
+                            traceback.print_exc()
+                            error_stack = traceback.format_exc()
+                            raise ValueError(f"{error_stack}")
 
                     # Model training/testing part
                     if designed_experiment:            

@@ -22,6 +22,7 @@ import { set } from "lodash"
 const Split = ({ id, data, type }) => { 
   const [selectedCSVFile, setSelectedCSVFile] = useState("") // Selected CSV file
   const [selectedSaveFolder, setSelectedSaveFolder] = useState("") // Selected save folder
+  const [selectedWSFolder, setSelectedWSFolder] = useState("") // Selected workspace folder
   const [listCSVFiles, setListCSVFiles] = useState([]) // List of csv files in the workspace
   const [listWSFolders, setListWSFolders] = useState([]) // List of folders in the workspace
   const [reload, setReload] = useState(false)
@@ -179,6 +180,36 @@ const Split = ({ id, data, type }) => {
                 />
               </Form.Group>
 
+              {/* Workspace Folder */}
+              <Form.Group controlId="saveFolder">
+                <Tooltip target=".saveFolder"/>
+                <Form.Label 
+                    className="saveFolder" 
+                    data-pr-tooltip="Folder containing the experiments' resources (features, outcomes, etc.)."
+                    data-pr-position="bottom">
+                        Experiment's Workspace Folder
+                </Form.Label>
+                <Col style={{ width: "300px" }}>
+                  <Dropdown
+                    style={{ maxWidth: "100%", height: "auto", width: "auto" }}
+                    filter
+                    value={selectedWSFolder}
+                    onChange={(e) => {
+                      data.setupParam.possibleSettings.defaultSettings.path_ws_experiments = e.value
+                      data.internal.settings.path_ws_experiments = e.value
+                      setSelectedWSFolder(e.value)
+                      // Update node warnings
+                      updateHasWarning(data)
+                      setReload(!reload)
+                    }}
+                    options={listWSFolders}
+                    optionLabel="name"
+                    display="chip"
+                    placeholder="Select a folder"
+                  />
+                </Col>
+              </Form.Group>
+
               {/* Path Outcome */}
               <Form.Group controlId="outcomeFile">
               <Tooltip target=".outcomeFile"/>
@@ -211,32 +242,32 @@ const Split = ({ id, data, type }) => {
 
               {/* Save Folder */}
               <Form.Group controlId="saveFolder">
-              <Tooltip target=".saveFolder"/>
-              <Form.Label 
-                  className="saveFolder" 
-                  data-pr-tooltip="Folder where the experiment will be saved (data & results). The folder should not be empty (bug)."
-                  data-pr-position="bottom">
-                      Save Folder
-              </Form.Label>
-              <Col style={{ width: "300px" }}>
-                <Dropdown
-                  style={{ maxWidth: "100%", height: "auto", width: "auto" }}
-                  filter
-                  value={selectedSaveFolder}
-                  onChange={(e) => {
-                    data.setupParam.possibleSettings.defaultSettings.path_save_experiments = e.value
-                    data.internal.settings.path_save_experiments = e.value
-                    setSelectedSaveFolder(e.value)
-                    // Update node warnings
-                    updateHasWarning(data)
-                    setReload(!reload)
-                  }}
-                  options={listWSFolders}
-                  optionLabel="name"
-                  display="chip"
-                  placeholder="Select a folder"
-                />
-              </Col>
+                <Tooltip target=".saveFolder"/>
+                <Form.Label 
+                    className="saveFolder" 
+                    data-pr-tooltip="Folder where the experiment will be saved (data & results). The folder should not be empty (bug)."
+                    data-pr-position="bottom">
+                        Save Folder
+                </Form.Label>
+                <Col style={{ width: "300px" }}>
+                  <Dropdown
+                    style={{ maxWidth: "100%", height: "auto", width: "auto" }}
+                    filter
+                    value={selectedSaveFolder}
+                    onChange={(e) => {
+                      data.setupParam.possibleSettings.defaultSettings.path_save_experiments = e.value
+                      data.internal.settings.path_save_experiments = e.value
+                      setSelectedSaveFolder(e.value)
+                      // Update node warnings
+                      updateHasWarning(data)
+                      setReload(!reload)
+                    }}
+                    options={listWSFolders}
+                    optionLabel="name"
+                    display="chip"
+                    placeholder="Select a folder"
+                  />
+                </Col>
               </Form.Group>
             </Row>
           </>

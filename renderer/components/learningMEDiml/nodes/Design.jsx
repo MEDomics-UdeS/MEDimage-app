@@ -67,17 +67,17 @@ const Design = ({ id, data, type }) => {
               </Form.Label>
                 <Dropdown 
                     style={{width: "300px"}}
-                    value={data.setupParam.possibleSettings.defaultSettings.testSets[0]}
+                    value={data.setupParam.possibleSettings.defaultSettings.active_method}
                     options={[{ name: 'Random' }, { name: 'Institution' }, { name: 'Cross-Validation' }]}
                     optionLabel="name" 
-                    placeholder={data.setupParam.possibleSettings.defaultSettings.testSets[0]}
+                    placeholder={data.setupParam.possibleSettings.defaultSettings.active_method}
                     onChange={(event) => {
                       if (event.target.value.name === "Cross-Validation") {
-                        data.setupParam.possibleSettings.defaultSettings.testSets[0] = 'cv';
-                        data.internal.settings.testSets[0] = 'cv';
+                        data.setupParam.possibleSettings.defaultSettings.active_method = 'cv';
+                        data.internal.settings.active_method = 'cv';
                       } else {
-                      data.setupParam.possibleSettings.defaultSettings.testSets[0] = event.target.value.name;
-                      data.internal.settings.testSets[0] = event.target.value.name;
+                      data.setupParam.possibleSettings.defaultSettings.active_method = event.target.value.name;
+                      data.internal.settings.active_method = event.target.value.name;
                       }
                       updateHasWarning(data);
                       setReload(!reload);
@@ -86,7 +86,7 @@ const Design = ({ id, data, type }) => {
               </Form.Group>
 
               {/* OTHER PARAMS IF SPLIT TYPE IS RANDOM */}
-              {data.setupParam.possibleSettings.defaultSettings.testSets[0] === "Random" &&
+              {data.setupParam.possibleSettings.defaultSettings.active_method === "Random" &&
               <>
               {/* Split Method */}
               <Form.Group controlId="splitMethod">
@@ -221,7 +221,7 @@ const Design = ({ id, data, type }) => {
             }
 
             {/* OTHER PARAMS IF SPLIT TYPE IS CV */}
-            {data.setupParam.possibleSettings.defaultSettings.testSets[0].toLowerCase() === "cv" &&
+            {data.setupParam.possibleSettings.defaultSettings.active_method?.toLowerCase() === "cv" &&
               <>
 
               {/* Number of splits */}

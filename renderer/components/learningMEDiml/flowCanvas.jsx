@@ -687,11 +687,13 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
       let nodeData = value.data
       let nodeName = value.name
       if (nodeName === "design") {
-        let methodDesing = nodeData.testSets[0]
+        let methodDesing = nodeData.active_method
+        console.log("debug methodDesing", methodDesing)
         if (!experimentsTemp.includes(nodeData.expName)){
           experimentsTemp.push(nodeData.expName)
         }
         folderNames.push("learn__" + nodeData.expName)
+        console.log('debug nodeData', nodeData)
         nSplitsTemp.push(nodeData[methodDesing].nSplits);
         //setNSplits(nodeData[methodDesing].nSplits);
       }
