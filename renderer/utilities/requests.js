@@ -76,11 +76,7 @@ export const axiosPostJsonGo = async (port, topic, json2send, jsonReceivedCB, on
     if (response.data.type == "toParse") {
       let cleanResponse = {}
       try {
-        cleanResponse = JSON.parse(sanitizeJson(response.data.response_message))
-        if (typeof cleanResponse.error === 'string') {
-            // Sanitize the inner string again just in case it has paths too
-            cleanResponse.error = JSON.parse(sanitizeJson(cleanResponse.error));
-        }
+        cleanResponse = JSON.parse(nanToNull(response.data.response_message))
       } catch (error) {
         cleanResponse = JSON.parse(parsingCleaning(nanToNull(response.data.response_message)).replaceAll("\\", ""))
       }
@@ -164,11 +160,4 @@ export const nanToNull = (json) => {
   let jsonStr = json
   jsonStr = jsonStr.replaceAll("NaN", "null")
   return jsonStr
-}
-
-const sanitizeJson = (jsonString) => {
-  // This Regex finds single backslashes that are NOT followed by 
-  // a valid JSON escape character (like " or \ or n) and doubles them.
-  // It specifically fixes Windows paths like C:\Users -> C:\\Users
-  return jsonString.replace(/\\(?![/u"\\bfnrt])/g, "\\\\")
 }
