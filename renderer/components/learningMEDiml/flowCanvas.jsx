@@ -280,13 +280,11 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
     newNode.id = `${newNode.id}${associatedNode ? `.${associatedNode}` : ""}`
 
     // Add defaut parameters of node to possibleSettings
-    let type = newNode.data.internal.type.replaceAll(/ |-/g, "_").replace(/[^a-z_]/g, "")
-    console.log("nodesParams[workflowType]", nodesParams[workflowType])
+    let type = newNode.data.internal.type
 
-    let setupParams = {}
-    if (nodesParams[workflowType][type]) {
-      setupParams = JSON.parse(JSON.stringify(nodesParams[workflowType][type]))
-    }
+    let setupParams = Object.values(nodesParams[workflowType]).find(
+      (element) => element.type?.toLowerCase() === type.toLowerCase()
+    )
 
     // Add default parameters to node data
     newNode.data.setupParam = setupParams
@@ -688,12 +686,10 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
       let nodeName = value.name
       if (nodeName === "design") {
         let methodDesing = nodeData.active_method
-        console.log("debug methodDesing", methodDesing)
         if (!experimentsTemp.includes(nodeData.expName)){
           experimentsTemp.push(nodeData.expName)
         }
         folderNames.push("learn__" + nodeData.expName)
-        console.log('debug nodeData', nodeData)
         nSplitsTemp.push(nodeData[methodDesing].nSplits);
         //setNSplits(nodeData[methodDesing].nSplits);
       }
