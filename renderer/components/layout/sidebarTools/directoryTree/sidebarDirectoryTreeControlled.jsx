@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 import fs from "fs"
 import { Tooltip } from "primereact/tooltip"
-import { useContext, useEffect, useRef, useState } from "react"
+import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import { Accordion, Stack } from "react-bootstrap"
 import { ArrowClockwise, ArrowRepeat, BoxArrowUpRight, ChevronBarContract, ChevronBarExpand, Eraser, EyeFill, EyeSlashFill, FolderPlus, Trash } from "react-bootstrap-icons"
 import { ControlledTreeEnvironment, Tree } from "react-complex-tree"
@@ -78,7 +78,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
    * @returns {void}
    * @note - This function is called when the user presses a key.
    */
-  const handleKeyPress = (event) => {
+  const handleKeyPress = useCallback((event) => {
     if (event.key === "Delete" && tree.current.isRenaming === false) {
       if (selectedItems.length > 0) {
         onDeleteSequentially(globalData, workspace.workingDirectory.path, setIsDialogShowing, selectedItems)
@@ -132,7 +132,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
         }
       }
     }
-  }
+  }, [])
 
   /**
    * This useEffect hook attaches an event listener to the document to listen for key presses.
