@@ -369,13 +369,9 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
   const addSpecificToNode = (newNode, associatedNode) => {
     newNode.id = `${newNode.id}${associatedNode ? `.${associatedNode}` : ""}`
 
-    // Add defaut parameters of node to possibleSettings
-    let type = newNode.data.internal.type.replaceAll(/ |-/g, "_").replace(/[^a-z_]/g, "")
-
-    let setupParams = {}
-    if (staticNodesParams[workflowType][type]) {
-      setupParams = JSON.parse(JSON.stringify(staticNodesParams[workflowType][type]))
-    }
+    let setupParams = Object.values(staticNodesParams[workflowType]).find(
+      (element) => element.type?.toLowerCase() === newNode.data.internal.type.toLowerCase()
+    )
 
     // Add default parameters to node data
     newNode.data.setupParam = setupParams
