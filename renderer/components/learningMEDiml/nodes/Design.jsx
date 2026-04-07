@@ -67,17 +67,17 @@ const Design = ({ id, data, type }) => {
               </Form.Label>
                 <Dropdown 
                     style={{width: "300px"}}
-                    value={data.setupParam.possibleSettings.defaultSettings.active_method}
+                    value={data.setupParam.possibleSettings.defaultSettings.active_method[0]}
                     options={[{ name: 'Random' }, { name: 'Institution' }, { name: 'Cross-Validation' }]}
                     optionLabel="name" 
-                    placeholder={data.setupParam.possibleSettings.defaultSettings.active_method}
+                    placeholder={data.setupParam.possibleSettings.defaultSettings.active_method[0]}
                     onChange={(event) => {
                       if (event.target.value.name === "Cross-Validation") {
-                        data.setupParam.possibleSettings.defaultSettings.active_method = 'cv';
-                        data.internal.settings.active_method = 'cv';
+                        data.setupParam.possibleSettings.defaultSettings.active_method = ['cv'];
+                        data.internal.settings.active_method = ['cv'];
                       } else {
-                      data.setupParam.possibleSettings.defaultSettings.active_method = event.target.value.name;
-                      data.internal.settings.active_method = event.target.value.name;
+                        data.setupParam.possibleSettings.defaultSettings.active_method = [event.target.value.name];
+                        data.internal.settings.active_method = [event.target.value.name];
                       }
                       updateHasWarning(data);
                       setReload(!reload);
@@ -86,7 +86,7 @@ const Design = ({ id, data, type }) => {
               </Form.Group>
 
               {/* OTHER PARAMS IF SPLIT TYPE IS RANDOM */}
-              {data.setupParam.possibleSettings.defaultSettings.active_method === "Random" &&
+              {data.setupParam.possibleSettings.defaultSettings.active_method?.[0]?.toLowerCase() === "random" &&
               <>
               {/* Split Method */}
               <Form.Group controlId="splitMethod">
@@ -221,7 +221,7 @@ const Design = ({ id, data, type }) => {
             }
 
             {/* OTHER PARAMS IF SPLIT TYPE IS CV */}
-            {data.setupParam.possibleSettings.defaultSettings.active_method?.toLowerCase() === "cv" &&
+            {data.setupParam.possibleSettings.defaultSettings.active_method?.[0]?.toLowerCase() === "cv" &&
               <>
 
               {/* Number of splits */}
@@ -236,10 +236,10 @@ const Design = ({ id, data, type }) => {
                 <InputNumber
                     style={{width: "300px"}}
                     buttonLayout="horizontal"
-                    value={data.setupParam.possibleSettings.defaultSettings.cv.nSplits}
+                    value={data.setupParam.possibleSettings.defaultSettings.cv.nFolds}
                     onValueChange={(event) => {
-                      data.setupParam.possibleSettings.defaultSettings.cv.nSplits = event.target.value;
-                      data.internal.settings.cv.nSplits = event.target.value;
+                      data.setupParam.possibleSettings.defaultSettings.cv.nFolds = event.target.value;
+                      data.internal.settings.cv.nFolds = event.target.value;
                       updateHasWarning(data);
                       setReload(!reload);
                     }}

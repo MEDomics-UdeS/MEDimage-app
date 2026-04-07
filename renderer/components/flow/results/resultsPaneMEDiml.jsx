@@ -42,15 +42,6 @@ const ResultsPaneMEDiml = () => {
 
   const op = useRef(null);
 
-  const cleanResults = () => {
-    setSelectedResults([])
-    setExpNames([])
-    setSelectedPipelines([])
-    setHistogramImages([])
-    setHeatMap("")
-    setTreePlot("")
-  }
-
   /*
   * @Description: This function is used to process the flow data
   */
@@ -375,7 +366,7 @@ const ResultsPaneMEDiml = () => {
 
   useEffect(() => {
     if (flowContent.nodes) {
-      let experiments = []
+      const nativeImage = require("electron").nativeImage
       let histograms = []
       flowContent.nodes.map((node) => {
         if (node.type === "Analyze"){
@@ -411,7 +402,9 @@ const ResultsPaneMEDiml = () => {
                           if (result.hasOwnProperty("histogram")){
                             if (result.histogram.hasOwnProperty("path")){
                               if(!histograms.includes(result.histogram.path)){
-                                histograms.push(result.histogram.path)
+                                const image = nativeImage.createFromPath(result.histogram.path)
+                                const url = image.toDataURL()
+                                histograms.push(url)
                               }
                             }
                           }
@@ -431,7 +424,7 @@ const ResultsPaneMEDiml = () => {
           }
         }
       })
-      if (histograms.length > 0){
+      if (histograms.length > 0) {
         setHistogramImages(histograms)
       }
     }

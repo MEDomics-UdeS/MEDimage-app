@@ -11,7 +11,7 @@ const learningMEDimlDefaultSettings = {
   // design
   design : {
     expName: "",
-    active_method: "cv",
+    active_method: ["cv"],
     Random: {
       method: "SubSampling",
       nSplits: 10,
@@ -20,7 +20,7 @@ const learningMEDimlDefaultSettings = {
       seed: 54288
     },
     cv: {
-      nSplits: 10,
+      nFolds: 10,
       seed: 54288
     }
   },
