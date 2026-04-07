@@ -690,8 +690,8 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
           experimentsTemp.push(nodeData.expName)
         }
         folderNames.push("learn__" + nodeData.expName)
-        nSplitsTemp.push(nodeData[methodDesing].nSplits);
-        //setNSplits(nodeData[methodDesing].nSplits);
+        nSplitsTemp.push(nodeData[methodDesing].nSplits || nodeData[methodDesing].nFolds);
+        //setNSplits(nodeData[methodDesing].nSplits || nodeData[methodDesing].nFolds);
       }
     }
     if (folderNames.length === 0){
