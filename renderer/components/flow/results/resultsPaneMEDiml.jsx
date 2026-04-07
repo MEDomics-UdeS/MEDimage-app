@@ -138,15 +138,12 @@ const ResultsPaneMEDiml = () => {
     try {    
       return data.map((pipelines, indexPip) => {
         return (
-          <Accordion key={`AccordionPips-${indexPip}`}>
-            <AccordionTab disabled={!isResults} key={`AccordionTab-${indexPip}`} header={Object.keys(pipelines)[0]}>
-              {Object.entries(pipelines).map((item, index) => {
+              Object.entries(pipelines).map((item, index) => {
                 return (
                   <Accordion key={`Accordion-${index+indexPip}`}>
                     <AccordionTab disabled={!isResults} key={`AccordionTab-${index+indexPip}`} header={Object.keys(item[1])[0]}>
                       {renderAccordionTabs(item[1], index, isResults)}
 
-                      {/*Figures*/}
                       {/*Histograms*/}
                       <Accordion key={`AccordionTab-Histograms-${index+indexPip}`}>
                         <AccordionTab disabled={!isResults} key={`AccordionTab-Figures-${index+indexPip}`} header={"Analysis Plots"}>
@@ -158,9 +155,7 @@ const ResultsPaneMEDiml = () => {
                   </Accordion>
                 );
               })
-            }
-            </AccordionTab>
-          </Accordion>
+            
       )});
     } catch (error) {
       toast.error("Invalid workflow", error)
