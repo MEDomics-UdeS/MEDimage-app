@@ -30,7 +30,7 @@ class DiscretizationNode(Node):
                 ivh=False
             )
         except Exception as e:
-            raise ValueError("Debug exception e", e)
+            raise ValueError("Exception e", e)
         
         # Update the latest output object of the pipeline
         pipeline.latest_node_output["vol_quant_re"] = vol_quant_re 
