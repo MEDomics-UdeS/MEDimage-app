@@ -161,6 +161,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
   // Executes setTreeData when there is a change in nodes or edges arrays.
   useEffect(() => {
     setTreeData(createTreeFromNodes())
+    checkDuplicateExperiments(nodes)
   }, [nodes, edges])
 
   // Hook executed upon modification of groupNodeId to show the current workflow
@@ -308,6 +309,57 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
     }
 
     return newNode
+  }
+
+  // Check if there are duplicate model nodes and show a warning if there are
+  const checkDuplicateExperiments = (nodes) => {
+    const expNodes = nodes.filter((node) => node.type === "Design")
+    const duplicateExperiments = expNodes.filter(
+      (node, index) => expNodes.findIndex(
+        (n) => n.data.internal.settings.expName === node.data.internal.settings.expName) !== index
+    )
+    if (duplicateExperiments.length > 0) {
+      const nonDuplicateNodes = nodes.filter((node) => !duplicateExperiments.includes(node))
+      duplicateExperiments.forEach((node) => {
+        if (node.data.internal.hasWarning && !node.data.internal.hasWarning.state) {
+          node.data.internal.hasWarning = { state: true, tooltip: <p>Duplicate experiment found</p> }
+        }
+      })
+      nonDuplicateNodes.length > 0 && nonDuplicateNodes.forEach((node) => {
+        if (node.data.internal.hasWarning && node.data.internal.hasWarning.state && node.data.internal.hasWarning.tooltip.props.children.startsWith("This node shares the same ID")) {
+          node.data.internal.hasWarning = { state: false }
+          setNodes((nds) =>
+            nds.map((n) => {
+              if (n.id === node.id) {
+                n.data.internal = node.data.internal
+              }
+              return n
+            })
+          )
+        }
+      })
+    } else {
+      // Remove warnings if no duplicates are found
+      nodes.forEach((node) => {
+        if (node.data.internal.hasWarning && 
+            node.data.internal.hasWarning.state && 
+            node.data.internal.hasWarning.tooltip && 
+            node.data.internal.hasWarning.tooltip.props && 
+            node.data.internal.hasWarning.tooltip.props.children && 
+            node.data.internal.hasWarning.tooltip.props.children.startsWith("Duplicate experiment")
+        ) {
+          node.data.internal.hasWarning = { state: false }
+          setNodes((nds) =>
+            nds.map((n) => {
+              if (n.id === node.id) {
+                n.data.internal = node.data.internal
+              }
+              return n
+            })
+          )
+        }
+      })
+    }
   }
 
   const duplicateNode = (id) => {
@@ -693,9 +745,6 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
         nSplitsTemp.push(nodeData[methodDesing].nSplits || nodeData[methodDesing].nFolds);
         //setNSplits(nodeData[methodDesing].nSplits || nodeData[methodDesing].nFolds);
       }
-    }
-    if (folderNames.length === 0){
-      toast.error("Please add a design node to the workflow")
     }
     for (const [key, value] of Object.entries(newFlow.drawflow.Home.data)) {
       let nodeData = value.data
