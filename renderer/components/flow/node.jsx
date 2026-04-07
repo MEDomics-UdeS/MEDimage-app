@@ -304,21 +304,21 @@ export const updateHasWarning = (data) => {
     if (data.internal.settings.expName === "") {
       data.internal.hasWarning = { state: true, tooltip: <p>No experiment name is given!</p> }
       return
-    } else if (data.internal.settings?.active_method?.toLowerCase() === "cv"){
-      if (data.internal.settings.cv.nSplits === null || data.internal.settings.cv.nSplits === "") {
+    } else if (data.internal.settings?.active_method?.[0]?.toLowerCase() === "cv"){
+      if (data.internal.settings.cv.nFolds === null || data.internal.settings.cv.nFolds === "") {
         data.internal.hasWarning = { state: true, tooltip: <p>No number of folds is given!</p> }
         return
       } else if (data.internal.settings.cv.seed === null || data.internal.settings.cv.seed === ""){
         data.internal.hasWarning = { state: true, tooltip: <p>No seed is given!</p> }
         return
-      } else if (data.internal.settings.cv.nSplits < 2) {
+      } else if (data.internal.settings.cv.nFolds < 2) {
         data.internal.hasWarning = { state: true, tooltip: <p>Number of folds must be at least 2!</p> }
         return
       } else {
         data.internal.hasWarning = { state: false }
         return
       }
-    } else if (data.internal.settings?.active_method?.toLowerCase() === "random"){
+    } else if (data.internal.settings?.active_method?.[0]?.toLowerCase() === "random"){
       if (data.internal.settings.Random.nSplits === null || data.internal.settings.Random.nSplits === "") {
         data.internal.hasWarning = { state: true, tooltip: <p>No number of splits is given!</p> }
         return

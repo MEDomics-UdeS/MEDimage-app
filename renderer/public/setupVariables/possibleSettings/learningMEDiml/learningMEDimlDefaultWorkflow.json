@@ -83,7 +83,7 @@
           "hasRun": false,
           "settings": {
             "expName": "",
-            "active_method": "Random",
+            "active_method": ["Random"],
             "Random": {
               "method": "SubSampling",
               "nSplits": 10,
@@ -112,7 +112,7 @@
           "possibleSettings": {
             "defaultSettings": {
               "expName": "",
-              "active_method": "Random",
+              "active_method": ["Random"],
               "Random": {
                 "method": "SubSampling",
                 "nSplits": 10,
