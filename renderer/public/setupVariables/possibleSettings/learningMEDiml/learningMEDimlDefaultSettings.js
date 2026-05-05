@@ -1,6 +1,6 @@
 const learningMEDimlDefaultSettings = {
   // split
-  split : {
+  design : {
     path_outcome_file: "",
     path_ws_experiments: "",
     outcome_name: "",
@@ -9,7 +9,7 @@ const learningMEDimlDefaultSettings = {
   },
 
   // design
-  design : {
+  split : {
     expName: "",
     active_method: ["cv"],
     Random: {
