@@ -2,7 +2,6 @@ import React from "react"
 import Node from "../../flow/node"
 import { Form, Row } from "react-bootstrap"
 import {useState} from 'react';
-import { Tooltip } from 'primereact/tooltip';
 import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
 import { updateHasWarning } from "../../flow/node";
@@ -32,16 +31,11 @@ const Cleaning = ({ id, data, type }) => {
         setupParam={data.setupParam}
         nodeSpecific={
           <>
-            <Row className="form-group-box">
+            <Row className="form-group-box" style={{ textAlign: "center", alignItems: "center", justifyContent: "center" }}>
               {/* missingCutoffps */}
               <Form.Group controlId="missingCutoffps">
-              <Tooltip target=".missingCutoffps"/>
-              <Form.Label 
-                  className="missingCutoffps" 
-                  data-pr-tooltip="Maximum percentage cut-offs of missing features per sample"
-                  data-pr-position="bottom">
-                      Missing Cut Off/Sample
-              </Form.Label>
+              <Form.Label className="missingCutoffps">Missing Cut Off/Sample</Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Maximum percentage of missing features allowed per sample.</p>
                 <InputNumber
                     style={{width: "300px"}}
                     buttonLayout="horizontal"
@@ -64,13 +58,8 @@ const Cleaning = ({ id, data, type }) => {
 
               {/* missingCutoffpf */}
               <Form.Group controlId="missingCutoffpf">
-              <Tooltip target=".missingCutoffpf"/>
-              <Form.Label 
-                  className="missingCutoffpf" 
-                  data-pr-tooltip="Maximal percentage cut-offs of missing patient samples per feature"
-                  data-pr-position="bottom">
-                      Missing Patients Cut Off/Feature
-              </Form.Label>
+              <Form.Label className="missingCutoffpf">Missing Patients Cut Off/Feature</Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Maximum percentage of missing samples allowed per feature.</p>
                 <InputNumber
                     style={{width: "300px"}}
                     buttonLayout="horizontal"
@@ -93,13 +82,10 @@ const Cleaning = ({ id, data, type }) => {
 
               {/* covCutoff */}
               <Form.Group controlId="covCutoff">
-              <Tooltip target=".covCutoff"/>
-              <Form.Label 
-                  className="covCutoff" 
-                  data-pr-tooltip="minimal coefficient of variation cut-offs over samples per feature"
-                  data-pr-position="bottom">
-                      Minimum variation percentage/feature
-              </Form.Label>
+                <Form.Label className="covCutoff">Minimum Variation Percentage</Form.Label>
+                <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+                  Minimum coefficient of variation threshold to retain features.
+                </p>
                 <InputNumber
                     style={{width: "300px"}}
                     buttonLayout="horizontal"
@@ -122,9 +108,8 @@ const Cleaning = ({ id, data, type }) => {
 
               {/* imputation */}
               <Form.Group controlId="imputation">
-              <Form.Label className="imputation">
-                  Imputation Method
-              </Form.Label>
+              <Form.Label className="imputation">Imputation Method</Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Strategy for filling missing values in features.</p>
                 <Dropdown 
                     style={{width: "300px"}}
                     value={data.setupParam.possibleSettings.defaultSettings.default.feature.continuous.imputation}
