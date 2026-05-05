@@ -122,7 +122,7 @@ const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClick
             <>
               <div className="align-center">
                 <img src={`/icon/${flowInfos.type}/` + `${data.internal.img.replaceAll(" ", "_")}`} alt={data.internal.img} className="icon-nodes" />
-                {data.setupParam.title}
+                {data.internal.name}
               </div>
 
               <div className="btn-node-div">
@@ -284,7 +284,7 @@ export const updateHasWarning = (data) => {
     }
   }
   // Split node check if all the mandatory fields are filled
-  if (data && data.setupParam && data.setupParam.type === "Split") {
+  if (data && data.setupParam && data.setupParam.type === "Design") {
     if (data.internal.settings.outcome_name === "") {
       data.internal.hasWarning = { state: true, tooltip: <p>No outcome name is given!</p> }
       return
@@ -300,7 +300,7 @@ export const updateHasWarning = (data) => {
     }
   }
   // Design node check if all the mandatory fields are filled
-  if (data && data.setupParam && data.setupParam.type === "Design") {
+  if (data && data.setupParam && data.setupParam.type === "Split") {
     if (data.internal.settings.expName === "") {
       data.internal.hasWarning = { state: true, tooltip: <p>No experiment name is given!</p> }
       return
