@@ -281,11 +281,18 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
     newNode.id = `${newNode.id}${associatedNode ? `.${associatedNode}` : ""}`
 
     // Add defaut parameters of node to possibleSettings
-    let type = newNode.data.internal.type
+    let type = newNode.data.internal.type.toLowerCase().replaceAll(" ", "_")
 
     let setupParams = Object.values(nodesParams[workflowType]).find(
-      (element) => element.type?.toLowerCase() === type.toLowerCase()
+      (element) => element.type?.toLowerCase().replaceAll(" ", "_") === type.toLowerCase()
     )
+
+    if (!setupParams) {
+      // try again using title
+      setupParams = Object.values(nodesParams[workflowType]).find(
+        (element) => element.title?.toLowerCase().replaceAll(" ", "_") === type.toLowerCase()
+      )
+    }
 
     // Add default parameters to node data
     newNode.data.setupParam = setupParams
