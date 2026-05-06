@@ -74,6 +74,7 @@ class MEDimlLearning:
         filename_loaded = ""
         results_avg = []
         analysis_dict = {}
+        self.set_progress(now=0.0)
 
         # ------------------------------------------ PIP EXECUTION ------------------------------------------
         for pip_idx, pip in enumerate(pips):
@@ -162,7 +163,7 @@ class MEDimlLearning:
                                     method=method
                                 )
                                 splitted_data = True
-                                self.set_progress(now=5 // len(pips))
+                                self.set_progress(now=self._progress['now'] + 5//len(pips))
 
                                 # Initialize the DesignExperiment class
                                 experiment = MEDiml.learning.DesignExperiment(path_study, path_ws_experiments, path_settings, experiment_label)
@@ -177,7 +178,7 @@ class MEDimlLearning:
                                 # Set up the split counter
                                 split_counter = 0
                                 designed_experiment = True
-                                self.set_progress(now=10 // len(pips))
+                                self.set_progress(now=self._progress['now'] + 10//len(pips))
                         except Exception as e:
                             traceback.print_exc()
                             raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
@@ -318,7 +319,7 @@ class MEDimlLearning:
                                     
                                     # Update
                                     loaded_data = True
-                                    self.set_progress(now=round(self._progress['now'] + 100/len(paths_splits)/5) // len(pips))
+                                    self.set_progress(now=self._progress['now'] + round(self._progress['now'] + 100/len(paths_splits)/5) // len(pips))
                                 # Clinical or other variables (For ex: Volume)
                                 else:
                                     return {"error":  "Variable type not implemented yet, only Radiomics variables are supported!"}
@@ -370,7 +371,7 @@ class MEDimlLearning:
                                 flags_preprocessing.append("var_datacleaning")
                                 flags_preprocessing_test.append("var_datacleaning")
                                 cleaned_data = True
-                                self.set_progress(now=round(self._progress['now'] + 100/len(paths_splits)/5) // len(pips))
+                                self.set_progress(now=self._progress['now'] + round(self._progress['now'] + 100/len(paths_splits)/5) // len(pips))
                             except Exception as e:
                                 traceback.print_exc()
                                 raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
@@ -418,7 +419,7 @@ class MEDimlLearning:
                                     else:
                                         return {"error":  f"Normalization: method {normalization_method} not implemented yet!"}
                                     
-                                self.set_progress(now=round(self._progress['now'] + 100/len(paths_splits)/5) // len(pips))
+                                self.set_progress(now=self._progress['now'] + round(self._progress['now'] + 100/len(paths_splits)/5) // len(pips))
                                 normalized_features = True
                             except Exception as e:
                                 traceback.print_exc()
@@ -490,7 +491,7 @@ class MEDimlLearning:
                                 rad_tables_testing = MEDiml.learning.ml_utils.combine_rad_tables(rad_tables_testing)
                                 rad_tables_testing.Properties['userData']['flags_processing'] = flags_preprocessing_test
                                 reduced_features = True
-                                self.set_progress(now=round(self._progress['now'] + 100/len(paths_splits)/5) // len(pips))
+                                self.set_progress(now=self._progress['now'] + round(self._progress['now'] + 100/len(paths_splits)/5) // len(pips))
                             except Exception as e:
                                 traceback.print_exc()
                                 raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
@@ -675,7 +676,7 @@ class MEDimlLearning:
                                 # F. Saving the results dictionary
                                 MEDiml.utils.json_utils.save_json(path_results, run_results, cls=NumpyEncoder)
                                 saved_results = True
-                                self.set_progress(now=round((split_counter+1) * (90 / len(paths_splits)) + 10) // len(pips))
+                                self.set_progress(now=self._progress['now'] + round((split_counter+1) * (90 / len(paths_splits)) + 10) // len(pips))
 
                                 # Increment the split counter
                                 split_counter += 1
