@@ -6,7 +6,6 @@ import { Image } from "primereact/image"
 import { InputSwitch } from "primereact/inputswitch"
 import { InputText } from 'primereact/inputtext'
 import { MultiSelect } from 'primereact/multiselect'
-import { Tooltip } from 'primereact/tooltip'
 import React, { useContext, useEffect, useState } from 'react'
 import { Alert, Card, Col, Container, Form, Offcanvas, ProgressBar, Row } from 'react-bootstrap'
 import Table from 'react-bootstrap/Table'
@@ -656,7 +655,9 @@ const DataManager = ({ pageId, configPath = "" }) => {
       {/* Check if workspace is gonna be used or not*/}
       <Row className="form-group-box">
         <Form.Label htmlFor="file">Use Workspace Data (Recommanded)</Form.Label>
-        <i>If this is checked, the data available in the workspace will be used instead of local data.</i>
+        <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+          If this is checked, the data available in the workspace will be used instead of local data.
+        </p>
         <Col style={{ width: "150px" }}>
           <InputSwitch
             checked={useWorkspace}
@@ -667,14 +668,12 @@ const DataManager = ({ pageId, configPath = "" }) => {
 
       {/* UPLOAD DICOM DATASET FOLDER*/}
         <Row className="form-group-box">
-          <Tooltip target=".dcm-path"/>
-          <Form.Label 
-            className="dcm-path" 
-            data-pr-tooltip="Path to the DICOM dataset folder you want to process"
-            data-pr-position="bottom"
-            htmlFor="file">
+          <Form.Label className="dcm-path" htmlFor="file">
               DICOM dataset folder
           </Form.Label>
+          <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+            Path to the DICOM dataset folder you want to process
+          </p>
           {useWorkspace ? (
             <Col style={{ width: "150px" }}>
               <Dropdown
@@ -704,14 +703,14 @@ const DataManager = ({ pageId, configPath = "" }) => {
 
         {/* UPLOAD NIfTI DATASET FOLDER*/}
         <Row className="form-group-box">
-          <Tooltip target=".nifti-path"/>
           <Form.Label 
-            className="nifti-path" 
-            data-pr-tooltip="Path to the NIfTI dataset folder you want to process" 
-            data-pr-position="bottom"
+            className="nifti-path"
             htmlFor="file">
               NIfTI dataset folder
           </Form.Label>
+          <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+            Path to the NIfTI dataset folder you want to process
+          </p>
           {useWorkspace ? (
             <Col style={{ width: "150px" }}>
               <Dropdown
@@ -741,14 +740,14 @@ const DataManager = ({ pageId, configPath = "" }) => {
 
         {/* UPLOAD SAVING FOLDER*/}
         <Row className="form-group-box">
-          <Tooltip target=".save-path"/>
           <Form.Label 
-            className="save-path" 
-            data-pr-tooltip="Folder to where the processed data will be saved"
-            data-pr-position="bottom"
+            className="save-path"
             htmlFor="file">
               Saving Options
           </Form.Label>
+          <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+            Folder to where the processed data will be saved
+          </p>
           {useWorkspace ? (
             <Col style={{ width: "150px" }}>
               <h6>Save in workspace</h6>
@@ -779,14 +778,12 @@ const DataManager = ({ pageId, configPath = "" }) => {
           )}
           {/* NUMBER OF BATCH*/}
           <Col>
-            <Tooltip target=".nbatch"/>
-            <h6 
-              className="nbatch"
-              data-pr-tooltip="Number of cores to use for the parallel processing"
-              data-pr-position="bottom"
-              >
+            <h6 className="nbatch">
               Number of cores to use :
             </h6>
+            <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+              Number of cores to use for the parallel processing
+            </p>
             <Form.Control
               name="nBatch"
               type="number"
@@ -883,7 +880,9 @@ const DataManager = ({ pageId, configPath = "" }) => {
         {/* Check if workspace is gonna be used or not*/}
         <Row className="form-group-box">
           <Form.Label htmlFor="file">Use Workspace Data (Recommanded)</Form.Label>
-          <i>If this is checked, the data available in the workspace will be used instead of local data.</i>
+          <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+            If this is checked, the data available in the workspace will be used instead of local data.
+          </p>
           <Col style={{ width: "150px" }}>
             <InputSwitch
               checked={useWorkspacePC}
@@ -895,14 +894,10 @@ const DataManager = ({ pageId, configPath = "" }) => {
         {useWorkspacePC ?  (
           <Row className="form-group-box">
             <Col style={{ width: "150px" }}>
-              <Tooltip target=".csv-file-ws"/>
-              <h6 
-                className="csv-file-ws"
-                data-pr-tooltip="CSV file containing the scans to check and their associated ROI (Region of Interest)"
-                data-pr-position="bottom"
-              >
-                CSV from workspace
-              </h6>
+              <h6 className="csv-file-ws">CSV from workspace</h6>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+                CSV file containing the scans to check and their associated ROI (Region of Interest)
+              </p>
               <Dropdown
                 style={{ maxWidth: "100%", height: "auto", width: "auto" }}
                 filter
@@ -915,14 +910,12 @@ const DataManager = ({ pageId, configPath = "" }) => {
               />
             </Col>
             <Col style={{ width: "150px" }}>
-              <Tooltip target=".npy-dataset-ws"/>
-              <h6 
-                className="npy-dataset-ws"
-                data-pr-tooltip="Folder containing the .npy files to check"
-                data-pr-position="bottom"
-              >
+              <h6 className="npy-dataset-ws">
                 NPY dataset from workspace
               </h6>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+                Folder containing the .npy files to check
+              </p>
               <Dropdown
                 style={{ maxWidth: "100%", height: "auto", width: "auto" }}
                 filter
@@ -935,14 +928,10 @@ const DataManager = ({ pageId, configPath = "" }) => {
               />
             </Col>
             <Col style={{ width: "150px" }}>
-              <Tooltip target=".npy-dataset-ws"/>
-              <h6 
-                className="npy-dataset-ws"
-                data-pr-tooltip="Folder containing the .npy files to check"
-                data-pr-position="bottom"
-              >
-                Save in workspace
-              </h6>
+              <h6 className="npy-dataset-ws">Save in workspace</h6>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+                Folder containing the .npy files to check
+              </p>
               <Dropdown
                 style={{ maxWidth: "100%", height: "auto", width: "auto" }}
                 filter
@@ -960,14 +949,14 @@ const DataManager = ({ pageId, configPath = "" }) => {
             <Col style={{ width: "150px" }}>
               <Form method="post" encType="multipart/form-data" className="inputFile">
                 {/* UPLOAD CSV FILE*/}
-                <Tooltip target=".csv-file"/>
                 <Form.Label 
-                  className="csv-file" 
-                  data-pr-tooltip="CSV file containing the scans to check and their associated ROI (Region of Interest)"
-                  data-pr-position="bottom"
+                  className="csv-file"
                   htmlFor="file">
                     Local CSV File
                 </Form.Label>
+                <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+                  CSV file containing the scans to check and their associated ROI (Region of Interest)
+                </p>
                 <Form.Group controlId="enterFile">
                   <Form.Control
                     name="pathCSV"
@@ -981,14 +970,14 @@ const DataManager = ({ pageId, configPath = "" }) => {
             {/* UPLOAD SAVING FOLDER*/}
             <Col style={{ width: "150px" }}>
               <Form method="post" encType="multipart/form-data" className="inputFile">
-                <Tooltip target=".npy-path"/>
                 <Form.Label 
-                  className="npy-path" 
-                  data-pr-tooltip="Path to the folder containing the .npy files to check (If empty, path save will be used)"
-                  data-pr-position="bottom"
+                  className="npy-path"
                   htmlFor="file">
                     NPY dataset folder
                 </Form.Label>
+                <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+                  Path to the folder containing the .npy files to check (If empty, path save will be used)
+                </p>
                 <Form.Group controlId="enterFile">
                   <Form.Control
                     name="pathNpy"
@@ -1006,15 +995,14 @@ const DataManager = ({ pageId, configPath = "" }) => {
       {/* WILD CARDS*/}
       <Form>
           <Row className="form-group-box">
-            <Tooltip target=".checks-options"/>
             <Form.Label 
               className="checks-options" 
-              data-pr-tooltip="Options to select the scans to check (institutions, modalities, etc.).
-               If empty, use a costum wildcard (e.g. 'STS*CECT*.npy')"
-              data-pr-position="bottom"
               htmlFor="file">
                 Pre-checks options
             </Form.Label>
+            <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+              Options to select the scans to check (institutions, modalities, etc.). If empty, use a costum wildcard (e.g. 'STS*CECT*.npy')
+            </p>
             <Col>
               <MultiSelect 
                 value={selectedStudies} 
