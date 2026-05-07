@@ -1,7 +1,7 @@
 import { Button } from 'primereact/button'
 import { Column } from 'primereact/column'
 import { Dialog } from 'primereact/dialog'
-import { Tooltip } from 'primereact/tooltip'
+ 
 import { TreeTable } from 'primereact/treetable'
 import React, { useContext, useEffect, useState } from 'react'
 import { Alert, Card, Col, Form, ProgressBar, Row } from 'react-bootstrap'
@@ -491,7 +491,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
       {/* Check whether to use the workspace or not*/}
       <Row className="form-group-box">
         <Form.Label htmlFor="file">Use current workspace data (recommanded)</Form.Label>
-        <i>If this is checked, the data available in the workspace will be used instead of local data.</i>
+        <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>If this is checked, the data available in the workspace will be used instead of local data.</p>
         <Col style={{ width: "150px" }}>
           <InputSwitch
             checked={useWorkspace}
@@ -502,18 +502,12 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
 
       {/* UPLOAD NPY DATASET FOLDER*/}
       <Row className="form-group-box">
-        <Tooltip target=".npy-folder"/>
-        <Form.Label 
-          className="npy-folder" 
-          data-pr-tooltip="Path to the folder containing the NPY dataset to use for radiomics features extraction"
-          data-pr-position="bottom"
-          htmlFor="file">
-            NPY dataset folder (MEDscan objects)
+        <Form.Label className="npy-folder" htmlFor="file">
+          NPY dataset folder (MEDscan objects)
         </Form.Label>
-        {useWorkspace ? (
+        <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Path to the folder containing the NPY dataset to use for radiomics features extraction</p>
+          {useWorkspace ? (
           <Col>
-            <Tooltip target=".csv-file-ws"/>
-            <h6>Select from workspace</h6>
             <Dropdown
               style={{ maxWidth: "100%", height: "auto", width: "auto" }}
               filter
@@ -543,18 +537,12 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
 
         {/* UPLOAD SETTINGS FILE*/}
         <Row className="form-group-box">
-          <Tooltip target=".settings-file"/>
-          <Form.Label 
-            className="settings-file" 
-            data-pr-tooltip="Path to the extraction settings file"
-            data-pr-position="bottom"
-            htmlFor="file">
-              Settings File
+          <Form.Label className="settings-file" htmlFor="file">
+            Settings File
           </Form.Label>
+          <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Path to the extraction settings file</p>
           {useWorkspace ? (
             <Col>
-              <Tooltip target=".csv-file-ws"/>
-              <h6>Select From Workspace</h6>
               <Dropdown
                 style={{ maxWidth: "100%", height: "auto", width: "auto" }}
                 filter
@@ -601,18 +589,12 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
 
         {/* UPLOAD CSV FILE*/}
         <Row className="form-group-box">
-        <Tooltip target=".csv-file"/>
-        <Form.Label 
-          className="csv-file" 
-          data-pr-tooltip="Path to the CSV file containing the scans to use for radiomics features extraction with their corresponding ROIs (Regions of Interest)"
-          data-pr-position="bottom"
-          htmlFor="file">
-            Path to CSV File
+        <Form.Label className="csv-file" htmlFor="file">
+          Path to CSV File
         </Form.Label>
-        {useWorkspace ? (
+        <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Path to the CSV file containing the scans to use for radiomics features extraction with their corresponding ROIs (Regions of Interest)</p>
+          {useWorkspace ? (
           <Col>
-            <Tooltip target=".csv-file-ws"/>
-            <h6>Select From Workspace</h6>
             <Dropdown
               style={{ maxWidth: "100%", height: "auto", width: "auto" }}
               filter
@@ -641,18 +623,12 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
 
         {/* UPLOAD SAVING FOLDER*/}
         <Row className="form-group-box">
-          <Tooltip target=".save"/>
-          <Form.Label 
-            className="save" 
-            data-pr-tooltip="Folder where the results of the extraction will be saved"
-            data-pr-position="bottom"
-            htmlFor="file">
-              Save folder
+          <Form.Label className="save" htmlFor="file">
+            Save folder
           </Form.Label>
+          <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Folder where the results of the extraction will be saved</p>
         {useWorkspace ? (
           <Col>
-            <Tooltip target=".csv-file-ws"/>
-            <h6>Select From Workspace</h6>
             <Dropdown
               style={{ maxWidth: "100%", height: "auto", width: "auto" }}
               filter
@@ -680,16 +656,14 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
         </Row>
 
       {/* NUMBER OF BATCH*/}
-      <Row className="form-group-box">
+        <Row className="form-group-box">
         <Col>
         <Form.Group controlId="n_cores" style={{ paddingTop: "10px" }}>
-            <Tooltip target=".ncores"/>
             <Form.Label 
-              className="ncores" 
-              data-pr-tooltip="Number of cores to use for the parallel extraction of features"
-              data-pr-position="bottom">
+              className="ncores">
                 Number of cores to use :
             </Form.Label>
+            <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Number of cores to use for the parallel extraction of features</p>
             <Form.Control
               name="n_cores"
               type="number"
@@ -700,13 +674,11 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
         </Form.Group>
         </Col>
         <Col style={{display: "flex", flexDirection:"column", justifyContent: "center", alignItems: "center"}}>
-          <Tooltip target=".skip"/>
           <Form.Label 
-            className="skip" 
-            data-pr-tooltip="Skip extractions if they are already present in the save folder"
-            data-pr-position="bottom">
+            className="skip">
               Skip Existing Extractions :
           </Form.Label>
+          <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0", textAlign: "center"}}>Skip extractions if they are already present in the save folder</p>
           <InputSwitch
             checked={skipExisting}
             onChange={(e) => {
