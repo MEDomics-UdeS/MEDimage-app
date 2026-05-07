@@ -156,7 +156,7 @@ class MEDimlLearning:
                                 self.set_progress(label=f"Pip {str(pip_idx+1)} | Spliting data")
 
                                 # Generate the machine learning experiment
-                                path_study, _ = MEDiml.learning.ml_utils.create_holdout_set(
+                                path_study = MEDiml.learning.ml_utils.create_holdout_set(
                                     path_outcome_file=path_outcome_file,
                                     path_save_experiments=path_save_experiments,
                                     outcome_name=outcome_name,
@@ -214,8 +214,6 @@ class MEDimlLearning:
                                 else:
                                     print(f"Design method {method_design} doesn ot support split numbers, defaulting to 5 splits!")
                                     nb_split = 5
-
-                                
                         except Exception as e:
                             traceback.print_exc()
                             raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
@@ -231,14 +229,6 @@ class MEDimlLearning:
                                 
                                 # Update progress
                                 self.set_progress(label=f"Pip {str(pip_idx+1)} | Split {split_counter+1} | Loading data")
-                                
-                                # --> A. Initialization phase
-                                learner = MEDiml.learning.RadiomicsLearner(
-                                    path_study=path_study,
-                                    path_workspace=path_ws_experiments,
-                                    path_settings=Path.cwd(), 
-                                    experiment_label=experiment_label
-                                )
 
                                 # Load the test dictionary and machine learning information
                                 path_ml = paths_splits[split_counter]
@@ -319,7 +309,8 @@ class MEDimlLearning:
                                     
                                     # Update
                                     loaded_data = True
-                                    self.set_progress(now=self._progress['now'] + round(self._progress['now'] + 100/len(paths_splits)/5) // len(pips))
+                                    self.set_progress(now=self._progress['now'] + 10 // len(paths_splits) // len(pips))
+
                                 # Clinical or other variables (For ex: Volume)
                                 else:
                                     return {"error":  "Variable type not implemented yet, only Radiomics variables are supported!"}
@@ -371,7 +362,7 @@ class MEDimlLearning:
                                 flags_preprocessing.append("var_datacleaning")
                                 flags_preprocessing_test.append("var_datacleaning")
                                 cleaned_data = True
-                                self.set_progress(now=self._progress['now'] + round(self._progress['now'] + 100/len(paths_splits)/5) // len(pips))
+                                self.set_progress(now=self._progress['now'] + 10//len(paths_splits)//len(pips))
                             except Exception as e:
                                 traceback.print_exc()
                                 raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
@@ -418,8 +409,8 @@ class MEDimlLearning:
                                         rad_table_learning = normalization.fit_transform(rad_table_learning)  # Training data
                                     else:
                                         return {"error":  f"Normalization: method {normalization_method} not implemented yet!"}
-                                    
-                                self.set_progress(now=self._progress['now'] + round(self._progress['now'] + 100/len(paths_splits)/5) // len(pips))
+                                
+                                self.set_progress(now=self._progress['now'] + 10 // len(paths_splits) // len(pips))
                                 normalized_features = True
                             except Exception as e:
                                 traceback.print_exc()
@@ -491,7 +482,7 @@ class MEDimlLearning:
                                 rad_tables_testing = MEDiml.learning.ml_utils.combine_rad_tables(rad_tables_testing)
                                 rad_tables_testing.Properties['userData']['flags_processing'] = flags_preprocessing_test
                                 reduced_features = True
-                                self.set_progress(now=self._progress['now'] + round(self._progress['now'] + 100/len(paths_splits)/5) // len(pips))
+                                self.set_progress(now=self._progress['now'] + 20 // len(paths_splits) // len(pips))
                             except Exception as e:
                                 traceback.print_exc()
                                 raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
@@ -541,18 +532,14 @@ class MEDimlLearning:
                                     var_importance_threshold = content["data"][model_name]["varImportanceThreshold"]
                                 else:
                                     return {"error":  "Radiomics learner: Radiomics learner: variable importance threshold not provided"}
-                                if "optimalThreshold" in content["data"][model_name].keys() and content["data"][model_name]["optimalThreshold"] is not None:
-                                    optimal_threshold = content["data"][model_name]["optimalThreshold"]
+                                if "optimizeThreshold" in content["data"][model_name].keys() and content["data"][model_name]["optimizeThreshold"] is not None:
+                                    optimize_threshold = content["data"][model_name]["optimizeThreshold"]
                                 else:
-                                    optimal_threshold = None
+                                    optimize_threshold = True
                                 if "optimizationMetric" in content["data"][model_name].keys() and content["data"][model_name]["optimizationMetric"] is not None:
                                     optimization_metric = content["data"][model_name]["optimizationMetric"]
                                 else:
                                     return {"error":  "Radiomics learner: Optimization metric was not provided"}
-                                if "method" in content["data"][model_name].keys() and content["data"][model_name]["method"] is not None:
-                                    method = content["data"][model_name]["method"]
-                                else:
-                                    return {"error":  "Radiomics learner: Training method was not provided"}
                                 if "use_gpu" in content["data"][model_name].keys() and content["data"][model_name]["use_gpu"] is not None:
                                     use_gpu = content["data"][model_name]["use_gpu"]
                                 else:
@@ -570,24 +557,12 @@ class MEDimlLearning:
                                     algorithm='xgboost',
                                     ml_config={
                                     'var_importance_threshold': var_importance_threshold,
-                                    'optimize_threshold': True,
+                                    'optimize_threshold': optimize_threshold,
                                     'optimization_metric': optimization_metric,
                                     'use_gpu': use_gpu,
                                     'seed': seed
                                 })
                                 estimator.fit(var_table_train, outcome_table_binary_train)
-
-                                # Training the model
-                                """model = learner.train_xgboost_model(
-                                    var_table_train, 
-                                    outcome_table_binary_train, 
-                                    var_importance_threshold, 
-                                    optimal_threshold,
-                                    method=method,
-                                    use_gpu=use_gpu,
-                                    optimization_metric=optimization_metric,
-                                    seed=seed
-                                )"""
 
                                 # Saving the trained model using pickle
                                 if "nameSave" in content["data"][model_name].keys() and content["data"][model_name]["nameSave"] is not None:
@@ -676,7 +651,7 @@ class MEDimlLearning:
                                 # F. Saving the results dictionary
                                 MEDiml.utils.json_utils.save_json(path_results, run_results, cls=NumpyEncoder)
                                 saved_results = True
-                                self.set_progress(now=self._progress['now'] + round((split_counter+1) * (90 / len(paths_splits)) + 10) // len(pips))
+                                self.set_progress(now=self._progress['now'] + 40 // len(paths_splits) // len(pips))
 
                                 # Increment the split counter
                                 split_counter += 1
@@ -1106,7 +1081,7 @@ class MEDimlLearning:
                         f.writelines("else:\n")
                         f.writelines("    holdout_test = True\n")
                         f.writelines("\n# Generate the machine learning experiment\n")
-                        f.writelines("path_study, _ = MEDiml.learning.ml_utils.create_holdout_set(\n")
+                        f.writelines("path_study = MEDiml.learning.ml_utils.create_holdout_set(\n")
                         f.writelines("    path_outcome_file=path_outcome_file,\n")
                         f.writelines("    path_save_experiments=path_save_experiments,\n")
                         f.writelines("    outcome_name=outcome_name,\n")
@@ -1397,7 +1372,7 @@ class MEDimlLearning:
                         f.writelines("\n    # Initializing XGBoost model settings\n")
                         f.writelines("    model_name = learner_settings['model']\n")
                         f.writelines("    var_importance_threshold = learner_settings[model_name]['varImportanceThreshold']\n")
-                        f.writelines("    optimal_threshold = learner_settings[model_name]['optimalThreshold']\n")
+                        f.writelines("    optimal_threshold = learner_settings[model_name]['optimizeThreshold']\n")
                         f.writelines("    optimization_metric = learner_settings[model_name]['optimizationMetric']\n")
                         f.writelines("    method = learner_settings[model_name]['method']\n")
                         f.writelines("    use_gpu = learner_settings[model_name]['use_gpu']  if 'use_gpu' in learner_settings[model_name] else False\n")

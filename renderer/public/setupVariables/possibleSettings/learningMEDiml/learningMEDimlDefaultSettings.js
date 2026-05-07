@@ -36,10 +36,9 @@ const learningMEDimlDefaultSettings = {
     model: "XGBoost",
     XGBoost: {
       varImportanceThreshold: 0.3,
-      optimalThreshold: 0.5,
+      optimizeThreshold: true,
       nameSave: "xgboost_5perc",
       optimizationMetric: "MCC",
-      method: "pycaret",
       seed: 54288
     }
   },
