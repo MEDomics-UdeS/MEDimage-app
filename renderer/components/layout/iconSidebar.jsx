@@ -1,23 +1,16 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useContext, useEffect } from "react"
-import { Files, HouseFill, Gear, Server, Search, BandaidFill, Send } from "react-bootstrap-icons"
-import Nav from "react-bootstrap/Nav"
-import { NavDropdown } from "react-bootstrap"
-import { WorkspaceContext } from "../workspace/workspaceContext"
+import { ipcRenderer } from "electron"
 import { Tooltip } from "primereact/tooltip"
-import { LayoutModelContext } from "./layoutContext"
-import { PiFlaskFill } from "react-icons/pi"
-import { FaMagnifyingGlassChart, FaHeadSideVirus } from "react-icons/fa6"
-import { FaDatabase } from "react-icons/fa6"
-import { LuNetwork } from "react-icons/lu"
-import { Button } from "primereact/button"
-import { TbFileExport } from "react-icons/tb"
-import { VscChromeClose } from "react-icons/vsc"
-import { PiGraphFill } from "react-icons/pi"
-import { MdOutlineGroups3 } from "react-icons/md"
-import { FaBriefcase } from "react-icons/fa"
+import { useContext, useEffect, useState } from "react"
+import { NavDropdown } from "react-bootstrap"
+import { Gear, HouseFill } from "react-bootstrap-icons"
+import Nav from "react-bootstrap/Nav"
+import { FaBriefcase, FaLayerGroup } from "react-icons/fa"
+import { FaHeadSideVirus } from "react-icons/fa6"
 import { GiDigDug } from "react-icons/gi"
-import { FaLayerGroup } from "react-icons/fa"
+import { WorkspaceContext } from "../workspace/workspaceContext"
+import { LayoutModelContext } from "./layoutContext"
+
 
 /**
  * @description Sidebar component containing icons for each page
@@ -27,6 +20,7 @@ import { FaLayerGroup } from "react-icons/fa"
 const IconSidebar = ({ onSidebarItemSelect }) => {
   // eslint-disable-next-line no-unused-vars
   const { dispatchLayout, developerMode, setDeveloperMode } = useContext(LayoutModelContext)
+  const [appVersion, setAppVersion] = useState("")
   const [activeKey, setActiveKey] = useState("home") // activeKey is the name of the page
   const [disabledIcon, setDisabledIcon] = useState("disabled") // disabled is the state of the page
   const [developerModeNav, setDeveloperModeNav] = useState(true)
@@ -39,6 +33,11 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
   useEffect(() => {
     setDeveloperMode(true)
     setDeveloperModeNav(true)
+
+    // Get app's version
+    ipcRenderer.invoke("getAppVersion").then((data) => {
+      setAppVersion(data.replace(/v/, ""))
+    })
   }, [])
 
   /**
@@ -110,7 +109,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
 
         <Nav defaultActiveKey="/home" className="flex-column" style={{ width: "100%", height: "100%" }}>
           <Nav.Link
-            className="homeNavIcon btnSidebar"
+            className={`homeNavIcon btnSidebar`}
             data-pr-at="right center"
             data-pr-tooltip="Home"
             data-pr-my="left center"
@@ -120,7 +119,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
             onClick={(event) => handleClick(event, "home")}
             onDoubleClick={(event) => handleDoubleClick(event, "Home")}
           >
-            <HouseFill size={"1.25rem"} width={"100%"} height={"100%"} style={{ scale: "0.65" }} />
+            <HouseFill size={"1.25rem"} width={"100%"} height={"100%"} />
           </Nav.Link>
           
           <NavDropdown.Divider style={{ height: "3rem" }} />
@@ -129,7 +128,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
             <div className="sidebar-icons">
                 {/* MEDiml Extraction Module */}
                 <Nav.Link
-                  className="ExtMEDimgNav btnSidebar align-center"
+                  className={`ExtMEDimgNav btnSidebar align-center`}
                   data-pr-at="right center"
                   data-pr-my="left center"
                   data-pr-tooltip="Extraction Module"
@@ -142,7 +141,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
                   }}
                   onDoubleClick={(event) => handleDoubleClick(event, "extractionMEDiml")}
                 >
-                  <GiDigDug style={{ height: "2rem", width: "auto" }} />
+                  <GiDigDug style={{ height: "1.5rem", width: "auto" }} />
                 </Nav.Link>
             </div>
           </div>
@@ -150,7 +149,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
             <div className="sidebar-icons">
               {/* DataManager */}
               <Nav.Link
-                className="DataManagerNav btnSidebar align-center"
+                className={`DataManagerNav btnSidebar align-center`}
                 icon="pi pi-book"
                 data-pr-at="right center"
                 data-pr-my="left center"
@@ -165,7 +164,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
                 }}
                 onDoubleClick={(event) => handleDoubleClick(event, "DataManager")}
               >
-                <FaBriefcase style={{ height: "2rem", width: "auto" }} />
+                <FaBriefcase style={{ height: "1.5rem", width: "auto" }} />
               </Nav.Link>
             </div>
           </div>
@@ -173,7 +172,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
             <div className="sidebar-icons">
               {/* BatchExtractor */}
               <Nav.Link
-                className="BatchExtractorNav btnSidebar align-center"
+                className={`BatchExtractorNav btnSidebar align-center`}
                 data-pr-at="right center"
                 data-pr-my="left center"
                 data-pr-tooltip="BatchExtractor"
@@ -186,7 +185,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
                 }}
                 onDoubleClick={(event) => handleDoubleClick(event, "BatchExtractor")}
               >
-                <FaLayerGroup style={{ height: "2rem", width: "auto" }} />
+                <FaLayerGroup style={{ height: "1.5rem", width: "auto" }} />
               </Nav.Link>
             </div>
           </div>
@@ -207,7 +206,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
                   }}
                   onDoubleClick={(event) => handleClick(event, "LearningMEDiml")}
                 >
-                  <FaHeadSideVirus style={{ height: "2rem", width: "auto" }} />
+                  <FaHeadSideVirus style={{ height: "1.5rem", width: "auto" }} />
                 </Nav.Link>
             </div>
           </div>
@@ -216,9 +215,10 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
           {/* div that puts the buttons to the bottom of the sidebar*/}
           <div className="d-flex icon-sidebar-divider" style={{ flexGrow: "1" }}></div>
 
-          {/* ------------------------------------------- SETTINGS BUTTON ----------------------------------------- */}
+          <div className="sidebar-version">v{appVersion}</div>
+
           <Nav.Link
-            className="settingsNav btnSidebar"
+            className={`settingsNav btnSidebar`}
             data-pr-at="right center"
             data-pr-my="left center"
             data-pr-tooltip="Settings"
@@ -227,7 +227,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
             onClick={() => dispatchLayout({ type: `openSettings`, payload: { pageId: "Settings" } })}
             disabled={disabledIcon}
           >
-            <Gear size={"1.25rem"} width={"100%"} height={"100%"} style={{ scale: "0.65" }} />
+            <Gear size={"1.5rem"} />
           </Nav.Link>
         </Nav>
         {/* ------------------------------------------- END ICON NAVBAR ----------------------------------------- */}

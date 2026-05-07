@@ -8,7 +8,8 @@ import { Message } from 'primereact/message'
 import { OverlayPanel } from 'primereact/overlaypanel'
 import { Panel } from 'primereact/panel'
 import { SelectButton } from "primereact/selectbutton"
-import React, { useContext, useEffect, useRef, useState } from "react"
+import { Splitter, SplitterPanel } from 'primereact/splitter'
+import { useContext, useEffect, useRef, useState } from "react"
 import { Col, Row } from "react-bootstrap"
 import Card from "react-bootstrap/Card"
 import { toast } from "react-toastify"
@@ -321,6 +322,21 @@ const ResultsPaneMEDiml = () => {
         <Card.Title>Plots</Card.Title>
           <Accordion>
             <AccordionTab disabled={!isResults} key={`AccordionTab-Figures`} header={"Compare Analysis Plots"}>
+              {histogramImages.length > 0 ? 
+                (<Panel header="Feature Importance" toggleable>
+                    <Splitter >
+                      {histogramImages.map((image, index) => (
+                        <SplitterPanel key={index}>
+                          <Image key={index} src={histogramImages[index]} alt="Image" width="300" preview/>
+                        </SplitterPanel>
+                      ))}
+                    </Splitter>
+                </Panel>) : (
+                <Panel header="Tree Plot" toggleable>
+                  <div style={{ color: 'red' }}>No feature importance histogram generated.</div>
+                </Panel>
+              )}
+                      
               {(heatMap === undefined || heatMap === "") && (
                 <Panel header="Heatmap" toggleable>
                   <div style={{ color: 'red' }}>No heatmap generated.</div>

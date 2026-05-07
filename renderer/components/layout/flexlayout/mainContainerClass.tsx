@@ -22,23 +22,24 @@ import {
 } from "flexlayout-react"
 import fs from "fs"
 import Image from "next/image"
+import { confirmDialog } from "primereact/confirmdialog"
 import * as Prism from "prismjs"
 import "prismjs/themes/prism-coy.css"
 import * as React from "react"
 import * as Icons from "react-bootstrap-icons"
 import Iframe from "react-iframe"
 import { toast } from "react-toastify"
-import { getPathSeparator, loadJsonPath } from "../../../utilities/fileManagementUtils"
-import ExtractionMEDimlPage from "../../mainPages/extractionMEDiml"
-import LearningMEDimlPage from "../../mainPages/learningMEDiml"
-import DataManager from "../../mainPages/datamanager"
+import { getPathSeparator, loadCSVFromPath, loadJSONFromPath, loadJsonPath, loadXLSXFromPath } from "../../../utilities/fileManagementUtils"
 import DataTableWrapperBPClass from "../../dataTypeVisualisation/dataTableWrapperBPClass"
 import DataTableFromDB from "../../dbComponents/dataTableFromDB"
+import CodeEditor from "../../flow/codeEditor"
 import BatchExtractor from "../../mainPages/batchextractor"
+import DataManager from "../../mainPages/datamanager"
+import ExtractionMEDimlPage from "../../mainPages/extractionMEDiml"
 import HomePage from "../../mainPages/home"
 import HtmlViewer from "../../mainPages/htmlViewer"
+import LearningMEDimlPage from "../../mainPages/learningMEDiml"
 import ModulePage from "../../mainPages/moduleBasics/modulePage"
-import NotebookEditor from "../../mainPages/notebookEditor"
 import OutputPage from "../../mainPages/output"
 import SettingsPage from "../../mainPages/settings"
 import TerminalPage from "../../mainPages/terminal"
@@ -53,9 +54,30 @@ import ZoomPanPinchComponent from "./zoomPanPinchComponent"
 
 var fields = ["Name", "Field1", "Field2", "Field3", "Field4", "Field5"]
 
+interface CodeEditorWithOpenStateProps {
+  id: string
+  path: string
+  updateSavedCode: (savedCode: boolean, nodeId: string) => void
+  setIsEditorOpen: (value: boolean) => void
+}
+
+const CodeEditorWithOpenState = ({ id, path, updateSavedCode, setIsEditorOpen }: CodeEditorWithOpenStateProps) => {
+  React.useEffect(() => {
+    setIsEditorOpen(true)
+    return () => {
+      setIsEditorOpen(false)
+    }
+  }, [setIsEditorOpen])
+
+  const TypedCodeEditor = CodeEditor as unknown as React.ComponentType<any>
+  return <TypedCodeEditor id={id} path={path} updateSavedCode={updateSavedCode} />
+}
+
 interface LayoutContextType {
   layoutRequestQueue: any[]
   setLayoutRequestQueue: (value: any[]) => void
+  isEditorOpen: boolean
+  setIsEditorOpen: (value: boolean) => void
 }
 
 interface DataContextType {
@@ -78,9 +100,18 @@ interface MyComponentState {
  * @returns the main container
  */
 const MainContainer = (props) => {
-  const { layoutRequestQueue, setLayoutRequestQueue } = React.useContext(LayoutModelContext) as unknown as LayoutContextType
+  const { layoutRequestQueue, setLayoutRequestQueue, setIsEditorOpen, isEditorOpen } = React.useContext(LayoutModelContext) as unknown as LayoutContextType
   const { globalData, setGlobalData } = React.useContext(DataContext) as unknown as DataContextType
-  return <MainInnerContainer layoutRequestQueue={layoutRequestQueue} setLayoutRequestQueue={setLayoutRequestQueue} globalData={globalData} setGlobalData={setGlobalData} />
+  return (
+    <MainInnerContainer 
+      layoutRequestQueue={layoutRequestQueue} 
+      setLayoutRequestQueue={setLayoutRequestQueue} 
+      globalData={globalData} 
+      setIsEditorOpen={setIsEditorOpen}
+      isEditorOpen={isEditorOpen}
+      setGlobalData={setGlobalData} 
+    />
+)
 }
 
 /**
@@ -93,6 +124,7 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
   showingPopupMenu: boolean = false
   htmlTimer?: any = null
   layoutRef?: React.RefObject<Layout>
+  saved: { [key: string]: boolean } = {}
   static contextType = LayoutModelContext
 
   constructor(props: any) {
@@ -493,25 +525,64 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
   }
 
   /**
+   * Update savedCode state
+   * @param savedCode the new value of savedCode
+   */
+  updateSavedCode = (savedCode: boolean, nodeId: string) => {
+    const fileName = this.state.model?.getNodeById(nodeId)?.getHelpText() ?? this.state.model?.getNodeById(nodeId)?.getId()
+    this.saved[nodeId] = savedCode
+    if (fileName) this.state.model!.doAction(Actions.renameTab(nodeId, fileName + (savedCode ? "" : "*")))
+  }
+
+  /**
    * Callback when an action is dispatched by flexlayout.
    * @param action action that was dispatched
    * @returns optionally return a Action to replace the action or null to not dispatch action
    * @description here we catch RENAME_TAB actions and update the medDataObject name
    */
   onAction = (action: Action) => {
-    console.log("MainContainer action: ", action, this.layoutRef, this.state.model)
+    const { isEditorOpen, setIsEditorOpen } = this.props as LayoutContextType
+    console.log("MainContainer action: ", action, this.layoutRef, this.state.model, this.saved)
     if (action.type === Actions.RENAME_TAB) {
+      if (isEditorOpen) {
+        console.error("Please close the editor before renaming")
+        toast.error("Please close the editor before renaming")
+        return Actions.RENAME_TAB
+      }
       const { globalData, setGlobalData } = this.props as DataContextType
       let newName = action.data.text
       let medObject = globalData[action.data.node]
       console.log("medObject", medObject)
       if (medObject) {
+        // Check name is not empty
+        if (newName == "") {
+          toast.error("Error: Name cannot be empty")
+          return Actions.RENAME_TAB
+        }
+        // Check if the name keeps the original extension
+        if (medObject.type != "directory") {
+          const newNameParts = newName.split(".")
+          if (medObject.type != newNameParts[newNameParts.length - 1]) {
+            toast.error("Invalid Name")
+            return Actions.RENAME_TAB
+          }
+        }
+        // Check if the new name is different from the original
+        if (medObject.name == newName) {
+          toast.warning("Warning: same name")
+          return Actions.RENAME_TAB
+        }
+        // Check if the name is not DATA or EXPERIMENTS
+        if (["ROOT", "DATA", "EXPERIMENTS"].includes(newName)) {
+          toast.error("Error: This name is reserved and cannot be used")
+          return Actions.RENAME_TAB
+        }
         // update the medDataObject name
         let success = updateMEDDataObjectName(medObject.id, newName)
         if (!success) {
           toast.error("Failed to update MEDDataObject name of the file")
           console.error("Failed to update MEDDataObject name")
-          return null
+          return action
         }
         // Update the path
         let oldPath = medObject.path
@@ -529,6 +600,22 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
           MEDDataObject.updateWorkspaceDataObject()
         }
       }
+    } else if (action.type === Actions.DELETE_TAB && this.saved[action.data.node] === false) {
+      return confirmDialog({
+        closable: false,
+        message: `You have unsaved changes in the code editor. Are you sure you want to close the tab?`,
+        header: "Unsaved changes",
+        icon: "pi pi-exclamation-triangle",
+        accept: () => {
+          this.updateSavedCode(true, action.data.node)
+          this.state.model!.doAction(action)
+        },
+        reject: () => {
+          return null // Return null to cancel the action
+        }
+      })
+    } else if (action.type === Actions.DELETE_TAB) {
+      setIsEditorOpen(false)
     }
     return action
   }
@@ -543,6 +630,7 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
    * @returns the react component to display
    */
   factory = (node: TabNode) => {
+    const { isEditorOpen, setIsEditorOpen } = this.props as LayoutContextType
     var component = node.getComponent()
 
     /**
@@ -803,11 +891,10 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
         console.log("config", config)
         return <Iframe url={config.path} width="100%" height="100%" />
       }
-    } else if (component === "codeEditor") {
+    } else if (component === "codeEditor" || component === "Code Editor") {
       if (node.getExtraData().data == null) {
         const config = node.getConfig()
-        console.log("config", config)
-        return <NotebookEditor url={config.path} />
+        return <CodeEditorWithOpenState id={config.uuid} path={config.path} updateSavedCode={this.updateSavedCode} setIsEditorOpen={setIsEditorOpen} />
       }
     } else if (component === "Settings") {
       return <SettingsPage />
@@ -1193,3 +1280,4 @@ function showImage(url, scale) {
 }
 
 export { MainContainer }
+
