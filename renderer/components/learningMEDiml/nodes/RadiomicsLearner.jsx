@@ -31,13 +31,13 @@ const RadiomicsLearner = ({ id, data, type }) => {
         nodeSpecific={
           <>
             {/* Show segmentation warning when there is no roisList or the roisList is empty */}
-            <Row className="form-group-box" style={{ textAlign: "center", alignItems: "center", justifyContent: "center" }}>
+            <Row className="form-group-box" style={{ maxHeight: "400px", overflowY: "auto", overflowX: "hidden", paddingRight: "8px" }}>
               {/* Model type */}
               <Form.Group controlId="algo">
               <Form.Label className="algo">Algorithm</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Learning algorithm for model training.</p>
                 <Dropdown 
-                    style={{width: "300px", display: "block", margin: "0 auto"}}
+                      
                     value={data.setupParam.possibleSettings.defaultSettings.model}
                     options={[{ name: 'XGBoost' }]}
                     optionLabel="name" 
@@ -56,7 +56,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
               <Form.Label className="varImportanceThreshold">Variable Importance Threshold</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Higher threshold keeps fewer important variables in the model.</p>
                 <InputNumber
-                    style={{width: "300px", display: "block", margin: "0 auto"}}
+                    style={{width: "300px"}}
                     buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.XGBoost.varImportanceThreshold}
                     onValueChange={(event) => {
@@ -81,7 +81,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
               <Form.Label className="optimalThreshold">Model's Optimal Threshold</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Decision threshold for predictions. Leave empty for automatic calculation.</p>
                 <InputNumber
-                    style={{width: "300px", display: "block", margin: "0 auto"}}
+                    style={{width: "300px"}}
                     buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.XGBoost.optimalThreshold}
                     onValueChange={(event) => {
@@ -109,7 +109,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Name for saving the trained model.</p>
                 <InputText
                     key="nameSaveModel"
-                    style={{width: "300px", display: "block", margin: "0 auto"}}
+                    style={{width: "300px"}}
                     value={data.setupParam.possibleSettings.defaultSettings.XGBoost.nameSave}
                     placeholder={data.setupParam.possibleSettings.defaultSettings.XGBoost.nameSave}
                     onChange={(event) => {
@@ -128,7 +128,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Performance metric used when tuning with PyCaret.</p>
               <InputText
                     key="optimizationMetric"
-                    style={{width: "300px", display: "block", margin: "0 auto"}}
+                    style={{width: "300px"}}
                     value={data.setupParam.possibleSettings.defaultSettings.XGBoost.optimizationMetric}
                     placeholder={data.setupParam.possibleSettings.defaultSettings.XGBoost.optimizationMetric}
                     onChange={(event) => {
@@ -145,7 +145,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
               <Form.Label className="method">Parameters Tuning Method</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Strategy for hyperparameter optimization.</p>
                 <Dropdown 
-                    style={{width: "300px", display: "block", margin: "0 auto"}}
+                    style={{width: "300px"}}
                     value={data.setupParam.possibleSettings.defaultSettings.XGBoost.method}
                     options={[{ name: 'PyCaret' }, { name: 'grid_search' }, { name: 'random_search' }]}
                     optionLabel="name" 
@@ -165,7 +165,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
               <Form.Label className="seed">Random Seed</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Seed value for reproducible random number generation.</p>
                 <InputNumber
-                    style={{width: "300px", display: "block", margin: "0 auto"}}
+                    style={{width: "300px"}}
                     buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.XGBoost.seed}
                     onValueChange={(event) => {
