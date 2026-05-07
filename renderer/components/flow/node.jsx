@@ -41,7 +41,7 @@ import NodeWrapperResults from "./nodeWrapperResults"
  * Note: all JSX.Element props are not mandatory
  * Note: see Powerpoint for additionnal
  */
-const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClickCustom, isGroupNode, nodeLink = "https://medomicslab.gitbook.io/MEDiml-app-docs" }) => {
+const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClickCustom, isGroupNode, nodeLink="https://medomicslab.gitbook.io/MEDiml-app-docs", color=null }) => {
   const [nodeName, setNodeName] = useState(data.internal.name) // used to store the name of the node
   const { flowInfos, canRun } = useContext(FlowInfosContext) // used to get the flow infos
   const { showResultsPane } = useContext(FlowResultsContext) // used to get the flow results
@@ -114,6 +114,7 @@ const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClick
           pt={{
             body: { className: `${nodeBody ? "padding-0_2rem-important" : "padding-0-important"}` }
           }}
+          style={{backgroundColor: color}}
           onClick={(e) => (onClickCustom ? onClickCustom(e) : op.current.toggle(e))}
           // if the node has run and the results pane is displayed, the node is displayed normally
           // if the node has not run and the results pane is displayed, the node is displayed with a notRun class (see .css file)
