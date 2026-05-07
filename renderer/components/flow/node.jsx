@@ -329,9 +329,6 @@ export const updateHasWarning = (data) => {
       } else if (data.internal.settings.Random.nSplits < 2) {
         data.internal.hasWarning = { state: true, tooltip: <p>Number of splits must be at least 2!</p> }
         return
-      } else if (data.internal.settings.Random.method === null || data.internal.settings.Random.method === ""){
-        data.internal.hasWarning = { state: true, tooltip: <p>No method is selected!</p> }
-        return
       } else if (data.internal.settings.Random.testProportion === null || data.internal.settings.Random.testProportion === ""){
         data.internal.hasWarning = { state: true, tooltip: <p>No test proportion is given!</p> }
         return
@@ -407,9 +404,6 @@ export const updateHasWarning = (data) => {
     if (data.internal.settings.XGBoost.nameSave === null || data.internal.settings.XGBoost.nameSave === "") {
       data.internal.hasWarning = { state: true, tooltip: <p>Save name for the model is not given!</p> }
       return
-    } else if (data.internal.settings.XGBoost.optimalThreshold < 0 || data.internal.settings.XGBoost.optimalThreshold > 1){
-      data.internal.hasWarning = { state: true, tooltip: <p>Model's optimal threshold must be between 0 and 1!</p> }
-      return
     } else if (data.internal.settings.XGBoost.varImportanceThreshold === null || data.internal.settings.XGBoost.varImportanceThreshold === ""){
       data.internal.hasWarning = { state: true, tooltip: <p>Varialble importance cut-off threshold is not given!</p> }
       return
@@ -419,14 +413,9 @@ export const updateHasWarning = (data) => {
     } else if (data.internal.settings.XGBoost.seed === null || data.internal.settings.XGBoost.seed === ""){
       data.internal.hasWarning = { state: true, tooltip: <p>Seed for the random generator is not given!</p> }
       return
-    } else if (data.internal.settings.XGBoost.method === "pycaret"){
-      if (data.internal.settings.XGBoost.optimizationMetric === null || data.internal.settings.XGBoost.optimizationMetric === "" || data.internal.settings.XGBoost.optimizationMetric === undefined){
-        data.internal.hasWarning = { state: true, tooltip: <p>Optimization metric is not given!</p> }
-        return
-      } else {
-        data.internal.hasWarning = { state: false }
-        return
-      }
+    } if (data.internal.settings.XGBoost.optimizationMetric === null || data.internal.settings.XGBoost.optimizationMetric === "" || data.internal.settings.XGBoost.optimizationMetric === undefined){
+      data.internal.hasWarning = { state: true, tooltip: <p>Optimization metric is not given!</p> }
+      return
     } else {
       data.internal.hasWarning = { state: false }
       return
