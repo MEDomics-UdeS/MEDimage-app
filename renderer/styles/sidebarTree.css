@@ -67,149 +67,125 @@
   border-style: solid;
 }
 
-.rct-tree-input-icon {
-  content: url(data:image/svg+xml,%3Csvg%20stroke%3D%22currentColor%22%20fill%3D%22currentColor%22%20stroke-width%3D%220%22%20viewBox%3D%220%200%2016%2016%22%20height%3D%221em%22%20width%3D%221em%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M11.742%2010.344a6.5%206.5%200%201%200-1.397%201.398h-.001c.03.04.062.078.098.115l3.85%203.85a1%201%200%200%200%201.415-1.414l-3.85-3.85a1.007%201.007%200%200%200-.115-.1zM12%206.5a5.5%205.5%200%201%201-11%200%205.5%205.5%200%200%201%2011%200z%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E) !important;
-  position: relative !important;
-  padding: 1px 0 !important;
-  left: 1.15rem !important;
-  transform: none !important;
-  z-index: 1 !important;
+
+.icon-sidebar {
+  background: linear-gradient(180deg, #040a14da, #273c69);
 }
 
-.rct-tree-search-input-container {
-  position: absolute;
-  top: -1.72rem;
-  right: 0.5rem;
-  width: 197px;
+.icon-sidebar::after {
+  background: linear-gradient(180deg, #b5bed141, #b5bed141);
+  width: 0.65px;
 }
 
-.context-menu-icon {
-  margin-right: 0.5rem;
-  align-self: center;
-}
+/* ===== ICON BUTTON BASE ===== */
+.btnSidebar {
+  width: 2.8rem;
+  height: 2.8rem;
 
-.context-menu-icon:hover {
-  box-shadow: 0 0 0.25rem 0.1rem #0000007c !important;
-}
-
-.context-menu-icon:active {
-  background-color: #0000007c !important;
-}
-
-.tooltip-small > .p-tooltip-text {
-  padding: 0.25rem !important;
-  margin-right: 0rem;
-  align-self: center;
-  font-size: smaller;
-  background-color: #222222;
-  border-radius: 3px;
-}
-
-.tooltip-small > .p-tooltip-arrow {
-  /* border: 0.25rem solid #f20b0b !important; */
-  background-color: #222222 !important;
-  border-right-color: #222222 !important;
-}
-
-.contexify_menu > .contexify_item > .contexify_itemContent {
-  padding-top: 0.15rem !important;
-  padding-bottom: 0.15rem !important;
-}
-
-.context-submenu > .contexify_item > .contexify_itemContent {
-  z-index: 999 !important;
-  outline: #fa2727 !important;
-  outline-width: 1rem !important;
-  border-color: #000000 !important;
-  border-width: 1rem !important;
-  border-style: solid !important;
-  background-color: #000000 !important;
-}
-
-.contexify.contexify_submenu {
-  box-shadow: 0 0 0.25rem 0.1rem #0000007c !important;
-}
-
-.tooltip-icon-sidebar > .p-tooltip-text {
-  padding: 0.5rem !important;
-  margin-right: 0.5rem;
-  align-self: center;
-}
-
-.rct-tree-item-isNotFolder:hover {
-  padding-top: var(--tree-item-padding-left);
-  box-shadow: inset var(--tree-item-padding-left) 0em #8d0e0e;
-}
-
-.folder-bracket {
-  position: absolute;
-  width: 0.1rem;
-  top: 1.5rem;
-  bottom: 10px;
-  background-color: #868686;
-}
-
-.medomics-layer {
-  display: flex;
-  flex-direction: row;
-  z-index: 3;
+  display: flex !important;
+  align-items: center;
   justify-content: center;
-  border-top: 0.15rem solid;
 
+  border-radius: 50%;
+  margin: 0.35rem 0;
+
+  color: #cfcfcf !important;
+  background: transparent;
+
+  transition: all 0.2s ease-in-out;
+}
+
+/* ===== HOVER STATE ===== */
+.btnSidebar:hover {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
+  color: #ffffff !important;
+}
+
+/* ===== ACTIVE / PRIMARY BUTTON ===== */
+.btnSidebar.active,
+.btnSidebar:active {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 0 6px rgba(255, 255, 255, 0.08),
+    0 0 10px rgba(255, 255, 255, 0.08);
+}
+
+/* ===== GOLD TOP ICON (FOCAL POINT) ===== */
+.homeNavIcon {
+  color: #ffffff !important;
+
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.6));
+}
+
+/* ===== ICON SIZE NORMALIZATION ===== */
+.btnSidebar svg {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+/* ===== REMOVE OLD BLOCKY LAYERS ===== */
+.medomics-layer {
+  border: none;
   width: 100%;
-}
-
-.medomics-layer-text {
-  color: #ffffff;
-  padding-inline: 1rem;
-  border-radius: 0 10px 10px 0;
-  display: block;
-  position: absolute;
-  left: -10rem;
-  z-index: -1;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  transition: all 0.5s ease-in-out;
-}
-
-.medomics-layer:hover .medomics-layer-text {
-  display: block;
-  left: 3rem;
-  box-shadow: 0 0 0.25rem 0.1rem #0000007c !important;
-}
-
-.icon-sidebar:hover .medomics-layer .medomics-layer-text {
-  display: block;
-  left: 3rem;
+  display: flex;
+  justify-content: center;
 }
 
 .sidebar-icons {
+  margin: 0;
+}
+
+/* ===== PUSH BOTTOM BUTTON ===== */
+.icon-sidebar-divider {
+  flex-grow: 1;
+  background: transparent;
+}
+
+/* ===== SETTINGS BUTTON ===== */
+.settingsNav {
+  margin-top: 0.5rem;
+}
+
+/* ===== TOOLTIP STYLE (MATCH DARK UI) ===== */
+.tooltip-icon-sidebar > .p-tooltip-text {
+  background: #111;
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+/* ===== SUBTLE VERSION TEXT (OPTIONAL) ===== */
+.icon-sidebar::after {
+  content: "v0.2.0";
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.25);
+  margin-top: 0.5rem;
+}
+
+.sidebar-bottom {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: center;   /* horizontal centering */
   justify-content: center;
-  margin-right: 0rem;
-  margin: 0.4rem;
+  width: 100%;
+  margin-top: auto;
 }
 
-.icon-sidebar-divider {
-  z-index: 3;
-  background-color: #3a3a3a;
+/* VERSION TEXT */
+.sidebar-version {
+  font-size: 0.7rem;
+  color: #ffffff;              /* fully white */
+  opacity: 0.7;                /* still subtle but visible */
+  text-align: center;          /* ensures text itself is centered */
+  width: 100%;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.08em;
+  user-select: none;
 }
 
-.rct-tree-item-title-container div {
-  display: flex;
-  align-items: center;
-  text-overflow: ellipsis;
-  width: max-content;
-  overflow-x: hidden;
-}
-
-.rct-tree-item-title-container .label {
-  cursor: pointer;
-}
-
-.rct-tree-item-title-container .icon-offset {
-  margin-right: 0.15rem;
-  margin-bottom: 0.2rem;
+/* optional subtle polish */
+.sidebar-version:hover {
+  opacity: 1;
 }
