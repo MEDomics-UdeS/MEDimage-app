@@ -30,6 +30,7 @@ const Design = ({ id, data, type }) => {
         data={data}
         type={type}
         setupParam={data.setupParam}
+        color={"#ffd36b"}
         nodeSpecific={
           <>
             <Row className="form-group-box" style={{ textAlign: "center", alignItems: "center", justifyContent: "center" }}>
