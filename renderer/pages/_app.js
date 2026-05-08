@@ -192,7 +192,6 @@ function App() {
     })
 
     ipcRenderer.on("recentWorkspaces", (event, data) => {
-      console.log("recentWorkspaces", data)
       setRecentWorkspaces(data)
     })
 
