@@ -181,11 +181,8 @@ const Design = ({ id, data, type }) => {
 
               {/* Seed */}
               <Form.Group controlId="seed">
-              <Form.Label 
-                  className="seed">
-                      Random Seed
-              </Form.Label>
-              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Ensures reproducible random data splitting.</p>
+                <Form.Label className="seed">Random Seed</Form.Label>
+                <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Ensures reproducible random data splitting.</p>
                 <InputNumber
                     style={{width: "300px", display: "block", margin: "0 auto"}}
                     buttonLayout="horizontal"
@@ -199,11 +196,8 @@ const Design = ({ id, data, type }) => {
                     mode="decimal"
                     min={1}
                 />
-
               </Form.Group>
-
-
-              </>
+            </>
             }
 
             {/* OTHER PARAMS IF SPLIT TYPE IS CV */}
@@ -212,11 +206,8 @@ const Design = ({ id, data, type }) => {
 
               {/* Number of splits */}
               <Form.Group controlId="nSplits">
-              <Form.Label 
-                  className="nSplits">
-                      Number of folds
-              </Form.Label>
-              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>K value for cross-validation folds (K).</p>
+                <Form.Label className="nSplits">Number of folds</Form.Label>
+                <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>K value for cross-validation folds (K).</p>
                 <InputNumber
                     style={{width: "300px"}}
                     buttonLayout="horizontal"
@@ -237,11 +228,9 @@ const Design = ({ id, data, type }) => {
               </Form.Group>
               {/* Seed */}
               <Form.Group controlId="seed">
-              <Form.Label 
-                  className="seed">
-                      Random Seed
-              </Form.Label>
-              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Ensures reproducible random data splitting.</p>
+                <Form.Label className="seed">Random Seed
+                </Form.Label>
+                <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Ensures reproducible random data splitting.</p>
                 <InputNumber
                     style={{width: "300px", display: "block", margin: "0 auto"}}
                     buttonLayout="horizontal"
@@ -255,7 +244,6 @@ const Design = ({ id, data, type }) => {
                     mode="decimal"
                     min={1}
                 />
-
               </Form.Group>
               </>
             }
