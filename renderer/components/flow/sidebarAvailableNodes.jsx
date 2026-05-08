@@ -22,7 +22,7 @@ const onDragStart = (event, node) => {
 }
 
 const SectionContainer = ({ title, children }) => (
-  <div className="card mb-3" style={{backgroundColor: "#dbecf9"}}>
+  <div className="card mb-3" style={{backgroundColor: "#dbecf9", borderBottomColor: "#b9b9b9"}}>
     <h6 className="section-header p-2 border-bottom">
       {title}
     </h6>
