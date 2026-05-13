@@ -1,6 +1,5 @@
 import { Dropdown } from "primereact/dropdown"
 import { MultiSelect } from 'primereact/multiselect'
-import { Tooltip } from 'primereact/tooltip'
 import React, { useContext, useEffect, useState } from "react"
 import { Alert, Col, Form, Row } from "react-bootstrap"
 import { toast } from 'react-toastify'
@@ -35,8 +34,8 @@ const Data = ({ id, data, type }) => {
       data.setupParam.possibleSettings.defaultSettings.path = data.internal.settings.path
       setSelectedFolder(data.internal.settings.path)
     }
-    if (data.internal.settings.csv_files && data.internal.settings.csv_files.length > 0) {
-      setListCSVFiles(data.internal.settings.csv_files)
+    if (data.setupParam.csv_files && data.setupParam.csv_files.length > 0) {
+      setListCSVFiles(data.setupParam.csv_files)
     }
     updateWSfolder()
   }, [])
@@ -55,7 +54,11 @@ const Data = ({ id, data, type }) => {
         }
       })
       setListWSFolders(wsFolders)
-      handleSaveFolderChange(selectedFolder) // Update the list of csv files if a folder is already selected
+      if (selectedFolder) {
+        handleSaveFolderChange(selectedFolder)
+      } else if (data.internal.settings.path) {
+        handleSaveFolderChange(data.internal.settings.path)
+      }
     }
   }
 
@@ -78,7 +81,7 @@ const Data = ({ id, data, type }) => {
     setListCSVFiles(csvFiles)
     data.setupParam.possibleSettings.defaultSettings.path = directoryPath
     data.internal.settings.path = directoryPath
-    data.internal.settings.csv_files = csvFiles
+    data.setupParam.csv_files = csvFiles
     updateHasWarning(data)
     setReload(!reload)
   }
@@ -93,7 +96,7 @@ const Data = ({ id, data, type }) => {
         setupParam={data.setupParam}
         nodeSpecific={
           <>
-            <Row className="form-group-box">
+            <Row className="form-group-box" style={{ textAlign: "center", alignItems: "center", justifyContent: "center" }}>
             <Col>
             {/* nameType */}
             {/*<Form.Group controlId="nameType">
@@ -118,14 +121,9 @@ const Data = ({ id, data, type }) => {
 
             {/* path features */}
             <Form.Group controlId="FeaturePath">
-              <Tooltip target=".FeaturePath"/>
-              <Form.Label 
-                  className="FeaturePath" 
-                  data-pr-tooltip="Folder containing the features."
-                  data-pr-position="bottom">
-                      Features Folder Name
-              </Form.Label>
-              <Col style={{ width: "300px" }}>
+              <Form.Label className="FeaturePath">Features Folder Name</Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Select the folder containing feature files for training.</p>
+              <Col style={{ width: "300px", margin: "0 auto", display: "block", textAlign: "center" }}>
                 <Dropdown
                   style={{ maxWidth: "100%", height: "auto", width: "auto" }}
                   filter
@@ -140,21 +138,15 @@ const Data = ({ id, data, type }) => {
             </Form.Group>
 
             {/* select features files */}
-            {(listCSVFiles.length ===0 && selectedFolder !== "") && (
+            {(listCSVFiles.length === 0 && selectedFolder !== "") && (
                 <Alert variant="warning" style={{ marginTop: "10px" }}>
                   No features files found in the selected folder.
                 </Alert>
             )}
             {(listCSVFiles.length > 0) && (
             <>
-              <Tooltip target=".selectFiles"/>
-              <Form.Label 
-                  style={{ marginTop: "10px" }}
-                  className="selectFiles" 
-                  data-pr-tooltip="Select features files to use for model's training."
-                  data-pr-position="bottom">
-                      Select Features Files
-              </Form.Label>
+              <Form.Label className="selectFiles" style={{ marginTop: "10px" }}>Select Features Files</Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Choose which feature files to use for model training.</p>
               <MultiSelect
                 style={{ maxWidth: "100%", height: "auto", width: "auto" }}
                 value={featuresFiles} 

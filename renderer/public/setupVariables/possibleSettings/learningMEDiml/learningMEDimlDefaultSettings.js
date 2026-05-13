@@ -1,16 +1,17 @@
 const learningMEDimlDefaultSettings = {
   // split
-  split : {
+  design : {
     path_outcome_file: "",
+    path_ws_experiments: "",
     outcome_name: "",
     path_save_experiments: "",
     method: "all_learn",
   },
 
   // design
-  design : {
+  split : {
     expName: "",
-    testSets: ["cv"],
+    active_method: ["cv"],
     Random: {
       method: "SubSampling",
       nSplits: 10,
@@ -19,7 +20,7 @@ const learningMEDimlDefaultSettings = {
       seed: 54288
     },
     cv: {
-      nSplits: 10,
+      nFolds: 10,
       seed: 54288
     }
   },
@@ -35,10 +36,9 @@ const learningMEDimlDefaultSettings = {
     model: "XGBoost",
     XGBoost: {
       varImportanceThreshold: 0.3,
-      optimalThreshold: 0.5,
+      optimizeThreshold: true,
       nameSave: "xgboost_5perc",
       optimizationMetric: "MCC",
-      method: "pycaret",
       seed: 54288
     }
   },

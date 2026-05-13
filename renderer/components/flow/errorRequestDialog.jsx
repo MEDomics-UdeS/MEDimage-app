@@ -83,7 +83,9 @@ const ErrorRequestDialog = () => {
         </Row>
         {/* Axios error stack is usually in error.message.stack or error.stack_trace */}
         <pre className="mt-3" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-          {error?.message?.stack || error?.stack_trace || "No stack trace available"}
+          {typeof error?.message === 'string' ? error.message : 
+            error?.message?.stack || error?.stack_trace || "No stack trace available"
+          }
         </pre>
       </Dialog>
     </>

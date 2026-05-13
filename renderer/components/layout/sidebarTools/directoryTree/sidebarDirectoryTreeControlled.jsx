@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 import fs from "fs"
 import { Tooltip } from "primereact/tooltip"
-import { useContext, useEffect, useRef, useState } from "react"
+import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import { Accordion, Stack } from "react-bootstrap"
 import { ArrowClockwise, ArrowRepeat, BoxArrowUpRight, ChevronBarContract, ChevronBarExpand, Eraser, EyeFill, EyeSlashFill, FolderPlus, Trash } from "react-bootstrap-icons"
 import { ControlledTreeEnvironment, Tree } from "react-complex-tree"
@@ -78,7 +78,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
    * @returns {void}
    * @note - This function is called when the user presses a key.
    */
-  const handleKeyPress = (event) => {
+  const handleKeyPress = useCallback((event) => {
     if (event.key === "Delete" && tree.current.isRenaming === false) {
       if (selectedItems.length > 0) {
         onDeleteSequentially(globalData, workspace.workingDirectory.path, setIsDialogShowing, selectedItems)
@@ -132,7 +132,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
         }
       }
     }
-  }
+  }, [])
 
   /**
    * This useEffect hook attaches an event listener to the document to listen for key presses.
@@ -277,15 +277,15 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
       console.log("item", item)
       if (item.type == "medml") {
         dispatchLayout({ type: "openInLearningModule", payload: item })
-      } else if (item.type == "medimg") {
+      } else if (item.type == "medext") {
         dispatchLayout({ type: "openInExtractionMEDimlModule", payload: item })
-      } else if (item.type == "medimg.ml") {
+      } else if (item.type == "mediml") {
         dispatchLayout({ type: "openInLearningMEDimlModule", payload: item })
       } else if (item.type == "medeval") {
         dispatchLayout({ type: "openInEvaluationModule", payload: item })
       } else if (item.type == "csv" || item.type == "tsv" || item.type == "xlsx" || item.type == "view") {
         dispatchLayout({ type: "openInDataTableFromDBViewer", payload: item })
-      } else if (item.type == "py" || item.type == "ipynb") {
+      } else if (item.type == "py" || item.type == "json" || item.type == "txt" || item.type == "md") {
         dispatchLayout({ type: "openInCodeEditor", payload: item })
       } else if (item.type == "png" || item.type == "jpg" || item.type == "jpeg" || item.type == "gif" || item.type == "svg") {
         dispatchLayout({ type: "openInImageViewer", payload: item })
@@ -293,8 +293,6 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
         dispatchLayout({ type: "openInPDFViewer", payload: item })
       } else if (item.type == "html") {
         dispatchLayout({ type: "openHtmlViewer", payload: item })
-      } else if (item.type == "txt") {
-        dispatchLayout({ type: "openInTextEditor", payload: item })
       } else if (item.type == "medmodel") {
         dispatchLayout({ type: "openInModelViewer", payload: item })
       } else {
@@ -426,15 +424,14 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
         <Tooltip className="tooltip-small" target=".context-menu-icon" {...delayOptions} />
         <Accordion.Item eventKey="dirTree">
           <Accordion.Header /* onClick={() => MedDataObject.updateWorkspaceDataObject()} */>
-            <Stack direction="horizontal" style={{ flexGrow: "1" }}>
+            <Stack direction="horizontal" gap={2}>
               <p>
                 <strong>WORKSPACE</strong>
               </p>
-              <div style={{ flexGrow: "5" }} />
 
               {
                 isAccordionShowing && (
-                  <>
+                  <div style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
                     <a
                       onClick={(e) => {
                         e.preventDefault()
@@ -480,7 +477,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
                         <ChevronBarExpand size={"1rem"} className="context-menu-icon toggle-details-icon" data-pr-at="right bottom" data-pr-tooltip="Show Local/MongoDB details" data-pr-my="left top" />
                       )}
                     </a>
-                  </>
+                  </div>
                 ) /* We display the add folder icon only if the mouse is hovering the directory tree and if the accordion is not collapsed*/
               }
             </Stack>

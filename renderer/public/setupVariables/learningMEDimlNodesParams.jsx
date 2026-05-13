@@ -2,40 +2,43 @@ import learningMEDimlDefaultSettings from "./possibleSettings/learningMEDiml/lea
 /* eslint-disable */
 
 export const sceneDescription = {
-  extension: "medimg.ml",
+  extension: "mediml",
   externalFolders: ["models", "notebooks"],
   internalFolders: []
 }
 
 const nodesParams = {
-  split : {
-    type: "Split",
-    classes: "object segmentation view",
-    nbInput: 0,
-    nbOutput: 1,
-    input: [],
-    output: ["split_data"],
-    img: "split.png",
-    title: "Split",
-    possibleSettings: {
-      defaultSettings: learningMEDimlDefaultSettings.split
-    }
-  },
   design: {
     type: "Design",
+    section: "initialization",
     classes: "object segmentation view",
     nbInput: 1,
     nbOutput: 1,
     input: ["split_data"],
     output: ["design_data"],
-    img: "optimize.png",
-    title: "Design",
+    img: "split.png",
+    title: "Split",
     possibleSettings: {
       defaultSettings: learningMEDimlDefaultSettings.design
     }
   },
+  split : {
+    type: "Split",
+    section: "initialization",
+    classes: "object segmentation view",
+    nbInput: 0,
+    nbOutput: 1,
+    input: [],
+    output: ["split_data"],
+    img: "optimize.png",
+    title: "Design",
+    possibleSettings: {
+      defaultSettings: learningMEDimlDefaultSettings.split
+    }
+  },
   data: {
     type: "Data",
+    section: "initialization",
     classes: "object segmentation view",
     nbInput: 1,
     nbOutput: 1,
@@ -49,6 +52,7 @@ const nodesParams = {
   },
   cleaning: {
     type: "Cleaning",
+    section: "Machine Learning",
     classes: "object segmentation view",
     nbInput: 1,
     nbOutput: 1,
@@ -62,6 +66,7 @@ const nodesParams = {
   },
   normalization: {
     type: "Normalization",
+    section: "Machine Learning",
     classes: "object segmentation view",
     nbInput: 1,
     nbOutput: 1,
@@ -75,6 +80,7 @@ const nodesParams = {
   },
   feature_reduction: {
     type: "FeatureReduction",
+    section: "Machine Learning",
     classes: "object segmentation view",
     nbInput: 1,
     nbOutput: 1,
@@ -88,6 +94,7 @@ const nodesParams = {
   },
   radiomics_learner: {
     type: "RadiomicsLearner",
+    section: "Machine Learning",
     classes: "object segmentation view",
     nbInput: 1,
     nbOutput: 1,
@@ -101,6 +108,7 @@ const nodesParams = {
   },
   analyze: {
     type: "Analyze",
+    section: "analysis",
     classes: "object segmentation view",
     nbInput: 1,
     nbOutput: 0,

@@ -40,7 +40,7 @@
             "split_data"
           ],
           "img": "split.png",
-          "title": "Split",
+          "title": "Design",
           "possibleSettings": {
             "defaultSettings": {
               "path_outcome_file": "",
@@ -83,9 +83,7 @@
           "hasRun": false,
           "settings": {
             "expName": "",
-            "testSets": [
-              "Random"
-            ],
+            "active_method": ["Random"],
             "Random": {
               "method": "SubSampling",
               "nSplits": 10,
@@ -110,13 +108,11 @@
             "design_data"
           ],
           "img": "optimize.png",
-          "title": "Design",
+          "title": "Split",
           "possibleSettings": {
             "defaultSettings": {
               "expName": "",
-              "testSets": [
-                "Random"
-              ],
+              "active_method": ["Random"],
               "Random": {
                 "method": "SubSampling",
                 "nSplits": 10,
@@ -356,10 +352,9 @@
             "model": "XGBoost",
             "XGBoost": {
               "varImportanceThreshold": 0.3,
-              "optimalThreshold": 0.5,
+              "optimizeThreshold": true,
               "nameSave": "xgboost_5perc",
               "optimizationMetric": "MCC",
-              "method": "pycaret",
               "seed": 54288
             }
           },
@@ -388,7 +383,7 @@
               "model": "XGBoost",
               "XGBoost": {
                 "varImportanceThreshold": 0.3,
-                "optimalThreshold": 0.5,
+                "optimizeThreshold": true,
                 "nameSave": "xgboost_5perc",
                 "optimizationMetric": "MCC",
                 "method": "pycaret",

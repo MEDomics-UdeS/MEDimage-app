@@ -28,8 +28,8 @@ const iconExtension = {
     </span>
   ),
   "medml": <span className="emoji">🎯</span>,
-  "medimg": <span className="emoji"><Image src={medomicsImg} width={18} height={18} alt="medomics.svg" style={{ marginRight: "0.15rem" }} /></span>,
-  "medimg.ml": <span className="emoji"><Image src={medomicsImg} width={18} height={18} alt="medomics.svg" style={{ marginRight: "0.15rem" }} /></span>,
+  "medext": <span className="emoji"><Image src={medomicsImg} width={18} height={18} alt="medomics.svg" style={{ marginRight: "0.15rem" }} /></span>,
+  "mediml": <span className="emoji"><Image src={medomicsImg} width={18} height={18} alt="medomics.svg" style={{ marginRight: "0.15rem" }} /></span>,
   "medmlres": <span className="emoji">📊</span>,
   "medeval": <span className="emoji">🔬</span>,
   "zip": <span className="emoji">🔒</span>,

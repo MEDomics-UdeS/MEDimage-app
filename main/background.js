@@ -226,18 +226,11 @@ if (isProd) {
         // Kill the process on the port
         // killProcessOnPort(serverPort)
       } else if (process.platform === "darwin") {
-        await new Promise((resolve, reject) => {
+        await new Promise((resolve) => {
           exec("pkill -f mongod", (error, stdout, stderr) => {
-            if (error) {
-              console.error(`exec error: ${error}`)
-              reject(error)
-            }
-            console.log(`stdout: ${stdout}`)
-            console.error(`stderr: ${stderr}`)
             resolve()
           })
-        }
-      )
+        })
       } else {
         try {
           execSync("killall mongod")
@@ -511,6 +504,48 @@ ipcMain.on("restartApp", (event, data, args) => {
   app.quit()
 })
 
+let isQuitting = false
+
+app.on("before-quit", async (event) => {
+  if (isQuitting) return // Already handling quit
+  
+  event.preventDefault()
+  isQuitting = true
+  
+  console.log("App quitting — cleaning up terminals and services...")
+  
+  try {
+    // Wait for all PTY processes to exit gracefully (up to 3 seconds)
+    // This prevents the node-pty SIGABRT crash caused by thread::join()
+    // blocking during teardown when child processes haven't exited yet
+    await terminalManager.cleanupAsync(3000)
+  } catch (error) {
+    console.error("Error during terminal cleanup:", error)
+    // Fallback: force-kill synchronously
+    terminalManager.cleanup()
+  }
+  
+  // Stop MongoDB
+  try {
+    await stopMongoDB(mongoProcess)
+  } catch (error) {
+    console.warn("Error stopping MongoDB:", error)
+  }
+  
+  // Stop the server
+  if (MEDconfig.runServerAutomatically) {
+    try {
+      serverProcess.kill()
+      console.log("serverProcess killed")
+    } catch (error) {
+      console.log("serverProcess already killed")
+    }
+  }
+  
+  console.log("Cleanup complete, quitting app")
+  app.quit()
+})
+
 ipcMain.handle("checkMongoIsRunning", async (event) => {
   // Check if something is running on the port MEDconfig.mongoPort
   let port = MEDconfig.mongoPort
@@ -661,52 +696,60 @@ export function getMongoDBPath() {
     console.error("mongod not found")
     return null
   } else if (process.platform === "darwin") {
-    // Check if it is installed in the .mediml directory    
-      const binPath = path.join(process.env.HOME, ".mediml", "mongodb", "bin", "mongod")
-      if (fs.existsSync(binPath)) {
-        console.log("mongod found in .mediml directory")
-        return binPath
-      }
-    if (process.env.NODE_ENV !== "production") {
-
-    // Check if mongod is in the process.env.PATH
-    const paths = process.env.PATH.split(path.delimiter)
-    for (let i = 0; i < paths.length; i++) {
-      const binPath = path.join(paths[i], "mongod")
-      if (fs.existsSync(binPath)) {
-        console.log("mongod found in PATH")
-        return binPath
-      }
-    }
-    // Check if mongod is in the default installation path on macOS - /usr/local/bin/mongod
-    const binPath = "/usr/local/bin/mongod"
+    // Check if it is installed in the .mediml directory
+    const binPath = path.join(process.env.HOME, ".mediml", "mongodb", "bin", "mongod")
     if (fs.existsSync(binPath)) {
+      console.log("mongod found in .mediml directory")
       return binPath
     }
-  }
+    if (process.env.NODE_ENV !== "production") {
+      // Check if mongod is in the process.env.PATH
+      const paths = process.env.PATH.split(path.delimiter)
+      for (let i = 0; i < paths.length; i++) {
+        const binPath = path.join(paths[i], "mongod")
+        if (fs.existsSync(binPath)) {
+          console.log("mongod found in PATH")
+          return binPath
+        }
+      }
+      // Check if mongod is in the default installation path on macOS - /usr/local/bin/mongod
+      const binPath = "/usr/local/bin/mongod"
+      if (fs.existsSync(binPath)) {
+        return binPath
+      }
+    }
     console.error("mongod not found")
     return null
   } else if (process.platform === "linux") {
     // Check if mongod is in the process.env.PATH
     const paths = process.env.PATH.split(path.delimiter)
     for (let i = 0; i < paths.length; i++) {
+      console.log(`Checking for mongod in: index ${i}, path ${paths[i]}`)
       const binPath = path.join(paths[i], "mongod")
+      console.log(`Checking if mongod exists at: ${binPath}`)
       if (fs.existsSync(binPath)) {
         return binPath
       }
     }
-    console.error("mongod not found in PATH"+paths)
+    console.error("mongod not found in PATH" + paths)
     // Check if mongod is in the default installation path on Linux - /usr/bin/mongod
     if (fs.existsSync("/usr/bin/mongod")) {
       return "/usr/bin/mongod"
     }
-    console.error("mongod not found in /usr/bin/mongod")
-    
-    if (fs.existsSync("/home/"+process.env.USER+"/.mediml/mongodb/bin/mongod")) {
-      return "/home/"+process.env.USER+"/.mediml/mongodb/bin/mongod"
+
+    // Check the tarball install location used by after-install.sh
+    if (fs.existsSync("/usr/local/bin/mongod")) {
+      return "/usr/local/bin/mongod"
+    }
+
+    if (fs.existsSync("/usr/local/lib/mongodb/bin/mongod")) {
+      return "/usr/local/lib/mongodb/bin/mongod"
+    }
+
+    if (fs.existsSync(process.env.HOME + "/.mediml/mongodb/bin/mongod")) {
+      return process.env.HOME + "/.mediml/mongodb/bin/mongod"
     }
     return null
-
   } else {
     return "mongod"
   }

@@ -2,7 +2,6 @@ import React from "react"
 import Node from "../../flow/node"
 import { Form, Row } from "react-bootstrap"
 import {useState} from 'react';
-import { Tooltip } from 'primereact/tooltip';
 import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
 import { updateHasWarning } from "../../flow/node";
@@ -32,16 +31,14 @@ const FeatureReduction = ({ id, data, type }) => {
         setupParam={data.setupParam}
         nodeSpecific={
           <>
-            <Row className="form-group-box">
+            <Row 
+              className="form-group-box"
+              style={{ maxHeight: "400px", overflowY: "auto", overflowX: "hidden", paddingRight: "8px" }}
+            >
               {/* nSplits */}
               <Form.Group controlId="nSplits">
-              <Tooltip target=".nSplits"/>
-              <Form.Label 
-                  className="nSplits" 
-                  data-pr-tooltip="Number of FDA splits"
-                  data-pr-position="bottom">
-                      Number of Splits
-              </Form.Label>
+              <Form.Label className="nSplits">Number of Splits</Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Number of splits for Feature Reduction.</p>
                 <InputNumber
                     style={{width: "300px"}}
                     buttonLayout="horizontal"
@@ -62,13 +59,8 @@ const FeatureReduction = ({ id, data, type }) => {
 
               {/* corrType */}
               <Form.Group controlId="corrType">
-              <Tooltip target=".corrType"/>
-              <Form.Label 
-                  className="corrType" 
-                  data-pr-tooltip="Method to compute the correlation between features"
-                  data-pr-position="bottom">
-                      Correlation Method
-              </Form.Label>
+              <Form.Label className="corrType">Correlation Method</Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Method to measure feature correlations.</p>
                 <Dropdown 
                     style={{width: "300px"}}
                     value={data.setupParam.possibleSettings.defaultSettings.FDA.corrType}
@@ -85,13 +77,8 @@ const FeatureReduction = ({ id, data, type }) => {
 
               {/* threshStableStart */}
               <Form.Group controlId="threshStableStart">
-              <Tooltip target=".threshStableStart"/>
-              <Form.Label 
-                  className="threshStableStart" 
-                  data-pr-tooltip="Minimum correlation to outcome threshold to consider a feature as stable"
-                  data-pr-position="bottom">
-                      Stability Threshold
-              </Form.Label>
+              <Form.Label className="threshStableStart">Stability Threshold</Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Minimum correlation threshold for features to be considered stable.</p>
                 <InputNumber
                     style={{width: "300px"}}
                     buttonLayout="horizontal"
@@ -115,13 +102,8 @@ const FeatureReduction = ({ id, data, type }) => {
 
               {/* threshInterCorr */}
               <Form.Group controlId="threshInterCorr">
-              <Tooltip target=".threshInterCorr"/>
-              <Form.Label 
-                  className="threshInterCorr" 
-                  data-pr-tooltip="Minimum inter-correlation between features to consider them as redundant"
-                  data-pr-position="bottom">
-                      Inter-Correlation Threshold
-              </Form.Label>
+              <Form.Label className="threshInterCorr">Inter-Correlation Threshold</Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Threshold for identifying redundant feature pairs.</p>
                 <InputNumber
                     style={{width: "300px"}}
                     buttonLayout="horizontal"
@@ -145,9 +127,8 @@ const FeatureReduction = ({ id, data, type }) => {
 
               {/* minNfeatStable */}
               <Form.Group controlId="minNfeatStable">
-              <Form.Label className="minNfeatStable">
-                  Minimum Number of Stable Features
-              </Form.Label>
+              <Form.Label className="minNfeatStable">Minimum Number of Stable Features</Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Minimum stable features to retain after filtering.</p>
                 <InputNumber
                     style={{width: "300px"}}
                     buttonLayout="horizontal"
@@ -168,9 +149,8 @@ const FeatureReduction = ({ id, data, type }) => {
 
               {/* minNfeatInterCorr */}
               <Form.Group controlId="minNfeatInterCorr">
-              <Form.Label className="minNfeatInterCorr">
-                  Minimum Number of Inter-Correlated Features
-              </Form.Label>
+              <Form.Label className="minNfeatInterCorr">Minimum Number of Inter-Correlated Features</Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Minimum inter-correlated features to retain.</p>
                 <InputNumber
                     style={{width: "300px"}}
                     buttonLayout="horizontal"
@@ -191,13 +171,8 @@ const FeatureReduction = ({ id, data, type }) => {
 
               {/* minNfeat */}
               <Form.Group controlId="minNfeat">
-              <Tooltip target=".minNfeat"/>
-              <Form.Label 
-                  className="minNfeat" 
-                  data-pr-tooltip="The final number of features that will be used to train the model"
-                  data-pr-position="bottom">
-                      Final Number of Features
-              </Form.Label>
+              <Form.Label className="minNfeat">Final Number of Features</Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Total features to use for model training.</p>
                 <InputNumber
                     style={{width: "300px"}}
                     buttonLayout="horizontal"

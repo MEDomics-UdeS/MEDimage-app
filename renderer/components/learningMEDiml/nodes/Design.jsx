@@ -3,7 +3,6 @@ import Node from "../../flow/node"
 import { Form, Row, Col } from "react-bootstrap"
 import { InputText } from 'primereact/inputtext';
 import {useState} from 'react';
-import { Tooltip } from 'primereact/tooltip';
 import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
 import { InputSwitch } from 'primereact/inputswitch';
@@ -31,20 +30,19 @@ const Design = ({ id, data, type }) => {
         data={data}
         type={type}
         setupParam={data.setupParam}
+        color={"#ffd36b"}
         nodeSpecific={
           <>
-            <Row className="form-group-box">
+            <Row className="form-group-box" style={{ textAlign: "center", alignItems: "center", justifyContent: "center" }}>
               {/* Experiment Name */}
               <Form.Group controlId="expName">
-              <Tooltip target=".expName"/>
               <Form.Label 
-                  className="expName" 
-                  data-pr-tooltip="Name of the experiment. Must respect the following norm: Problem_RadiomicsLevel_Modality. For example: LungCancer_Morph_CT"
-                  data-pr-position="bottom">
+                  className="expName">
                       Experiment Name
               </Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Unique identifier for the analysis experiment.</p>
                 <InputText
-                    style={{width: "300px"}}
+                    style={{width: "300px", display: "block", margin: "0 auto"}}
                     value={data.internal.settings.expName || data.setupParam.possibleSettings.defaultSettings.expName}
                     placeholder="Ex: Problem_RadiomicsLevel_Modality"
                     onChange={(event) => {
@@ -58,26 +56,24 @@ const Design = ({ id, data, type }) => {
 
               {/* Split Type */}
               <Form.Group controlId="splitType">
-              <Tooltip target=".splitType"/>
               <Form.Label 
-                  className="splitType" 
-                  data-pr-tooltip="Splitting type of the data for ML phase. Random, institution-based or cross-validation."
-                  data-pr-position="bottom">
+                  className="splitType">
                       Split Type
               </Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Choose method for splitting data into sets.</p>
                 <Dropdown 
                     style={{width: "300px"}}
-                    value={data.setupParam.possibleSettings.defaultSettings.testSets[0]}
+                    value={data.setupParam.possibleSettings.defaultSettings.active_method[0]}
                     options={[{ name: 'Random' }, { name: 'Institution' }, { name: 'Cross-Validation' }]}
                     optionLabel="name" 
-                    placeholder={data.setupParam.possibleSettings.defaultSettings.testSets[0]}
+                    placeholder={data.setupParam.possibleSettings.defaultSettings.active_method[0]}
                     onChange={(event) => {
                       if (event.target.value.name === "Cross-Validation") {
-                        data.setupParam.possibleSettings.defaultSettings.testSets[0] = 'cv';
-                        data.internal.settings.testSets[0] = 'cv';
+                        data.setupParam.possibleSettings.defaultSettings.active_method = ['cv'];
+                        data.internal.settings.active_method = ['cv'];
                       } else {
-                      data.setupParam.possibleSettings.defaultSettings.testSets[0] = event.target.value.name;
-                      data.internal.settings.testSets[0] = event.target.value.name;
+                        data.setupParam.possibleSettings.defaultSettings.active_method = [event.target.value.name];
+                        data.internal.settings.active_method = [event.target.value.name];
                       }
                       updateHasWarning(data);
                       setReload(!reload);
@@ -86,19 +82,17 @@ const Design = ({ id, data, type }) => {
               </Form.Group>
 
               {/* OTHER PARAMS IF SPLIT TYPE IS RANDOM */}
-              {data.setupParam.possibleSettings.defaultSettings.testSets[0] === "Random" &&
+              {data.setupParam.possibleSettings.defaultSettings.active_method?.[0]?.toLowerCase() === "random" &&
               <>
               {/* Split Method */}
               <Form.Group controlId="splitMethod">
-              <Tooltip target=".splitMethod"/>
               <Form.Label 
-                  className="splitMethod" 
-                  data-pr-tooltip="Method to randomly split the data. Only 'SubSampling' is available for now."
-                  data-pr-position="bottom">
+                  className="splitMethod">
                       Split Method
               </Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Algorithm for distributing samples into train/test sets.</p>
                 <Dropdown 
-                    style={{width: "300px"}}
+                    style={{width: "300px", display: "block", margin: "0 auto"}}
                     value={data.setupParam.possibleSettings.defaultSettings.Random.method}
                     options={[{ name: 'SubSampling' }]}
                     optionLabel="name" 
@@ -114,15 +108,13 @@ const Design = ({ id, data, type }) => {
 
               {/* Number of splits */}
               <Form.Group controlId="nSplits">
-              <Tooltip target=".nSplits"/>
               <Form.Label 
-                  className="nSplits" 
-                  data-pr-tooltip="Number of splits to perform."
-                  data-pr-position="bottom">
+                  className="nSplits">
                       Splits Number
               </Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Total number of data partitions to create.</p>
                 <InputNumber
-                    style={{width: "300px"}}
+                    style={{width: "300px", display: "block", margin: "0 auto"}}
                     buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.Random.nSplits}
                     onValueChange={(event) => {
@@ -142,13 +134,11 @@ const Design = ({ id, data, type }) => {
 
               {/* Flag by institution or not */}
               <Form.Group controlId="stratifyInstitutions">
-              <Tooltip target=".stratifyInstitutions"/>
               <Form.Label 
-                  className="stratifyInstitutions" 
-                  data-pr-tooltip="If True, the train and test sets will have the same proportion of events from each institution."
-                  data-pr-position="bottom">
+                  className="stratifyInstitutions">
                       Flag by Institution
               </Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Maintain institution representation in train/test.</p>
               <br></br>
                 <InputSwitch 
                     checked={data.setupParam.possibleSettings.defaultSettings.Random.stratifyInstitutions} 
@@ -163,15 +153,13 @@ const Design = ({ id, data, type }) => {
 
               {/* Test proportion */}
               <Form.Group controlId="testProportion">
-              <Tooltip target=".testProportion"/>
               <Form.Label 
-                  className="testProportion" 
-                  data-pr-tooltip="Percentage of the data to use for testing."
-                  data-pr-position="bottom">
+                  className="testProportion">
                       Train/Test Proportion
               </Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Percentage of data allocated for testing.</p>
                 <InputNumber
-                    style={{width: "300px"}}
+                    style={{width: "300px", display: "block", margin: "0 auto"}}
                     buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.Random.testProportion}
                     onValueChange={(event) => {
@@ -193,15 +181,10 @@ const Design = ({ id, data, type }) => {
 
               {/* Seed */}
               <Form.Group controlId="seed">
-              <Tooltip target=".seed"/>
-              <Form.Label 
-                  className="seed" 
-                  data-pr-tooltip="Seed for the random generator."
-                  data-pr-position="bottom">
-                      Random Seed
-              </Form.Label>
+                <Form.Label className="seed">Random Seed</Form.Label>
+                <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Ensures reproducible random data splitting.</p>
                 <InputNumber
-                    style={{width: "300px"}}
+                    style={{width: "300px", display: "block", margin: "0 auto"}}
                     buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.Random.seed}
                     onValueChange={(event) => {
@@ -213,33 +196,25 @@ const Design = ({ id, data, type }) => {
                     mode="decimal"
                     min={1}
                 />
-
               </Form.Group>
-
-
-              </>
+            </>
             }
 
             {/* OTHER PARAMS IF SPLIT TYPE IS CV */}
-            {data.setupParam.possibleSettings.defaultSettings.testSets[0].toLowerCase() === "cv" &&
+            {data.setupParam.possibleSettings.defaultSettings.active_method?.[0]?.toLowerCase() === "cv" &&
               <>
 
               {/* Number of splits */}
               <Form.Group controlId="nSplits">
-              <Tooltip target=".nSplits"/>
-              <Form.Label 
-                  className="nSplits" 
-                  data-pr-tooltip="Number of folds for the cross-validation (referred to as K)."
-                  data-pr-position="bottom">
-                      Number of folds
-              </Form.Label>
+                <Form.Label className="nSplits">Number of folds</Form.Label>
+                <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>K value for cross-validation folds (K).</p>
                 <InputNumber
                     style={{width: "300px"}}
                     buttonLayout="horizontal"
-                    value={data.setupParam.possibleSettings.defaultSettings.cv.nSplits}
+                    value={data.setupParam.possibleSettings.defaultSettings.cv.nFolds}
                     onValueChange={(event) => {
-                      data.setupParam.possibleSettings.defaultSettings.cv.nSplits = event.target.value;
-                      data.internal.settings.cv.nSplits = event.target.value;
+                      data.setupParam.possibleSettings.defaultSettings.cv.nFolds = event.target.value;
+                      data.internal.settings.cv.nFolds = event.target.value;
                       updateHasWarning(data);
                       setReload(!reload);
                     }}
@@ -253,15 +228,11 @@ const Design = ({ id, data, type }) => {
               </Form.Group>
               {/* Seed */}
               <Form.Group controlId="seed">
-              <Tooltip target=".seed"/>
-              <Form.Label 
-                  className="seed" 
-                  data-pr-tooltip="Seed for the random generator."
-                  data-pr-position="bottom">
-                      Random Seed
-              </Form.Label>
+                <Form.Label className="seed">Random Seed
+                </Form.Label>
+                <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Ensures reproducible random data splitting.</p>
                 <InputNumber
-                    style={{width: "300px"}}
+                    style={{width: "300px", display: "block", margin: "0 auto"}}
                     buttonLayout="horizontal"
                     value={data.setupParam.possibleSettings.defaultSettings.cv.seed}
                     onValueChange={(event) => {
@@ -273,7 +244,6 @@ const Design = ({ id, data, type }) => {
                     mode="decimal"
                     min={1}
                 />
-
               </Form.Group>
               </>
             }
