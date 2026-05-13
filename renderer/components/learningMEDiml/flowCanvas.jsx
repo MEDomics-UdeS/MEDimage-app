@@ -27,11 +27,11 @@ import { PageInfosContext } from "../mainPages/moduleBasics/pageInfosContext.jsx
 import Analyze from "./nodes/Analyze.jsx"
 import Cleaning from "./nodes/Cleaning.jsx"
 import Data from "./nodes/Data.jsx"
-import Design from "./nodes/Design.jsx"
+import Split from "./nodes/Split.jsx"
 import FeatureReduction from "./nodes/FeatureReduction.jsx"
 import Normalization from "./nodes/Normalization.jsx"
 import RadiomicsLearner from "./nodes/RadiomicsLearner.jsx"
-import Split from "./nodes/Split.jsx"
+import Design from "./nodes/Design.jsx"
 
 // Import node parameters
 import nodesParams from "../../public/setupVariables/allNodesParams.jsx"
@@ -70,7 +70,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
   const [resultsFolder, setResultsFolder] = useState([])   // resultsFolder is used to store the path to the machine learning results
   const [experiments, setExperiments] = useState([]) // experiments is used to store the experiments to be done in the learning experiment
   const { pageId } = useContext(PageInfosContext) // used to get the page infos such as id and config path
-  const { setIsResults, isResults } = useContext(FlowResultsContext)
+  const { setIsResults, isResults, updateFlowResults } = useContext(FlowResultsContext)
   const { canRun } = useContext(FlowInfosContext) // used to get the flow infos
   const { groupNodeId, changeSubFlow, updateNode } = useContext(FlowFunctionsContext)
   const { globalData } = useContext(DataContext)
@@ -148,6 +148,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
         if (configToLoad) {
           let jsonContent = await getCollectionData(configToLoad)
           updateScene(jsonContent[0])
+          updateFlowResults(jsonContent[0], pageId)
           toast.success("Config file has been loaded successfully")
         } else {
           console.log("No config file found for this page, base workflow will be used")
@@ -160,6 +161,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
   // Executes setTreeData when there is a change in nodes or edges arrays.
   useEffect(() => {
     setTreeData(createTreeFromNodes())
+    checkDuplicateExperiments(nodes)
   }, [nodes, edges])
 
   // Hook executed upon modification of groupNodeId to show the current workflow
@@ -279,12 +281,17 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
     newNode.id = `${newNode.id}${associatedNode ? `.${associatedNode}` : ""}`
 
     // Add defaut parameters of node to possibleSettings
-    let type = newNode.data.internal.type.replaceAll(/ |-/g, "_").replace(/[^a-z_]/g, "")
-    console.log("nodesParams[workflowType]", nodesParams[workflowType])
+    let type = newNode.data.internal.type.toLowerCase().replaceAll(" ", "_")
 
-    let setupParams = {}
-    if (nodesParams[workflowType][type]) {
-      setupParams = JSON.parse(JSON.stringify(nodesParams[workflowType][type]))
+    let setupParams = Object.values(nodesParams[workflowType]).find(
+      (element) => element.type?.toLowerCase().replaceAll(" ", "_") === type.toLowerCase()
+    )
+
+    if (!setupParams) {
+      // try again using title
+      setupParams = Object.values(nodesParams[workflowType]).find(
+        (element) => element.title?.toLowerCase().replaceAll(" ", "_") === type.toLowerCase()
+      )
     }
 
     // Add default parameters to node data
@@ -309,6 +316,57 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
     }
 
     return newNode
+  }
+
+  // Check if there are duplicate model nodes and show a warning if there are
+  const checkDuplicateExperiments = (nodes) => {
+    const expNodes = nodes.filter((node) => node.type === "Design")
+    const duplicateExperiments = expNodes.filter(
+      (node, index) => expNodes.findIndex(
+        (n) => n.data.internal.settings.expName === node.data.internal.settings.expName) !== index
+    )
+    if (duplicateExperiments.length > 0) {
+      const nonDuplicateNodes = nodes.filter((node) => !duplicateExperiments.includes(node))
+      duplicateExperiments.forEach((node) => {
+        if (node.data.internal.hasWarning && !node.data.internal.hasWarning.state) {
+          node.data.internal.hasWarning = { state: true, tooltip: <p>Duplicate experiment found</p> }
+        }
+      })
+      nonDuplicateNodes.length > 0 && nonDuplicateNodes.forEach((node) => {
+        if (node.data.internal.hasWarning && node.data.internal.hasWarning.state && node.data.internal.hasWarning.tooltip.props.children.startsWith("This node shares the same ID")) {
+          node.data.internal.hasWarning = { state: false }
+          setNodes((nds) =>
+            nds.map((n) => {
+              if (n.id === node.id) {
+                n.data.internal = node.data.internal
+              }
+              return n
+            })
+          )
+        }
+      })
+    } else {
+      // Remove warnings if no duplicates are found
+      nodes.forEach((node) => {
+        if (node.data.internal.hasWarning && 
+            node.data.internal.hasWarning.state && 
+            node.data.internal.hasWarning.tooltip && 
+            node.data.internal.hasWarning.tooltip.props && 
+            node.data.internal.hasWarning.tooltip.props.children && 
+            node.data.internal.hasWarning.tooltip.props.children.startsWith("Duplicate experiment")
+        ) {
+          node.data.internal.hasWarning = { state: false }
+          setNodes((nds) =>
+            nds.map((n) => {
+              if (n.id === node.id) {
+                n.data.internal = node.data.internal
+              }
+              return n
+            })
+          )
+        }
+      })
+    }
   }
 
   const duplicateNode = (id) => {
@@ -686,17 +744,14 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
       let nodeData = value.data
       let nodeName = value.name
       if (nodeName === "design") {
-        let methodDesing = nodeData.testSets[0]
+        let methodDesing = nodeData.active_method
         if (!experimentsTemp.includes(nodeData.expName)){
           experimentsTemp.push(nodeData.expName)
         }
         folderNames.push("learn__" + nodeData.expName)
-        nSplitsTemp.push(nodeData[methodDesing].nSplits);
-        //setNSplits(nodeData[methodDesing].nSplits);
+        nSplitsTemp.push(nodeData[methodDesing].nSplits || nodeData[methodDesing].nFolds);
+        //setNSplits(nodeData[methodDesing].nSplits || nodeData[methodDesing].nFolds);
       }
-    }
-    if (folderNames.length === 0){
-      toast.error("Please add a design node to the workflow")
     }
     for (const [key, value] of Object.entries(newFlow.drawflow.Home.data)) {
       let nodeData = value.data
@@ -805,30 +860,35 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
             now: 0,
             currentLabel: ""
           })
-          toast.error(response.error)
-          console.log("error", response.error)
-          // check if error has message or not
-          if (response.error.message){
-            console.log("error message", response.error.message)
-            setError(response.error)
-          } else {
-            console.log("error no message", response.error)
+          if (typeof response.error === "string") {
+            toast.error(response.error)
+            console.log("error", response.error)
             setError({
               "message": response.error
             })
+          } else if (Object.keys(response.error).includes("message")) {
+          // check if error has message or not
+            console.error("error", response.error.message)
+            toast.error(response.error.message)
+            setError(response.error)
+          } else if (Object.keys(response.error).includes("toast")) {
+            // check if error has message or not
+            console.error("error", response.error.toast)
+            toast.error(response.error.toast)
+            setError(response.error.toast)
           }
           setShowError(true)
         }
-        },
-        (error) => {
-          setIsProgressUpdating(false)
-          setProgress({
-            now: 0,
-            currentLabel: ""
-          })
-          toast.error("Error detected while running the experiment", error)
-          console.log("error detected", error)
-          setError(error)
+      },
+      (error) => {
+        setIsProgressUpdating(false)
+        setProgress({
+          now: 0,
+          currentLabel: ""
+        })
+        toast.error("Error detected while running the experiment", error)
+        console.log("error detected", error)
+        setError(error)
       }
     )
   }, [nodes, edges, reactFlowInstance])

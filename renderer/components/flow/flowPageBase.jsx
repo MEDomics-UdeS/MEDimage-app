@@ -95,9 +95,7 @@ const FlowPageBaseWithFlowInfos = ({ children, workflowType, id, LearningMEDiml=
                 size > 5 ? setShowResultsPane(true) : setShowResultsPane(false)
               }}
             >
-            <>
-            {<ResultsPaneMEDiml />}
-            </>
+              {<ResultsPaneMEDiml />}
             </Panel>
           </PanelGroup>
         </Panel>

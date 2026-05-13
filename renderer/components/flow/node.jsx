@@ -41,7 +41,7 @@ import NodeWrapperResults from "./nodeWrapperResults"
  * Note: all JSX.Element props are not mandatory
  * Note: see Powerpoint for additionnal
  */
-const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClickCustom, isGroupNode, nodeLink = "https://medomicslab.gitbook.io/MEDiml-app-docs" }) => {
+const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClickCustom, isGroupNode, nodeLink="https://medomicslab.gitbook.io/MEDiml-app-docs", color=null }) => {
   const [nodeName, setNodeName] = useState(data.internal.name) // used to store the name of the node
   const { flowInfos, canRun } = useContext(FlowInfosContext) // used to get the flow infos
   const { showResultsPane } = useContext(FlowResultsContext) // used to get the flow results
@@ -114,6 +114,7 @@ const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClick
           pt={{
             body: { className: `${nodeBody ? "padding-0_2rem-important" : "padding-0-important"}` }
           }}
+          style={{backgroundColor: color}}
           onClick={(e) => (onClickCustom ? onClickCustom(e) : op.current.toggle(e))}
           // if the node has run and the results pane is displayed, the node is displayed normally
           // if the node has not run and the results pane is displayed, the node is displayed with a notRun class (see .css file)
@@ -284,7 +285,7 @@ export const updateHasWarning = (data) => {
     }
   }
   // Split node check if all the mandatory fields are filled
-  if (data && data.setupParam && data.setupParam.type === "Split") {
+  if (data && data.setupParam && data.setupParam.type === "Design") {
     if (data.internal.settings.outcome_name === "") {
       data.internal.hasWarning = { state: true, tooltip: <p>No outcome name is given!</p> }
       return
@@ -300,25 +301,25 @@ export const updateHasWarning = (data) => {
     }
   }
   // Design node check if all the mandatory fields are filled
-  if (data && data.setupParam && data.setupParam.type === "Design") {
+  if (data && data.setupParam && data.setupParam.type === "Split") {
     if (data.internal.settings.expName === "") {
       data.internal.hasWarning = { state: true, tooltip: <p>No experiment name is given!</p> }
       return
-    } else if (data.internal.settings.testSets[0].toLowerCase() === "cv"){
-      if (data.internal.settings.cv.nSplits === null || data.internal.settings.cv.nSplits === "") {
+    } else if (data.internal.settings?.active_method?.[0]?.toLowerCase() === "cv"){
+      if (data.internal.settings.cv.nFolds === null || data.internal.settings.cv.nFolds === "") {
         data.internal.hasWarning = { state: true, tooltip: <p>No number of folds is given!</p> }
         return
       } else if (data.internal.settings.cv.seed === null || data.internal.settings.cv.seed === ""){
         data.internal.hasWarning = { state: true, tooltip: <p>No seed is given!</p> }
         return
-      } else if (data.internal.settings.cv.nSplits < 2) {
+      } else if (data.internal.settings.cv.nFolds < 2) {
         data.internal.hasWarning = { state: true, tooltip: <p>Number of folds must be at least 2!</p> }
         return
       } else {
         data.internal.hasWarning = { state: false }
         return
       }
-    } else if (data.internal.settings.testSets[0].toLowerCase() === "random"){
+    } else if (data.internal.settings?.active_method?.[0]?.toLowerCase() === "random"){
       if (data.internal.settings.Random.nSplits === null || data.internal.settings.Random.nSplits === "") {
         data.internal.hasWarning = { state: true, tooltip: <p>No number of splits is given!</p> }
         return
@@ -327,9 +328,6 @@ export const updateHasWarning = (data) => {
         return
       } else if (data.internal.settings.Random.nSplits < 2) {
         data.internal.hasWarning = { state: true, tooltip: <p>Number of splits must be at least 2!</p> }
-        return
-      } else if (data.internal.settings.Random.method === null || data.internal.settings.Random.method === ""){
-        data.internal.hasWarning = { state: true, tooltip: <p>No method is selected!</p> }
         return
       } else if (data.internal.settings.Random.testProportion === null || data.internal.settings.Random.testProportion === ""){
         data.internal.hasWarning = { state: true, tooltip: <p>No test proportion is given!</p> }
@@ -406,9 +404,6 @@ export const updateHasWarning = (data) => {
     if (data.internal.settings.XGBoost.nameSave === null || data.internal.settings.XGBoost.nameSave === "") {
       data.internal.hasWarning = { state: true, tooltip: <p>Save name for the model is not given!</p> }
       return
-    } else if (data.internal.settings.XGBoost.optimalThreshold < 0 || data.internal.settings.XGBoost.optimalThreshold > 1){
-      data.internal.hasWarning = { state: true, tooltip: <p>Model's optimal threshold must be between 0 and 1!</p> }
-      return
     } else if (data.internal.settings.XGBoost.varImportanceThreshold === null || data.internal.settings.XGBoost.varImportanceThreshold === ""){
       data.internal.hasWarning = { state: true, tooltip: <p>Varialble importance cut-off threshold is not given!</p> }
       return
@@ -418,14 +413,9 @@ export const updateHasWarning = (data) => {
     } else if (data.internal.settings.XGBoost.seed === null || data.internal.settings.XGBoost.seed === ""){
       data.internal.hasWarning = { state: true, tooltip: <p>Seed for the random generator is not given!</p> }
       return
-    } else if (data.internal.settings.XGBoost.method === "pycaret"){
-      if (data.internal.settings.XGBoost.optimizationMetric === null || data.internal.settings.XGBoost.optimizationMetric === "" || data.internal.settings.XGBoost.optimizationMetric === undefined){
-        data.internal.hasWarning = { state: true, tooltip: <p>Optimization metric is not given!</p> }
-        return
-      } else {
-        data.internal.hasWarning = { state: false }
-        return
-      }
+    } if (data.internal.settings.XGBoost.optimizationMetric === null || data.internal.settings.XGBoost.optimizationMetric === "" || data.internal.settings.XGBoost.optimizationMetric === undefined){
+      data.internal.hasWarning = { state: true, tooltip: <p>Optimization metric is not given!</p> }
+      return
     } else {
       data.internal.hasWarning = { state: false }
       return

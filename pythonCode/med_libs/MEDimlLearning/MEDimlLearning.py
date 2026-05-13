@@ -31,6 +31,12 @@ class MEDimlLearning:
 
         return dict
     
+    def __find_base_files(self, path_base_files):
+        path_base_files = Path(path_base_files)
+        if Path(path_base_files / "baseFiles").exists():
+            return path_base_files / "baseFiles"
+        return self.__find_base_files(path_base_files.parent)
+
     def generate_all_pips(self, id: str, node_content, pip, json_scene, pips, counter):
         # -------------------------------------------------- NODE ADD ---------------------------------------------------
         pip.append(id)  # Current node added to pip
@@ -68,22 +74,27 @@ class MEDimlLearning:
         filename_loaded = ""
         results_avg = []
         analysis_dict = {}
-        splitted_data = False
+        self.set_progress(now=0.0)
 
         # ------------------------------------------ PIP EXECUTION ------------------------------------------
         for pip_idx, pip in enumerate(pips):
 
             pip_name = "pipeline" + str(pip_idx+1)
 
-            self.set_progress(now=0.0, label=f"Pipeline {pip_idx+1} execution")
+            self.set_progress(label=f"Pipeline {pip_idx+1} execution")
 
             print("\n\n!!!!!!!!!!!!!!!!!! New pipeline execution !!!!!!!!!!!!!!!!!! \n --> Pip : ", pip)
 
             # Init object and variables for new pipeline
+            splitted_data = False
             pip_obj = {}
             pip_name_obj = ""
             pip_res = {}
             pip_name_res = "pip"
+            path_ws_experiments = None
+            path_settings = None
+            design_settings = dict()
+            path_study = None
             holdout_test = False
             cleaned_data = False
             normalized_features = False
@@ -111,7 +122,7 @@ class MEDimlLearning:
 
                     # ------------------------------------------ HOME ------------------------------------------
                     # Split
-                    if (content["name"].lower() == "split"):
+                    if (content["name"].lower() == "design"):
                         print("\n********SPLIT execution********")
                         try:
                             if not splitted_data:
@@ -120,6 +131,10 @@ class MEDimlLearning:
                                     path_outcome_file = Path(content["data"]["path_outcome_file"])
                                 else:
                                     return {"error": "Split: Path to outcome file is not given!"}
+                                if "path_ws_experiments" in content["data"].keys() and content["data"]["path_ws_experiments"] != "":
+                                    path_ws_experiments = Path(content["data"]["path_ws_experiments"])
+                                else:
+                                    return {"error":  "Split: Path to workspace experiments is not given!"}
                                 if "path_save_experiments" in content["data"].keys() and content["data"]["path_save_experiments"] != "":
                                     path_save_experiments = Path(content["data"]["path_save_experiments"])
                                 else:
@@ -138,62 +153,70 @@ class MEDimlLearning:
                                     holdout_test = True
 
                                 # Reset progress
-                                self.set_progress(now=0.0, label=f"Pip {str(pip_idx+1)} | Spliting data")
+                                self.set_progress(label=f"Pip {str(pip_idx+1)} | Spliting data")
 
                                 # Generate the machine learning experiment
-                                path_study, _ = MEDiml.learning.ml_utils.create_holdout_set(
+                                path_study = MEDiml.learning.ml_utils.create_holdout_set(
                                     path_outcome_file=path_outcome_file,
                                     path_save_experiments=path_save_experiments,
                                     outcome_name=outcome_name,
                                     method=method
                                 )
                                 splitted_data = True
-                                self.set_progress(now=5)
+                                self.set_progress(now=self._progress['now'] + 5//len(pips))
+
+                                # Initialize the DesignExperiment class
+                                experiment = MEDiml.learning.DesignExperiment(path_study, path_ws_experiments, path_settings, experiment_label)
+
+                                # Generate the machine learning experiment
+                                experiment_dict = experiment.create_experiment(design_settings)
+
+                                paths_splits = []
+                                for run in experiment_dict.keys():
+                                    paths_splits.append(experiment_dict[run])
+                                
+                                # Set up the split counter
+                                split_counter = 0
+                                designed_experiment = True
+                                self.set_progress(now=self._progress['now'] + 10//len(pips))
                         except Exception as e:
-                            return {"error": str(e)}
+                            traceback.print_exc()
+                            raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
 
                     # Design
-                    if (content["name"].lower() == "design"):
+                    if (content["name"].lower() == "split"):
                         print("\n********DESIGN execution********")
                         try:
                             if not designed_experiment:
                                 self.set_progress(label=f"Pip {str(pip_idx+1)} | Designing experiment")
                                 # Initialization
-                                path_settings = Path.cwd() / "flask_server" / "learning_MEDiml" / "settings"
-                                desing_settings = {}
+                                path_settings = self.__find_base_files(Path.cwd()) / "ml_settings.yml"
 
                                 # Retrieve data from json request
                                 if splitted_data and path_study is None:
                                     if "path_study" in content["data"].keys() and content["data"]["path_study"] != "":
                                         path_study = Path(content["data"]["path_study"])
                                     else:
-                                        return {"error":  "Desing: Path to study is not given!"}
+                                        return {"error":  "Design: Path to study is not given!"}
                                 if "expName" in content["data"].keys() and content["data"]["expName"] != "":
                                     experiment_label = content["data"]["expName"]
                                 else:
-                                    return {"error":  "Desing: Experiment label is not given!"}
+                                    return {"error":  "Design: Experiment label is not given!"}
                                 
                                 # Fill design settings
-                                desing_settings['design'] = content["data"]
-                                method_desing = desing_settings['design']['testSets'][0]
-                                nb_split = desing_settings['design'][method_desing]['nSplits'] if 'nSplits' in desing_settings['design'][method_desing].keys() else 10
-
-                                # Initialize the DesignExperiment class
-                                experiment = MEDiml.learning.DesignExperiment(path_study, path_settings, experiment_label)
-
-                                # Generate the machine learning experiment
-                                tests_dict = experiment.create_experiment(desing_settings)
-
-                                paths_splits = []
-                                for run in tests_dict.keys():
-                                    paths_splits.append(tests_dict[run])
-                                
-                                # Set up the split counter
-                                split_counter = 0
-                                designed_experiment = True
-                                self.set_progress(now=10)
+                                design_settings['design'] = content["data"]
+                                method_design = design_settings['design']['active_method'][0]
+                                nb_split = None
+                                if method_design.lower() == "cv":
+                                    nb_split = design_settings['design'][method_design]['nFolds'] if 'nFolds' in design_settings['design'][method_design].keys() else 5
+                                elif method_design.lower() == "random":
+                                    nb_split = design_settings['design'][method_design]['nSplits'] if 'nSplits' in design_settings['design'][method_design].keys() else 10
+                                else:
+                                    print(f"Design method {method_design} doesn ot support split numbers, defaulting to 5 splits!")
+                                    nb_split = 5
                         except Exception as e:
-                            return {"error": str(e)}
+                            traceback.print_exc()
+                            raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
 
                     # Model training/testing part
                     if designed_experiment:            
@@ -206,9 +229,6 @@ class MEDimlLearning:
                                 
                                 # Update progress
                                 self.set_progress(label=f"Pip {str(pip_idx+1)} | Split {split_counter+1} | Loading data")
-                                
-                                # --> A. Initialization phase
-                                learner = MEDiml.learning.RadiomicsLearner(path_study=path_study, path_settings=Path.cwd(), experiment_label=experiment_label)
 
                                 # Load the test dictionary and machine learning information
                                 path_ml = paths_splits[split_counter]
@@ -289,12 +309,14 @@ class MEDimlLearning:
                                     
                                     # Update
                                     loaded_data = True
-                                    self.set_progress(now=round(self._progress['now'] + 100/len(paths_splits)/5))
+                                    self.set_progress(now=self._progress['now'] + 10 // len(paths_splits) // len(pips))
+
                                 # Clinical or other variables (For ex: Volume)
                                 else:
                                     return {"error":  "Variable type not implemented yet, only Radiomics variables are supported!"}
                             except Exception as e:
-                                return {"error": str(e)}
+                                traceback.print_exc()
+                                raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
 
                         # Cleaning
                         if (content["name"].lower() == "cleaning"):
@@ -320,24 +342,31 @@ class MEDimlLearning:
                                     # Avoid future bugs (caused in Windows)
                                     if type(rad_table_learning.Properties['Description']) not in [str, Path]:
                                         rad_table_learning.Properties['Description'] = str(rad_table_learning.Properties['Description'])
+                                    
+                                    # Temp save of properties
+                                    temp_properties = deepcopy(rad_table_learning.Properties)
 
                                     # Data cleaning
                                     data_cln_method = list(content["data"].keys())[0]
                                     cleaning_dict = content['data'][data_cln_method]['feature']['continuous']
-                                    data_cleaner = MEDiml.learning.DataCleaner(rad_table_learning)
-                                    rad_table_learning = data_cleaner(cleaning_dict)
+                                    data_cleaner = MEDiml.learning.DataCleaner(cleaning_dict)
+                                    rad_table_learning = data_cleaner.fit_transform(rad_table_learning)
                                     if rad_table_learning is None:
                                         continue
+                                        
+                                    # Re-assign properties and append cleaned table to list
+                                    rad_table_learning.Properties = temp_properties
                                     rad_tables_learning.append(rad_table_learning)
                                 
                                 # Finalization steps
                                 flags_preprocessing.append("var_datacleaning")
                                 flags_preprocessing_test.append("var_datacleaning")
                                 cleaned_data = True
-                                self.set_progress(now=round(self._progress['now'] + 100/len(paths_splits)/5))
+                                self.set_progress(now=self._progress['now'] + 10//len(paths_splits)//len(pips))
                             except Exception as e:
-                                return {"error": str(e)}
-                        
+                                traceback.print_exc()
+                                raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
+
                         if (content["name"].lower() == "normalization"):
                             try:
                                 if not loaded_data:
@@ -376,15 +405,16 @@ class MEDimlLearning:
                                             rad_table_learning.Properties['userData']['normalization']['original_data']['datacleaning_method'] = data_cln_method
                                         
                                         # Apply ComBat
-                                        normalization = MEDiml.learning.Normalization('combat')
-                                        rad_table_learning = normalization.apply_combat(variable_table=rad_table_learning)  # Training data
+                                        normalization = MEDiml.learning.Normalization.CombatNormalization()
+                                        rad_table_learning = normalization.fit_transform(rad_table_learning)  # Training data
                                     else:
                                         return {"error":  f"Normalization: method {normalization_method} not implemented yet!"}
-                                    
-                                self.set_progress(now=round(self._progress['now'] + 100/len(paths_splits)/5))
+                                
+                                self.set_progress(now=self._progress['now'] + 10 // len(paths_splits) // len(pips))
                                 normalized_features = True
                             except Exception as e:
-                                return {"error": str(e)}
+                                traceback.print_exc()
+                                raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
 
                         if (content["name"].lower() == "feature_reduction"):
                             # Load data if cleaning step or normalization step was not performed
@@ -452,9 +482,10 @@ class MEDimlLearning:
                                 rad_tables_testing = MEDiml.learning.ml_utils.combine_rad_tables(rad_tables_testing)
                                 rad_tables_testing.Properties['userData']['flags_processing'] = flags_preprocessing_test
                                 reduced_features = True
-                                self.set_progress(now=round(self._progress['now'] + 100/len(paths_splits)/5))
+                                self.set_progress(now=self._progress['now'] + 20 // len(paths_splits) // len(pips))
                             except Exception as e:
-                                return {"error": str(e)}
+                                traceback.print_exc()
+                                raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
 
                         # --------------------------- MODEL TRAINING ---------------------------
                         if content["name"].lower() == "radiomics_learner":
@@ -501,18 +532,14 @@ class MEDimlLearning:
                                     var_importance_threshold = content["data"][model_name]["varImportanceThreshold"]
                                 else:
                                     return {"error":  "Radiomics learner: Radiomics learner: variable importance threshold not provided"}
-                                if "optimalThreshold" in content["data"][model_name].keys() and content["data"][model_name]["optimalThreshold"] is not None:
-                                    optimal_threshold = content["data"][model_name]["optimalThreshold"]
+                                if "optimizeThreshold" in content["data"][model_name].keys() and content["data"][model_name]["optimizeThreshold"] is not None:
+                                    optimize_threshold = content["data"][model_name]["optimizeThreshold"]
                                 else:
-                                    optimal_threshold = None
+                                    optimize_threshold = True
                                 if "optimizationMetric" in content["data"][model_name].keys() and content["data"][model_name]["optimizationMetric"] is not None:
                                     optimization_metric = content["data"][model_name]["optimizationMetric"]
                                 else:
                                     return {"error":  "Radiomics learner: Optimization metric was not provided"}
-                                if "method" in content["data"][model_name].keys() and content["data"][model_name]["method"] is not None:
-                                    method = content["data"][model_name]["method"]
-                                else:
-                                    return {"error":  "Radiomics learner: Training method was not provided"}
                                 if "use_gpu" in content["data"][model_name].keys() and content["data"][model_name]["use_gpu"] is not None:
                                     use_gpu = content["data"][model_name]["use_gpu"]
                                 else:
@@ -526,16 +553,16 @@ class MEDimlLearning:
                                 var_table_train = rad_tables_training.loc[patients_train, :]
 
                                 # Training the model
-                                model = learner.train_xgboost_model(
-                                    var_table_train, 
-                                    outcome_table_binary_train, 
-                                    var_importance_threshold, 
-                                    optimal_threshold,
-                                    method=method,
-                                    use_gpu=use_gpu,
-                                    optimization_metric=optimization_metric,
-                                    seed=seed
-                                )
+                                estimator = MEDiml.learning.Estimator.Estimator(
+                                    algorithm='xgboost',
+                                    ml_config={
+                                    'var_importance_threshold': var_importance_threshold,
+                                    'optimize_threshold': optimize_threshold,
+                                    'optimization_metric': optimization_metric,
+                                    'use_gpu': use_gpu,
+                                    'seed': seed
+                                })
+                                estimator.fit(var_table_train, outcome_table_binary_train)
 
                                 # Saving the trained model using pickle
                                 if "nameSave" in content["data"][model_name].keys() and content["data"][model_name]["nameSave"] is not None:
@@ -544,15 +571,22 @@ class MEDimlLearning:
                                     return {"error":  "Radiomics learner: Name to save model was not provided"}
                                 model_id = name_save_model + '_' + "var1"
                                 path_model = os.path.dirname(path_results) + '/' + (model_id + '.pickle')
-                                model_dict = model_dict = MEDiml.learning.ml_utils.save_model(model, "None", path_model)
+                                estimator.save(path_model)
 
                                 # --> C. Testing phase        
                                 # C.1. Testing the XGBoost model and computing model response
-                                response_train, response_test = learner.test_xgb_model(
+                                
+                                # Preparing the variable table
+                                var_table_test = MEDiml.learning.ml_utils.get_ml_test_table(estimator, rad_tables_testing)
+                                
+                                # Computing model response on the training and test sets
+                                response_train = estimator.predict_proba(var_table_test.loc[patients_train, :])
+                                response_test = estimator.predict_proba(var_table_test.loc[patients_test, :])
+                                """response_train, response_test = learner.test_xgb_model(
                                     model,
                                     rad_tables_testing,
                                     [patients_train, patients_test]
-                                )                
+                                ) """               
                                 if holdout_test:
                                     # --> D. Holdoutset testing phase
                                     # D.1. Prepare holdout test data
@@ -571,11 +605,11 @@ class MEDimlLearning:
                                     var_table_all_holdout.Properties['userData']['flags_processing'] = {}
 
                                     # D.2. Testing the XGBoost model and computing model response on the holdout set
-                                    response_holdout = learner.test_xgb_model(model, var_table_all_holdout, [patients_holdout])[0]
+                                    response_holdout = estimator.predict_proba(var_table_all_holdout.loc[patients_holdout, :])
                                                 
                                 # E. Computing performance metrics
                                 # Initialize the Results class
-                                result = MEDiml.learning.Results(model_dict, model_id)
+                                result = MEDiml.learning.Results(estimator.estimator_.model_info_, model_id)
                                 if holdout_test:
                                     run_results = result.to_json(
                                         response_train=response_train, 
@@ -617,13 +651,14 @@ class MEDimlLearning:
                                 # F. Saving the results dictionary
                                 MEDiml.utils.json_utils.save_json(path_results, run_results, cls=NumpyEncoder)
                                 saved_results = True
-                                self.set_progress(now=round((split_counter+1) * (90 / len(paths_splits)) + 10))
+                                self.set_progress(now=self._progress['now'] + 40 // len(paths_splits) // len(pips))
 
                                 # Increment the split counter
                                 split_counter += 1
 
                             except Exception as e:
-                                return {"error": str(e)}
+                                traceback.print_exc()
+                                raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
 
                     # add relevant nodes
                     if (update_pip):
@@ -638,7 +673,7 @@ class MEDimlLearning:
                         MEDiml.learning.ml_utils.average_results(Path(path_study) / f'learn__{experiment_label}', save=True)
 
                         # Analyze the features importance for all the runs
-                        MEDiml.learning.ml_utils.feature_imporance_analysis(Path(path_study) / f'learn__{experiment_label}')
+                        MEDiml.learning.ml_utils.feature_importance_analysis(Path(path_study) / f'learn__{experiment_label}')
 
                         # Find analyze node after all splits are done
                         for node in pip:
@@ -664,7 +699,8 @@ class MEDimlLearning:
                                             save=True
                                         )
                                     except Exception as e:
-                                        return {"error": str(e)}
+                                        traceback.print_exc()
+                                        raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
                                     
                                     # Move images to public folder
                                     level = experiment_label.split("_")[1]
@@ -678,7 +714,7 @@ class MEDimlLearning:
                                     analysis_dict = {}
                                     analysis_dict[experiment_label] = {}
                                     analysis_dict[experiment_label]["histogram"] = {}
-                                    analysis_dict[experiment_label]["histogram"]["path"] = '.' + str(path_save).replace('\\', '/')
+                                    analysis_dict[experiment_label]["histogram"]["path"] = str(path_save).replace('\\', '/')
 
                                 # Break the loop
                                 break
@@ -686,17 +722,22 @@ class MEDimlLearning:
                         # Update results dict
                         results_avg_dict = MEDiml.utils.load_json(Path(path_study) / f'learn__{experiment_label}' / 'results_avg.json')
                         
-                        # Add experiment label to results, analysis results and round all the values
+                        # Add experiment label to results, order metrics and round all the values
                         if "train" in results_avg_dict.keys() and results_avg_dict["train"] != {}:
+                            # Alphabetic order of metrics
+                            results_avg_dict["train"] = dict(sorted(results_avg_dict["train"].items()))
                             results_avg_dict["train"] = self.__round_dict(results_avg_dict["train"], 2)
                         if "test" in results_avg_dict.keys() and results_avg_dict["test"] != {}:
+                            results_avg_dict["test"] = dict(sorted(results_avg_dict["test"].items()))
                             results_avg_dict["test"] = self.__round_dict(results_avg_dict["test"], 2)
                         if "holdout" in results_avg_dict.keys() and results_avg_dict["holdout"] != {}:
+                            results_avg_dict["holdout"] = dict(sorted(results_avg_dict["holdout"].items()))
                             results_avg_dict["holdout"] = self.__round_dict(results_avg_dict["holdout"], 2)
                         results_avg.append({pip_name: {experiment_label: results_avg_dict, "analysis": analysis_dict}})
 
                     except Exception as e:
-                        return {"error": "Reults averaging & Features analysis:" + str(e)}
+                        traceback.print_exc()
+                        raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
                 
                 # Check if all the splits are done
                 if designed_experiment and split_counter == len(paths_splits):
@@ -717,7 +758,7 @@ class MEDimlLearning:
                     break
             for node in pip:
                 content = get_node_content(node, json_scene)
-                if content["name"].lower() == "design" and have_analyze and content["data"]["expName"] not in experiments_labels:
+                if content["name"].lower() == "split" and have_analyze and content["data"]["expName"] not in experiments_labels:
                     experiments_labels.append(content["data"]["expName"])
                     break
         
@@ -772,7 +813,8 @@ class MEDimlLearning:
                                 p_value_test=p_value_test,
                                 save=True)
                         except Exception as e:
-                            return {"error": str(e)}
+                            traceback.print_exc()
+                            raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
                         
                         # Move images to public folder
                         path_image = Path(path_study) / f'{title}.png' if title else Path(path_study) / f'{metric}_heatmap.png'
@@ -802,8 +844,9 @@ class MEDimlLearning:
                                 nb_split=nb_split
                                 )
                         except Exception as e:
-                            return {"error": str(e)}
-                    
+                            traceback.print_exc()
+                            raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
+
                         # Update Analysis dict
                         figures_dict["optimal_level"] = {}
                         figures_dict["optimal_level"]["name"] = optimal_levels
@@ -863,8 +906,9 @@ class MEDimlLearning:
                                         figures_dict["optimal_level"]["tree"][optimal_level] = {}
                                         figures_dict["optimal_level"]["tree"][optimal_level]["path"] = '.' + str(path_save).split('public')[-1].replace('\\', '/')
                             except Exception as e:
-                                return {"error": str(e)}
-                    
+                                traceback.print_exc()
+                                raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
+
                     # Break the nodes loop
                     break
 
@@ -991,7 +1035,7 @@ class MEDimlLearning:
             # Get experiment name
             for node in pip:
                 content = [x for x in self.json_config["nodes"] if x["id"] == node][0]
-                if content["name"].lower() == "design":
+                if content["name"].lower() == "split":
                     exp_name = content["data"]["expName"]
                     break
             
@@ -1037,7 +1081,7 @@ class MEDimlLearning:
                         f.writelines("else:\n")
                         f.writelines("    holdout_test = True\n")
                         f.writelines("\n# Generate the machine learning experiment\n")
-                        f.writelines("path_study, _ = MEDiml.learning.ml_utils.create_holdout_set(\n")
+                        f.writelines("path_study = MEDiml.learning.ml_utils.create_holdout_set(\n")
                         f.writelines("    path_outcome_file=path_outcome_file,\n")
                         f.writelines("    path_save_experiments=path_save_experiments,\n")
                         f.writelines("    outcome_name=outcome_name,\n")
@@ -1328,7 +1372,7 @@ class MEDimlLearning:
                         f.writelines("\n    # Initializing XGBoost model settings\n")
                         f.writelines("    model_name = learner_settings['model']\n")
                         f.writelines("    var_importance_threshold = learner_settings[model_name]['varImportanceThreshold']\n")
-                        f.writelines("    optimal_threshold = learner_settings[model_name]['optimalThreshold']\n")
+                        f.writelines("    optimal_threshold = learner_settings[model_name]['optimizeThreshold']\n")
                         f.writelines("    optimization_metric = learner_settings[model_name]['optimizationMetric']\n")
                         f.writelines("    method = learner_settings[model_name]['method']\n")
                         f.writelines("    use_gpu = learner_settings[model_name]['use_gpu']  if 'use_gpu' in learner_settings[model_name] else False\n")
@@ -1442,7 +1486,7 @@ class MEDimlLearning:
                 f.writelines("MEDiml.learning.ml_utils.average_results(Path(path_study) / f'learn__" + '{experiment_label}' + "', save=True)\n")
 
                 f.writelines("\n# Analyze the features importance for all the runs\n")
-                f.writelines("MEDiml.learning.ml_utils.feature_imporance_analysis(Path(path_study) / f'learn__" + '{experiment_label}' + "')\n")
+                f.writelines("MEDiml.learning.ml_utils.feature_importance_analysis(Path(path_study) / f'learn__" + '{experiment_label}' + "')\n")
             
                 # Find analyze node after all splits are done
                 for node in pip:
@@ -1489,7 +1533,7 @@ class MEDimlLearning:
                     break
             for node in pip:
                 content = [x for x in self.json_config["nodes"] if x["id"] == node][0]
-                if content["name"].lower() == "design" and have_analyze and content["data"]["expName"] not in experiments_labels:
+                if content["name"].lower() == "split" and have_analyze and content["data"]["expName"] not in experiments_labels:
                     experiments_labels.append(content["data"]["expName"])
                     break
         

@@ -1,7 +1,6 @@
 import { Dropdown } from "primereact/dropdown"
 import { InputSwitch } from 'primereact/inputswitch'
 import { InputText } from 'primereact/inputtext'
-import { Tooltip } from 'primereact/tooltip'
 import { useContext, useEffect, useState } from "react"
 import { Col, Form, Row } from "react-bootstrap"
 import DocLink from "../../extractionMEDiml/docLink"
@@ -20,8 +19,9 @@ import { set } from "lodash"
  * it handles the display of the node and the modal
  */
 const Split = ({ id, data, type }) => { 
-  const [selectedCSVFile, setSelectedCSVFile] = useState("") // Selected CSV file
+  const [selectedCSVFile, setSelectedCSVFile] = useState(data.internal.settings.path_outcome_file || "") // Selected CSV file
   const [selectedSaveFolder, setSelectedSaveFolder] = useState("") // Selected save folder
+  const [selectedWSFolder, setSelectedWSFolder] = useState(data.internal.settings.path_ws_experiments || "") // Selected workspace folder
   const [listCSVFiles, setListCSVFiles] = useState([]) // List of csv files in the workspace
   const [listWSFolders, setListWSFolders] = useState([]) // List of folders in the workspace
   const [reload, setReload] = useState(false)
@@ -57,7 +57,7 @@ const Split = ({ id, data, type }) => {
       let keys = Object.keys(globalData)
       let wsFolders = []
       keys.forEach((key) => {
-        if (globalData[key].type === "directory" && !globalData[key].name.startsWith(".")) {
+        if (globalData[key].type === "directory" && !globalData[key]?.path?.includes(".medomics") && !globalData[key]?.path?.includes(".mediml")) {
           wsFolders.push({ name: globalData[key].name, value: globalData[key].path })
         }
       })
@@ -128,7 +128,10 @@ const Split = ({ id, data, type }) => {
         setupParam={data.setupParam}
         nodeSpecific={
           <>
-            <Row className="form-group-box">
+            <Row 
+              className="form-group-box" 
+              style={{ maxHeight: "400px", overflowY: "auto", overflowX: "hidden", paddingRight: "8px" }}
+            >
               <DocLink
                 linkString={"https://medomicslab.gitbook.io/MEDiml-app-docs/learning"}
                 name={"Learn more about the nodes"}
@@ -136,37 +139,26 @@ const Split = ({ id, data, type }) => {
               />
               {/* Outcome Name */}
               <Form.Group controlId="outcomeName">
-              <Tooltip target=".outcomeName"/>
-              <Form.Label 
-                  className="outcomeName" 
-                  data-pr-tooltip="Name used to describe the problem studied."
-                  data-pr-position="bottom">
-                      Outcome Name
-              </Form.Label>
+                <Form.Label className="outcomeName">Outcome Name</Form.Label>
+                <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>A reference name to describe the problem studied.</p>
                 <InputText
-                    style={{ maxWidth: "100%", height: "auto", width: "auto" }}
-                    value={data.setupParam.possibleSettings.defaultSettings.outcome_name}
-                    placeholder="Ex: RCC_Subtype"
-                    onChange={(event) => {
-                      data.setupParam.possibleSettings.defaultSettings.outcome_name = event.target.value
-                      data.internal.settings.outcome_name = event.target.value
-                      // Update node warnings
-                      updateHasWarning(data)
-                      setReload(!reload)
-                    }}
+                  style={{ maxWidth: "100%", height: "auto", width: "auto", display: "block", margin: "0 auto" }}
+                  value={data.setupParam.possibleSettings.defaultSettings.outcome_name}
+                  placeholder="Ex: RCC_Subtype"
+                  onChange={(event) => {
+                    data.setupParam.possibleSettings.defaultSettings.outcome_name = event.target.value
+                    data.internal.settings.outcome_name = event.target.value
+                    // Update node warnings
+                    updateHasWarning(data)
+                    setReload(!reload)
+                  }}
                 />
               </Form.Group>
 
               {/* Split Method */}
               <Form.Group controlId="splitMethod">
-              <Tooltip target=".splitMethod"/>
-              <Form.Label 
-                  className="splitMethod" 
-                  data-pr-tooltip="If activated a holdout set will be created. If not, all the data will be used for learning."
-                  data-pr-position="bottom">
-                      Create Holdout Set
-              </Form.Label>
-                <br></br>
+              <Form.Label className="splitMethod">Create Holdout Set</Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>If activated a holdout set will be created. If not, all the data will be used for learning.</p>
                 <InputSwitch 
                     checked={data.setupParam.possibleSettings.defaultSettings.method == 'random' ? true : false} 
                     onChange={(event) => {
@@ -179,16 +171,38 @@ const Split = ({ id, data, type }) => {
                 />
               </Form.Group>
 
+              {/* Workspace Folder */}
+              <Form.Group controlId="workspaceFolder">
+                <Form.Label className="workspaceFolder">Experiment's Workspace Folder</Form.Label>
+                <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+                  Folder containing the experiments' resources (features, outcome file, etc.).
+                </p>
+                <Col style={{ width: "300px", margin: "0 auto", display: "block", textAlign: "center" }}>
+                  <Dropdown
+                    style={{ maxWidth: "100%", height: "auto", width: "auto" }}
+                    filter
+                    value={selectedWSFolder}
+                    onChange={(e) => {
+                      data.setupParam.possibleSettings.defaultSettings.path_ws_experiments = e.value
+                      data.internal.settings.path_ws_experiments = e.value
+                      setSelectedWSFolder(e.value)
+                      // Update node warnings
+                      updateHasWarning(data)
+                      setReload(!reload)
+                    }}
+                    options={listWSFolders}
+                    optionLabel="name"
+                    display="chip"
+                    placeholder="Select a folder"
+                  />
+                </Col>
+              </Form.Group>
+
               {/* Path Outcome */}
               <Form.Group controlId="outcomeFile">
-              <Tooltip target=".outcomeFile"/>
-              <Form.Label 
-                  className="outcomeFile" 
-                  data-pr-tooltip="CSV file of the outcomes."
-                  data-pr-position="bottom">
-                      Outcomes CSV
-              </Form.Label>
-              <Col style={{ width: "300px" }}>
+              <Form.Label className="outcomeFile">Outcomes CSV</Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>CSV file of the outcomes.</p>
+              <Col style={{ width: "300px", margin: "0 auto", display: "block", textAlign: "center" }}>
                 <Dropdown
                   style={{ maxWidth: "100%", height: "auto", width: "auto" }}
                   filter
@@ -210,33 +224,30 @@ const Split = ({ id, data, type }) => {
               </Form.Group>
 
               {/* Save Folder */}
-              <Form.Group controlId="saveFolder">
-              <Tooltip target=".saveFolder"/>
-              <Form.Label 
-                  className="saveFolder" 
-                  data-pr-tooltip="Folder where the experiment will be saved (data & results). The folder should not be empty (bug)."
-                  data-pr-position="bottom">
-                      Save Folder
-              </Form.Label>
-              <Col style={{ width: "300px" }}>
-                <Dropdown
-                  style={{ maxWidth: "100%", height: "auto", width: "auto" }}
-                  filter
-                  value={selectedSaveFolder}
-                  onChange={(e) => {
-                    data.setupParam.possibleSettings.defaultSettings.path_save_experiments = e.value
-                    data.internal.settings.path_save_experiments = e.value
-                    setSelectedSaveFolder(e.value)
-                    // Update node warnings
-                    updateHasWarning(data)
-                    setReload(!reload)
-                  }}
-                  options={listWSFolders}
-                  optionLabel="name"
-                  display="chip"
-                  placeholder="Select a folder"
-                />
-              </Col>
+              <Form.Group controlId="experimentSaveFolder">
+                <Form.Label className="experimentSaveFolder">Save Folder</Form.Label>
+                <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+                  Folder where the results will be saved. The folder should not be empty.
+                </p>
+                <Col style={{ width: "300px", margin: "0 auto", display: "block", textAlign: "center" }}>
+                  <Dropdown
+                    style={{ maxWidth: "100%", height: "auto", width: "auto" }}
+                    filter
+                    value={selectedSaveFolder}
+                    onChange={(e) => {
+                      data.setupParam.possibleSettings.defaultSettings.path_save_experiments = e.value
+                      data.internal.settings.path_save_experiments = e.value
+                      setSelectedSaveFolder(e.value)
+                      // Update node warnings
+                      updateHasWarning(data)
+                      setReload(!reload)
+                    }}
+                    options={listWSFolders}
+                    optionLabel="name"
+                    display="chip"
+                    placeholder="Select a folder"
+                  />
+                </Col>
               </Form.Group>
             </Row>
           </>

@@ -37,7 +37,11 @@ const FlowSceneSidebar = ({ type }) => {
   useEffect(() => {
     let localExperimentList = []
     for (const experimentId of globalData["EXPERIMENTS"].childrenIDs) {
-      if (globalData[experimentId].name === "EXTRACTION" || globalData[experimentId].name === "LEARNING") {
+      if (globalData[experimentId].name === "EXTRACTION" && type === "extractionMEDiml") {
+        for (const sceneId of globalData[experimentId].childrenIDs) {
+          localExperimentList.push(globalData[sceneId].name)
+        }
+      } else if (globalData[experimentId].name === "LEARNING" && type === "learningMEDiml") {
         for (const sceneId of globalData[experimentId].childrenIDs) {
           localExperimentList.push(globalData[sceneId].name)
         }
@@ -90,7 +94,7 @@ const FlowSceneSidebar = ({ type }) => {
     // Check if EXTRACTION and LEARNING folders exist
     let { extractionExists, learningExists, extractionFolder, learningFolder } = checkExistingFolders()
     let sceneFolder = null
-    if (extension == "medimg.ml"){
+    if (extension == "mediml"){
       // Create LEARNING folder if it does not exist
       if (!learningExists) {
         learningFolder = new MEDDataObject({
@@ -111,7 +115,7 @@ const FlowSceneSidebar = ({ type }) => {
         childrenIDs: [],
         inWorkspace: true
       })
-    } else if (extension == "medimg"){
+    } else if (extension == "medext"){
       // Create EXTRACTION folder if it does not exist
       if (!extractionExists) {
         extractionFolder = new MEDDataObject({

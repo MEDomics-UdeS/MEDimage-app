@@ -36,14 +36,20 @@ const InputForm = ({ nodeForm, changeNodeForm, enableView }) => {
       let npyFiles = []
       let dcmFolders = []
       keys.forEach((key) => {
-        if (globalData[key].type === "npy") {
+        if (globalData[key].type === "npy" && globalData[key].path) {
           npyFiles.push({ name: globalData[key].name, value: globalData[key].path })
-        } else if (globalData[key].type === "directory") {
+        } else if (globalData[key].type === "directory" && globalData[key].path) {
           dcmFolders.push({ name: globalData[key].name, value: globalData[key].path })
         }
       })
-      setListNpyFiles(npyFiles)
-      setListDicomFolders(dcmFolders)
+      const uniqueNpyFiles = Array.from(new Set(npyFiles.map((file) => file.value))).map((value) => {
+        return npyFiles.find((file) => file.value === value)
+      })
+      const uniqueDcmFolders = Array.from(new Set(dcmFolders.map((folder) => folder.value))).map((value) => {
+        return dcmFolders.find((folder) => folder.value === value)
+      })
+      setListNpyFiles(uniqueNpyFiles)
+      setListDicomFolders(uniqueDcmFolders)
     }
   }, [])
 
