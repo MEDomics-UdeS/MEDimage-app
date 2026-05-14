@@ -570,10 +570,19 @@ class MEDimlExtraction:
             path_to_niftis = Path(data["pathNiftis"])
         else:
             path_to_niftis = None
+        
+        # Required paths
+        path_npy = None
         if "pathNpy" in data.keys() and data["pathNpy"] != "":
             path_npy = Path(data["pathNpy"])
+        else:
+            raise ValueError("No path to npy files given!")
         if "pathSave" in data.keys() and data["pathSave"] != "":
             path_save = Path(data["pathSave"])
+        elif path_npy:
+            path_save = path_npy
+        else:
+            raise ValueError("No path to npy files given!")
         if "pathCSV" in data.keys() and data["pathCSV"] != "":
             path_csv = Path(data["pathCSV"])
         else:

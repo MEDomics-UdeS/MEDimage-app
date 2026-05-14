@@ -10,6 +10,8 @@ import { MEDDataObject } from "../../../workspace/NewMedDataObject"
 import { DataContext } from "../../../workspace/dataContext"
 import { WorkspaceContext } from "../../../workspace/workspaceContext"
 import FileCreationBtn from "../fileCreationBtn"
+import { LayoutModelContext } from "../../layoutContext"
+import { fromJSONtoTree } from "../directoryTree/utils"
 
 const typeInfo = {
   extractionMEDiml: {
@@ -31,6 +33,7 @@ const FlowSceneSidebar = ({ type }) => {
   const { workspace } = useContext(WorkspaceContext) // We get the workspace from the context to retrieve the directory tree of the workspace, thus retrieving the data files
   const [experimentList, setExperimentList] = useState([]) // We initialize the experiment list state to an empty array
   const { globalData } = useContext(DataContext)
+  const { dispatchLayout } = useContext(LayoutModelContext)
   const isProd = process.env.NODE_ENV === "production"
 
   // We use the useEffect hook to update the experiment list state when the workspace changes
@@ -215,6 +218,20 @@ const FlowSceneSidebar = ({ type }) => {
 
     // Success toast
     toast.success("Scene created successfully")
+
+    /*
+    // workspace tree
+    let item = fromJSONtoTree({ 'new': sceneObject })
+    item = Object.values(item)[0]
+
+    // Open scenes
+    if (extension == "medext") {
+      dispatchLayout({ type: "openInExtractionMEDimlModule", payload: item })
+    }
+    else if (extension == "mediml") {
+      dispatchLayout({ type: "openInLearningMEDimlModule", payload: item })
+    }
+    */
   }
 
   return (
