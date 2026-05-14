@@ -463,20 +463,6 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
                         <EyeSlashFill size={"1rem"} className="context-menu-icon refresh-icon" data-pr-at="right bottom" data-pr-tooltip="Show hidden files" data-pr-my="left top" />
                       )}
                     </a>
-                    <a
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        // Hide the tooltip before executing the action
-                        tooltipRefs.toggleDetails.current.hide()
-                        setShowMongoDetails(!showMongoDetails)
-                      }}
-                    >
-                      {showMongoDetails && <ChevronBarContract size={"1rem"} className="context-menu-icon toggle-details-icon" data-pr-at="right bottom" data-pr-tooltip="Hide Local/MongoDB details" data-pr-my="left top" />}
-                      {!showMongoDetails && (
-                        <ChevronBarExpand size={"1rem"} className="context-menu-icon toggle-details-icon" data-pr-at="right bottom" data-pr-tooltip="Show Local/MongoDB details" data-pr-my="left top" />
-                      )}
-                    </a>
                   </div>
                 ) /* We display the add folder icon only if the mouse is hovering the directory tree and if the accordion is not collapsed*/
               }
