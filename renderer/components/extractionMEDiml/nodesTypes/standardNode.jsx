@@ -72,7 +72,7 @@ const StandardNode = ({ id, data }) => {
   }, [nodeForm])
 
   // Get the node type by replacing "-" by "_" to access the nodeTypes dictionary
-  const nodeSpecificType = data.internal.type.replace(/-/g, "_")
+  const nodeSpecificType = data.internal.type.replace(/-/g, "_").toLowerCase()
   // Get the form component corresponding to the node type
   const SpecificNodeComponent = nodeTypes[nodeSpecificType]
 
