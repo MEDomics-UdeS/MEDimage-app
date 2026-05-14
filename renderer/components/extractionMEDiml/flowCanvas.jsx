@@ -368,10 +368,12 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
    */
   const addSpecificToNode = (newNode, associatedNode) => {
     newNode.id = `${newNode.id}${associatedNode ? `.${associatedNode}` : ""}`
-
-    let setupParams = Object.values(staticNodesParams[workflowType]).find(
-      (element) => element.type?.toLowerCase() === newNode.data.internal.type.toLowerCase()
+    let type = newNode.data.internal.type.replaceAll(/ |-/g, "_")
+    let keyNode = Object.keys(staticNodesParams[workflowType]).find(
+      (element) => element?.toLowerCase() === type.toLowerCase()
     )
+
+    let setupParams = deepCopy(staticNodesParams[workflowType][keyNode])
 
     // Add default parameters to node data
     newNode.data.setupParam = setupParams
@@ -929,6 +931,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
         // set workflow type and get default parameters
         let subworkflowType = node.data.internal.subflowId === "MAIN" ? "extraction" : "features"
         let setupParams = deepCopy(staticNodesParams[subworkflowType][node.name.toLowerCase().replaceAll(" ", "_").replaceAll("-", "_")])
+        console.log("debug setupParams", setupParams)
         node.data.setupParam = setupParams
       })
       const { x = 0, y = 0, zoom = 1 } = newScene.viewport
