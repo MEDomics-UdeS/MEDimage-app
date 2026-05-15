@@ -931,7 +931,6 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
         // set workflow type and get default parameters
         let subworkflowType = node.data.internal.subflowId === "MAIN" ? "extraction" : "features"
         let setupParams = deepCopy(staticNodesParams[subworkflowType][node.name.toLowerCase().replaceAll(" ", "_").replaceAll("-", "_")])
-        console.log("debug setupParams", setupParams)
         node.data.setupParam = setupParams
       })
       const { x = 0, y = 0, zoom = 1 } = newScene.viewport
