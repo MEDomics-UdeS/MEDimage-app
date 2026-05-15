@@ -105,6 +105,12 @@ export async function insertMEDDataObjectIfNotExists(medData, path = null, jsonD
       throw new Error('medData.type is required and must be a non-empty string', medData)
     }
 
+    // Skip npy files
+    if (medData.type === "npy" || (path && path.endsWith(".npy"))) {
+      console.log(`Skipping npy file: ${medData.name}`)
+      return null
+    }
+
     const db = await connectToMongoDB()
     const collection = db.collection("medDataObjects")
 
