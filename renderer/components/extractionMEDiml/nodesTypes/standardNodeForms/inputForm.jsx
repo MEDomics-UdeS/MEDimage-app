@@ -53,6 +53,17 @@ const InputForm = ({ nodeForm, changeNodeForm, enableView }) => {
     }
   }, [])
 
+  const handleNPYFileChange = (event) => {
+    var fileList = event.target.files
+    if (fileList.length > 0) {
+      fileList = fileList[0].path
+      setSelectedFile(fileList)
+    }
+    else {
+      setSelectedFile(event.target.files.path)
+    }
+  };
+
   /**
    * @param {String} fileType type of the file to upload (file or folder)
    *
@@ -142,10 +153,11 @@ const InputForm = ({ nodeForm, changeNodeForm, enableView }) => {
         name={"What is a MEDscan object?"}
         image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
       />
-      <Row className="form-group-box">
-        <Form.Label htmlFor="file">MEDscan Object (.npy)</Form.Label>
-        <Col>
-          <Dropdown
+      {listNpyFiles && listNpyFiles.length > 0 && (
+        <Row className="form-group-box flex-column align-items-start">
+          <Form.Label htmlFor="file">MEDscan Object (.npy)</Form.Label>
+          <Col className="w-100">
+            <Dropdown
               filter
               style={{ maxWidth: "300px" }}
               value={selectedFile}
@@ -157,13 +169,42 @@ const InputForm = ({ nodeForm, changeNodeForm, enableView }) => {
               placeholder="Select a npy file"
             />
         </Col>
-        <Col style={{marginBottom: "10px", marginTop: "10px"}}>
-          <Button label="Upload" severity="info" outlined onClick={() => handleUpload("file")} disabled={!selectedFile} loading={loading}/>
+        <Col className="w-100" style={{marginBottom: "10px", marginTop: "10px"}}>
+          <Button 
+            label="Upload" 
+            severity="info" 
+            outlined 
+            onClick={() => handleUpload("file")} 
+            disabled={!selectedFile}
+            loading={loading}
+          />
+        </Col>
+      </Row>)}
+      <Row className="form-group-box flex-column align-items-start">
+        <Form.Label htmlFor="file">MEDscan Object (.npy)</Form.Label>
+        <Col className="w-100">
+          <Form.Group controlId="enterFile">
+            <Form.Control
+              name="pathNpyFile"
+              type="file"
+              onChange={handleNPYFileChange}
+            />
+          </Form.Group>
+        </Col>
+        <Col className="w-100" style={{marginBottom: "10px", marginTop: "10px"}}>
+          <Button 
+            label="Upload" 
+            severity="info" 
+            outlined 
+            onClick={() => handleUpload("file")} 
+            disabled={!selectedFile}
+            loading={loading}
+          />
         </Col>
       </Row>
-      <Row className="form-group-box">
+      <Row className="form-group-box flex-column align-items-start">
         <Form.Label htmlFor="file">DICOM image (folder)</Form.Label>
-        <Col>
+        <Col className="w-100">
           <Dropdown
               filter
               style={{ maxWidth: "300px" }}
@@ -176,8 +217,14 @@ const InputForm = ({ nodeForm, changeNodeForm, enableView }) => {
               placeholder="Select a DICOM folder"
             />
         </Col>
-        <Col style={{marginBottom: "10px", marginTop: "10px"}}>
-          <Button label="Upload" severity="info" outlined onClick={() => handleUpload("folder")} disabled={!selectedDicomFolder} loading={loading}/>
+        <Col className="w-100" style={{marginBottom: "10px", marginTop: "10px"}}>
+          <Button 
+            label="Upload" 
+            severity="info" 
+            outlined onClick={() => handleUpload("folder")} 
+            disabled={!selectedDicomFolder} 
+            loading={loading}
+          />
         </Col>
       </Row>
       {nodeForm.filepath && nodeForm.filepath !== "" && (
