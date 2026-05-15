@@ -501,7 +501,7 @@ const WorkflowBase = ({ isGoodConnection, groupNodeHandlingDefault, onDeleteNode
         internal: {
           name: name,
           img: image,
-          type: name,
+          type: name.toLowerCase(),
           results: { checked: false, contextChecked: false },
           hasRun: false
         },

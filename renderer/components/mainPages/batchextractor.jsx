@@ -1,20 +1,19 @@
 import { Button } from 'primereact/button'
 import { Column } from 'primereact/column'
 import { Dialog } from 'primereact/dialog'
- 
+import { Dropdown } from 'primereact/dropdown'
+import { InputSwitch } from 'primereact/inputswitch'
 import { TreeTable } from 'primereact/treetable'
 import React, { useContext, useEffect, useState } from 'react'
 import { Alert, Card, Col, Form, ProgressBar, Row } from 'react-bootstrap'
 import { toast } from 'react-toastify'
 import { requestBackend } from "../../utilities/requests"
 import DocLink from '../extractionMEDiml/docLink'
+import { ErrorRequestContext } from '../generalPurpose/errorRequestContext'
+import { DataContext } from '../workspace/dataContext'
+import { MEDDataObject } from '../workspace/NewMedDataObject'
 import { WorkspaceContext } from "../workspace/workspaceContext"
 import SettingsEditor from "./dataComponents/settingsEditor"
-import { Dropdown } from 'primereact/dropdown'
-import { DataContext } from '../workspace/dataContext'
-import { ErrorRequestContext } from '../generalPurpose/errorRequestContext'
-import { MEDDataObject } from '../workspace/NewMedDataObject'
-import { InputSwitch } from 'primereact/inputswitch'
 
 /**
  * @param {Object} nodeForm form associated to the discretization node
@@ -521,7 +520,6 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
           </Col>
             ) : (
           <Col>
-            <h6>Select a local foler</h6>
             <Form.Group controlId="enterFile">
               <Form.Control
                 name="path_read"
@@ -589,10 +587,13 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
 
         {/* UPLOAD CSV FILE*/}
         <Row className="form-group-box">
-        <Form.Label className="csv-file" htmlFor="file">
-          Path to CSV File
-        </Form.Label>
-        <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Path to the CSV file containing the scans to use for radiomics features extraction with their corresponding ROIs (Regions of Interest)</p>
+          <Form.Label className="csv-file" htmlFor="file">
+            Path to CSV File
+          </Form.Label>
+          <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+            Path to the CSV file containing the scans to use for radiomics features extraction with 
+            their corresponding Regions of Interest
+          </p>
           {useWorkspace ? (
           <Col>
             <Dropdown
@@ -607,7 +608,6 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
             />
           </Col> ) :(
           <Col>
-            <h6>Select a Local File</h6>
             <Form.Group controlId="enterFile">
               <Form.Control
                 name="path_csv"
@@ -641,7 +641,9 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
             />
           </Col> ) :(
           <Col>
-          <h6>Select a Local Folder</h6>
+            <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0", color: "red"}}>
+              Warning: to select a folder, it must contain at least one file.
+            </p>
             <Form.Group controlId="enterFile">
               <Form.Control
                 name="path_save"
