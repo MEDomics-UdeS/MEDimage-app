@@ -78,7 +78,7 @@ const nodesParams = {
     classes: "object roi_extraction view run",
     nbInput: 1,
     nbOutput: 1,
-    input: ["interpolation_data", "re_segmentation_data", "filter_data"],
+    input: ["segmentation_data", "interpolation_data", "re_segmentation_data", "filter_data"],
     output: ["roi_extraction_data"],
     img: "roi_extraction.svg",
     title: "ROI extraction",
