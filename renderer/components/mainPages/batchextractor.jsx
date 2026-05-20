@@ -14,6 +14,7 @@ import { DataContext } from '../workspace/dataContext'
 import { MEDDataObject } from '../workspace/NewMedDataObject'
 import { WorkspaceContext } from "../workspace/workspaceContext"
 import SettingsEditor from "./dataComponents/settingsEditor"
+import { SelectButton } from 'primereact/selectbutton';
 
 /**
  * @param {Object} nodeForm form associated to the discretization node
@@ -46,6 +47,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
   const [saveFolder, setSaveFolder] = useState('') // Path of the folder where the results are saved
   const [showRadiomicsResults, setShowRadiomicsResults] = useState(false) // used to display the extraction results
   const [showEdit, setShowEdit] = useState(false) // used to display the extraction results
+  const [useNiftis, setUseNiftis] = useState(false) // A boolean variable to control the use of NIfTI dataset instead of NPY dataset
   const [nodes, setNodes] = useState([])
   const [useWorkspace, setUseWorkspace] = useState(true) // A boolean variable to control the use of the workspace
 
@@ -294,7 +296,8 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
       path_csv: selectedCSVFile,
       path_save: selectedSaveFolder,
       n_batch: parseInt(selectedNBatch),
-      skip_existing: skipExisting
+      skip_existing: skipExisting,
+      use_niftis: useNiftis
     }
 
     console.log("requestData", requestData);
@@ -499,38 +502,84 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
         </Col>
       </Row>
 
-      {/* UPLOAD NPY DATASET FOLDER*/}
       <Row className="form-group-box">
-        <Form.Label className="npy-folder" htmlFor="file">
-          NPY dataset folder (MEDscan objects)
-        </Form.Label>
-        <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Path to the folder containing the NPY dataset to use for radiomics features extraction</p>
-          {useWorkspace ? (
+        {/* UPLOAD NPY DATASET FOLDER*/}
+          <SelectButton
+            value={useNiftis}
+            onChange={(e) => setUseNiftis(e.value)}
+            options={[
+              { label: 'Use NPY', value: false },
+              { label: 'Use NIfTI', value: true }
+            ]}
+            style={{ width: '100%', marginBottom: '10px' }}
+          />
+        {!useNiftis ? (
           <Col>
-            <Dropdown
-              style={{ maxWidth: "100%", height: "auto", width: "auto" }}
-              filter
-              value={selectedReadFolder}
-              onChange={(e) => setSelectedReadFolder(e.value)}
-              options={listWSFolders}
-              optionLabel="name"
-              display="chip"
-              placeholder="Select a folder"
-            />
-          </Col>
-            ) : (
-          <Col>
-            <Form.Group controlId="enterFile">
-              <Form.Control
-                name="path_read"
-                type="file"
-                webkitdirectory="true"
-                directory="true"
-                onChange={handleReadFolderChange}
+          <Form.Label className="npy-folder" htmlFor="file">
+            NPY dataset folder (MEDscan objects)
+          </Form.Label>
+          <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Path to the folder containing the NPY dataset to use for radiomics features extraction</p>
+            {useWorkspace ? (
+            <Col>
+              <Dropdown
+                style={{ maxWidth: "100%", height: "auto", width: "auto" }}
+                filter
+                value={selectedReadFolder}
+                onChange={(e) => setSelectedReadFolder(e.value)}
+                options={listWSFolders}
+                optionLabel="name"
+                display="chip"
+                placeholder="Select a folder"
               />
-            </Form.Group>
-          </Col>
-        )}
+            </Col>
+              ) : (
+            <Col>
+              <Form.Group controlId="enterFile">
+                <Form.Control
+                  name="path_read"
+                  type="file"
+                  webkitdirectory="true"
+                  directory="true"
+                  onChange={handleReadFolderChange}
+                />
+              </Form.Group>
+            </Col>
+          
+          )}
+        </Col>) : (
+        <Col>
+          <Form.Label className="npy-folder" htmlFor="file">
+            NIfTI dataset folder
+          </Form.Label>
+          <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Path to the folder containing the NIfTI dataset to use for radiomics features extraction</p>
+            {useWorkspace ? (
+            <Col>
+              <Dropdown
+                style={{ maxWidth: "100%", height: "auto", width: "auto" }}
+                filter
+                value={selectedReadFolder}
+                onChange={(e) => setSelectedReadFolder(e.value)}
+                options={listWSFolders}
+                optionLabel="name"
+                display="chip"
+                placeholder="Select a folder"
+              />
+            </Col>
+              ) : (
+            <Col>
+              <Form.Group controlId="enterFile">
+                <Form.Control
+                  name="path_read"
+                  type="file"
+                  webkitdirectory="true"
+                  directory="true"
+                  onChange={handleReadFolderChange}
+                />
+              </Form.Group>
+            </Col>
+          )}
+        </Col>
+      )}
       </Row>
 
         {/* UPLOAD SETTINGS FILE*/}
@@ -611,9 +660,8 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
             <Form.Group controlId="enterFile">
               <Form.Control
                 name="path_csv"
+                accept='.csv'
                 type="file"
-                webkitdirectory="true"
-                directory="true"
                 onChange={handleCSVFileChange}
               />
             </Form.Group>
@@ -691,6 +739,32 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
         </Col>
       </Row>
 
+      {/* PROGRESS BAR*/}
+      {(refreshEnabled || progress === 100 || progress !== 0) && (
+          <React.Fragment>
+            <br />
+            <br />
+          </React.Fragment>
+          )}
+      {(progress === 0) && (refreshEnabled) &&(
+          <div className="progress-bar-requests">
+            <label>Processing</label>
+              <ProgressBar animated striped variant="danger" now={100} label={'Preparing data...'} />
+          </div>
+        )}
+      {progress !== 0 && progress !== 100 && (
+          <div className="progress-bar-requests">
+            <label>Extracting features</label>
+              <ProgressBar animated striped variant="info" now={progress} label={`${progress}%`} />
+          </div>
+        )}
+      {progress === 100 && (
+          <div className="progress-bar-requests">
+            <label>Done!</label>
+              <ProgressBar animated striped variant="success" now={progress} label={`${progress}%`} />
+          </div>
+      )}
+
       {/* PROCESS BUTTON*/}
       <Row className="form-group-box">
         <Col>
@@ -721,32 +795,6 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
         </Row>
       </Card.Body>
     </Card>
-
-    {/* PROGRESS BAR*/}
-    {(refreshEnabled || progress === 100 || progress !== 0) && (
-        <React.Fragment>
-          <br />
-          <br />
-        </React.Fragment>
-        )}
-    {(progress === 0) && (refreshEnabled) &&(
-        <div className="progress-bar-requests">
-          <label>Processing</label>
-            <ProgressBar animated striped variant="danger" now={100} label={'Preparing data...'} />
-        </div>
-      )}
-    {progress !== 0 && progress !== 100 && (
-        <div className="progress-bar-requests">
-          <label>Extracting features</label>
-            <ProgressBar animated striped variant="info" now={progress} label={`${progress}%`} />
-        </div>
-      )}
-      {progress === 100 && (
-          <div className="progress-bar-requests">
-            <label>Done!</label>
-              <ProgressBar animated striped variant="success" now={progress} label={`${progress}%`} />
-          </div>
-      )}
   </div>
   </>
   );

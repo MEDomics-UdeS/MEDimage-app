@@ -694,33 +694,35 @@ class MEDimlExtraction:
             path_save = Path(data["path_save"])
         else:
             path_save = None
+        if "use_niftis" in data.keys():
+            use_niftis = data["use_niftis"]
+        else:
+            use_niftis = False
 
         try:
             # CSV file path process
-            if str(path_csv).endswith('.csv'):
-                path_csv = path_csv.parent
-            
+            if not str(path_csv).endswith('.csv'):
+                raise ValueError("The path to dataset csv should be a path to a csv file.")
+
             # Load params
             with open(path_params, 'r') as f:
                 params = json.load(f)
             
             # Load csv and count scans
-            tabel_roi = pd.read_csv(path_csv / ('roiNames_' + params["roi_type_labels"][0] + '.csv'))
-            tabel_roi['under'] = '_'
-            tabel_roi['dot'] = '.'
-            tabel_roi['npy'] = '.npy'
-            name_patients = (pd.Series(
-                tabel_roi[['PatientID', 'under', 'under',
-                        'ImagingScanName',
-                        'dot',
-                        'ImagingModality',
-                        'npy']].fillna('').values.tolist()).str.join('')).tolist()
-            
+            tabel_roi = pd.read_csv(path_csv)
+
+            # Filter out patients not present in the read path
+            if use_niftis:
+                all_files = list(path_read.rglob('*.nii*'))
+            else:
+                all_files = list(path_read.rglob('*.npy'))
+            tabel_roi = tabel_roi[tabel_roi.apply(
+                lambda x: any(f"{x['PatientID']}__{x['ImagingScanName']}" in file.name for file in all_files), 
+                axis=1
+            )]
             
             # Count scans in path read
-            list_scans = [scan.name for scan in list(path_read.glob('*.npy'))]
-            list_scans_unique = [name_patient for name_patient in name_patients if name_patient in list_scans]
-            n_scans = len(list_scans_unique)
+            n_scans = len(tabel_roi['PatientID'].tolist())
 
             if type(params["roi_types"]) is list:
                 roi_label = params["roi_types"][0]
@@ -760,14 +762,18 @@ class MEDimlExtraction:
             skip_existing = data["skip_existing"]
         else:
             skip_existing = False
+        if "use_niftis" in data.keys():
+            use_niftis = data["use_niftis"]
+        else:
+            use_niftis = False
         if "n_batch" in data.keys():
             n_batch = data["n_batch"]
 
         try:
             # CSV file path process
-            if 'csv' in path_csv.name:
-                path_csv = path_csv.parent
-            
+            if not str(path_csv).endswith('.csv'):
+                raise ValueError("The path to dataset csv should be a path to a csv file.")
+
             # Check if at least one path to data is given
             if not ("path_read" in data.keys() and data["path_read"] != "") and not (
                     "path_params" in data.keys() and data["path_params"] != "") and not (
@@ -784,6 +790,7 @@ class MEDimlExtraction:
                 path_params=path_params,
                 path_save=path_save,
                 skip_existing=skip_existing,
+                use_niftis=use_niftis,
                 n_batch=n_batch
             )
 
