@@ -1,4 +1,4 @@
-# Contributing to MEDimage-app
+# Contributing to MEDiml-app
 
 First off, thank you for considering contributing to our project. It's people like you that make this project such a great tool.
 
@@ -42,5 +42,5 @@ All JavaScript must adhere to JavaScript Standard Style.
 
 All CSS must adhere to CSS Guidelines.
 
-### More infos 👉[HERE](https://medomics-udes.gitbook.io/medomicslab-docs/contributing)
-## Thank you again for your contribution and making MEDimage-app even better!
+### More infos 👉[HERE](https://medomicslab.gitbook.io/mediml-app-docs/contributing)
+## Thank you again for your contribution and making MEDiml-app even better!
