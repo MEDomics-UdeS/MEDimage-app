@@ -26,6 +26,12 @@ const Split = ({ id, data, type }) => {
   const [listWSFolders, setListWSFolders] = useState([]) // List of folders in the workspace
   const [reload, setReload] = useState(false)
   const { globalData } = useContext(DataContext) // We get the global data from the context
+  const sectionStyle = {
+    marginBottom: "16px",
+    paddingBottom: "12px",
+    borderBottom: "1px solid rgba(0, 0, 0, 0.08)"
+  }
+  const lastSectionStyle = { marginBottom: "16px" }
 
   useEffect(() => {
     if (!data.setupParam.possibleSettings.defaultSettings.outcome_name){
@@ -138,7 +144,7 @@ const Split = ({ id, data, type }) => {
                 image={"https://www.svgrepo.com/show/521262/warning-circle.svg"}
               />
               {/* Outcome Name */}
-              <Form.Group controlId="outcomeName">
+              <Form.Group controlId="outcomeName" style={sectionStyle}>
                 <Form.Label className="outcomeName">Outcome Name</Form.Label>
                 <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>A reference name to describe the problem studied.</p>
                 <InputText
@@ -156,7 +162,7 @@ const Split = ({ id, data, type }) => {
               </Form.Group>
 
               {/* Split Method */}
-              <Form.Group controlId="splitMethod">
+              <Form.Group controlId="splitMethod" style={sectionStyle}>
               <Form.Label className="splitMethod">Create Holdout Set</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>If activated a holdout set will be created. If not, all the data will be used for learning.</p>
                 <InputSwitch 
@@ -172,7 +178,7 @@ const Split = ({ id, data, type }) => {
               </Form.Group>
 
               {/* Workspace Folder */}
-              <Form.Group controlId="workspaceFolder">
+              <Form.Group controlId="workspaceFolder" style={sectionStyle}>
                 <Form.Label className="workspaceFolder">Experiment's Workspace Folder</Form.Label>
                 <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
                   Folder containing the experiments' resources (features, outcome file, etc.).
@@ -199,7 +205,7 @@ const Split = ({ id, data, type }) => {
               </Form.Group>
 
               {/* Path Outcome */}
-              <Form.Group controlId="outcomeFile">
+              <Form.Group controlId="outcomeFile" style={sectionStyle}>
               <Form.Label className="outcomeFile">Outcomes CSV</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>CSV file of the outcomes.</p>
               <Col style={{ width: "300px", margin: "0 auto", display: "block", textAlign: "center" }}>
@@ -224,7 +230,7 @@ const Split = ({ id, data, type }) => {
               </Form.Group>
 
               {/* Save Folder */}
-              <Form.Group controlId="experimentSaveFolder">
+              <Form.Group controlId="experimentSaveFolder" style={lastSectionStyle}>
                 <Form.Label className="experimentSaveFolder">Save Folder</Form.Label>
                 <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
                   Folder where the results will be saved. The folder should not be empty.
