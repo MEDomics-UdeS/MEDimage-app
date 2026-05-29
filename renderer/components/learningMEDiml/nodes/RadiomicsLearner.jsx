@@ -91,22 +91,20 @@ const RadiomicsLearner = ({ id, data, type }) => {
                 />
               </Form.Group>
 
-              {/* nameSave */}
-              <Form.Group controlId="nameSave" style={{ marginBottom: "16px" }}>
-              <Form.Label className="nameSave">Model's Save Name</Form.Label>
-              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Name for saving the trained model.</p>
-                <InputText
-                    key="nameSaveModel"
-                    style={{width: "300px"}}
-                    value={data.setupParam.possibleSettings.defaultSettings.XGBoost.nameSave}
-                    placeholder={data.setupParam.possibleSettings.defaultSettings.XGBoost.nameSave}
-                    onChange={(event) => {
-                      data.setupParam.possibleSettings.defaultSettings.XGBoost.nameSave = event.target.value;
-                      console.log("data.internal.settings.XGBoost: ", data.internal.settings);
-                      data.internal.settings.XGBoost.nameSave = event.target.value;
-                      updateHasWarning(data);
-                      setReload(!reload);
-                    }}
+              {/* finalizeModel */}
+              <Form.Group controlId="finalizeModel" style={{ marginBottom: "16px" }}>
+                <Form.Label className="finalizeModel">Finalize Model</Form.Label>
+                <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+                  Retrain a final model on the entire learning set.
+                </p>
+                <InputSwitch 
+                  checked={data.setupParam.possibleSettings.defaultSettings.XGBoost.finalizeModel}
+                  onChange={(event) => {
+                    data.setupParam.possibleSettings.defaultSettings.XGBoost.finalizeModel = event.target.value;
+                    data.internal.settings.XGBoost.finalizeModel = event.target.value;
+                    updateHasWarning(data);
+                    setReload(!reload);
+                  }}
                 />
               </Form.Group>
 
@@ -145,7 +143,25 @@ const RadiomicsLearner = ({ id, data, type }) => {
                     mode="decimal"
                     min={1}
                 />
+              </Form.Group>
 
+              {/* nameSave */}
+              <Form.Group controlId="nameSave" style={{ marginBottom: "16px" }}>
+              <Form.Label className="nameSave">Model's Save Name</Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Name for saving the trained model.</p>
+                <InputText
+                    key="nameSaveModel"
+                    style={{width: "300px"}}
+                    value={data.setupParam.possibleSettings.defaultSettings.XGBoost.nameSave}
+                    placeholder={data.setupParam.possibleSettings.defaultSettings.XGBoost.nameSave}
+                    onChange={(event) => {
+                      data.setupParam.possibleSettings.defaultSettings.XGBoost.nameSave = event.target.value;
+                      console.log("data.internal.settings.XGBoost: ", data.internal.settings);
+                      data.internal.settings.XGBoost.nameSave = event.target.value;
+                      updateHasWarning(data);
+                      setReload(!reload);
+                    }}
+                />
               </Form.Group>
             </Row>
           </>
