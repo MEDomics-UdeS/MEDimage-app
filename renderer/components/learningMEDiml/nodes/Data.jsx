@@ -24,6 +24,12 @@ const Data = ({ id, data, type }) => {
   const [listWSFolders, setListWSFolders] = useState([]) // List of folders in the workspace
   const [listCSVFiles, setListCSVFiles] = useState([]) // List of csv files in the workspace
   const { globalData } = useContext(DataContext) // We get the global data from the context
+  const sectionStyle = {
+    marginBottom: "16px",
+    paddingBottom: "12px",
+    borderBottom: "1px solid rgba(0, 0, 0, 0.08)"
+  }
+  const lastSectionStyle = { marginBottom: "16px" }
 
   useEffect(() => {
     if (!data.setupParam.possibleSettings.defaultSettings.featuresFiles.length){
@@ -120,7 +126,7 @@ const Data = ({ id, data, type }) => {
             </Form.Group>*/}
 
             {/* path features */}
-            <Form.Group controlId="FeaturePath">
+            <Form.Group controlId="FeaturePath" style={sectionStyle}>
               <Form.Label className="FeaturePath">Features Folder Name</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Select the folder containing feature files for training.</p>
               <Col style={{ width: "300px", margin: "0 auto", display: "block", textAlign: "center" }}>
@@ -144,7 +150,7 @@ const Data = ({ id, data, type }) => {
                 </Alert>
             )}
             {(listCSVFiles.length > 0) && (
-            <>
+            <Form.Group controlId="selectFeaturesFiles" style={lastSectionStyle}>
               <Form.Label className="selectFiles" style={{ marginTop: "10px" }}>Select Features Files</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Choose which feature files to use for model training.</p>
               <MultiSelect
@@ -162,7 +168,7 @@ const Data = ({ id, data, type }) => {
                 filter 
                 placeholder="Select features files"
               />
-            </>
+            </Form.Group>
             )}
             </Col>
             </Row>
