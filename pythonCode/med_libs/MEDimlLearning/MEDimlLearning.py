@@ -97,6 +97,7 @@ class MEDimlLearning:
             design_settings = dict()
             path_study = None
             holdout_test = False
+            evaluate_holdout = False
             cleaned_data = False
             normalized_features = False
             reduced_features = False
@@ -158,6 +159,7 @@ class MEDimlLearning:
                                     holdout_test = False
                                 else:
                                     holdout_test = True
+                                    evaluate_holdout = True
 
                                 # Reset progress
                                 self.set_progress(label=f"Pip {str(pip_idx+1)} | Spliting data")
@@ -263,8 +265,9 @@ class MEDimlLearning:
                                 patients_train = ml_info_dict['patientsTrain']
                                 patients_test = ml_info_dict['patientsTest']
                                 if holdout_test and not (path_study / 'patientsHoldOut.json').exists():
-                                    raise FileNotFoundError(f"patientsHoldOut.json file was not found in the study path {path_study}!")
-                                patients_holdout = MEDiml.utils.load_json(path_study / 'patientsHoldOut.json') if holdout_test else None
+                                    evaluate_holdout = False
+                                else:
+                                    patients_holdout = MEDiml.utils.load_json(path_study / 'patientsHoldOut.json') if holdout_test else None
                                 outcome_table_binary = ml_info_dict['outcome_table_binary']
                                 path_results = ml_info_dict['path_results']
                                 patient_ids = list(outcome_table_binary.index)
@@ -615,12 +618,12 @@ class MEDimlLearning:
                                 patient_ids = list(outcome_table_binary.index)
                                 patients_train = MEDiml.learning.ml_utils.intersect(MEDiml.learning.ml_utils.intersect(patient_ids, patients_train), rad_tables_training.index)
                                 patients_test = MEDiml.learning.ml_utils.intersect(MEDiml.learning.ml_utils.intersect(patient_ids, patients_test), rad_tables_testing.index)
-                                patients_holdout = MEDiml.learning.ml_utils.intersect(patient_ids, patients_holdout) if holdout_test else None
+                                patients_holdout = MEDiml.learning.ml_utils.intersect(patient_ids, patients_holdout) if evaluate_holdout else None
 
                                 # Initializing outcome tables for training and test sets
                                 outcome_table_binary_train = outcome_table_binary.loc[patients_train, :]
                                 outcome_table_binary_test = outcome_table_binary.loc[patients_test, :]
-                                outcome_table_binary_holdout = outcome_table_binary.loc[patients_holdout, :] if holdout_test else None
+                                outcome_table_binary_holdout = outcome_table_binary.loc[patients_holdout, :] if evaluate_holdout else None
 
                                 # Initializing XGBoost model settings
                                 if "model" in content["data"].keys() and content["data"]["model"] is not None:
@@ -702,8 +705,9 @@ class MEDimlLearning:
                                     var_table_all_holdout.Properties['userData']['flags_processing'] = {}
 
                                     # D.2. Testing the XGBoost model and computing model response on the holdout set
-                                    patients_ids = MEDiml.learning.ml_utils.intersect(patients_holdout, list(var_table_all_holdout.index))
-                                    response_holdout = estimator.predict_proba(var_table_all_holdout.loc[patients_ids, :])
+                                    if evaluate_holdout:
+                                        patients_ids = MEDiml.learning.ml_utils.intersect(patients_holdout, list(var_table_all_holdout.index))
+                                        response_holdout = estimator.predict_proba(var_table_all_holdout.loc[patients_ids, :])
 
                                 # E. Computing performance metrics
                                 # Initialize the Results class
@@ -739,7 +743,7 @@ class MEDimlLearning:
                                     outcome_table_binary_test
                                 )
 
-                                if holdout_test:
+                                if evaluate_holdout:
                                     # Calculating performance metrics for holdout phase and saving the ROC curve
                                     run_results[model_id]['holdout']['metrics'] = result.get_model_performance(
                                         response_holdout, 
@@ -787,16 +791,12 @@ class MEDimlLearning:
                         if (path_study / 'patientsHoldOut.json').exists():
                             patients_holdout = MEDiml.learning.ml_utils.load_json(path_study / 'patientsHoldOut.json')
                         elif finalize_model:
-                            raise FileNotFoundError(f"Cannot finalize model: patientsHoldOut.json not found at {path_study}")
+                            patients_holdout = []
                         
                         # Load outcomes table
                         outcome_table = pd.read_csv(ml_dict_paths['outcomes'], index_col=0)
                         outcome_table_binary = outcome_table.iloc[:, [0]]
-                        
-                        # Filter to patients in learning set
-                        all_patients = patients_final_train + (patients_holdout or [])
-                        all_patients = MEDiml.learning.ml_utils.intersect(all_patients, list(outcome_table_binary.index))
-                        
+
                         # Get ML configuration from one of the splits
                         test_paths = list(path_learn.glob('test__*'))
                         if not test_paths:
