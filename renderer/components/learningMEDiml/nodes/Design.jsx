@@ -21,6 +21,12 @@ import { updateHasWarning } from "../../flow/node";
  */
 const Design = ({ id, data, type }) => {  
   const [reload, setReload] = useState(false);
+  const sectionStyle = {
+    marginBottom: "16px",
+    paddingBottom: "12px",
+    borderBottom: "1px solid rgba(0, 0, 0, 0.08)"
+  }
+  const lastSectionStyle = { marginBottom: "16px" }
 
   return (
     <>
@@ -35,7 +41,7 @@ const Design = ({ id, data, type }) => {
           <>
             <Row className="form-group-box" style={{ textAlign: "center", alignItems: "center", justifyContent: "center" }}>
               {/* Experiment Name */}
-              <Form.Group controlId="expName">
+              <Form.Group controlId="expName" style={sectionStyle}>
               <Form.Label 
                   className="expName">
                       Experiment Name
@@ -55,7 +61,7 @@ const Design = ({ id, data, type }) => {
               </Form.Group>
 
               {/* Split Type */}
-              <Form.Group controlId="splitType">
+              <Form.Group controlId="splitType" style={sectionStyle}>
               <Form.Label 
                   className="splitType">
                       Split Type
@@ -85,7 +91,7 @@ const Design = ({ id, data, type }) => {
               {data.setupParam.possibleSettings.defaultSettings.active_method?.[0]?.toLowerCase() === "random" &&
               <>
               {/* Split Method */}
-              <Form.Group controlId="splitMethod">
+              <Form.Group controlId="splitMethod" style={sectionStyle}>
               <Form.Label 
                   className="splitMethod">
                       Split Method
@@ -107,7 +113,7 @@ const Design = ({ id, data, type }) => {
               </Form.Group>
 
               {/* Number of splits */}
-              <Form.Group controlId="nSplits">
+              <Form.Group controlId="nSplits" style={sectionStyle}>
               <Form.Label 
                   className="nSplits">
                       Splits Number
@@ -133,7 +139,7 @@ const Design = ({ id, data, type }) => {
               </Form.Group>
 
               {/* Flag by institution or not */}
-              <Form.Group controlId="stratifyInstitutions">
+              <Form.Group controlId="stratifyInstitutions" style={sectionStyle}>
               <Form.Label 
                   className="stratifyInstitutions">
                       Flag by Institution
@@ -152,7 +158,7 @@ const Design = ({ id, data, type }) => {
               </Form.Group>
 
               {/* Test proportion */}
-              <Form.Group controlId="testProportion">
+              <Form.Group controlId="testProportion" style={sectionStyle}>
               <Form.Label 
                   className="testProportion">
                       Train/Test Proportion
@@ -180,7 +186,7 @@ const Design = ({ id, data, type }) => {
               </Form.Group>
 
               {/* Seed */}
-              <Form.Group controlId="seed">
+              <Form.Group controlId="seed" style={lastSectionStyle}>
                 <Form.Label className="seed">Random Seed</Form.Label>
                 <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Ensures reproducible random data splitting.</p>
                 <InputNumber
@@ -205,7 +211,7 @@ const Design = ({ id, data, type }) => {
               <>
 
               {/* Number of splits */}
-              <Form.Group controlId="nSplits">
+              <Form.Group controlId="nSplits" style={sectionStyle}>
                 <Form.Label className="nSplits">Number of folds</Form.Label>
                 <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>K value for cross-validation folds (K).</p>
                 <InputNumber
@@ -227,7 +233,7 @@ const Design = ({ id, data, type }) => {
 
               </Form.Group>
               {/* Seed */}
-              <Form.Group controlId="seed">
+              <Form.Group controlId="seed" style={lastSectionStyle}>
                 <Form.Label className="seed">Random Seed
                 </Form.Label>
                 <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Ensures reproducible random data splitting.</p>
