@@ -20,7 +20,13 @@ import { updateHasWarning } from "../../flow/node";
 const Cleaning = ({ id, data, type }) => {
 
   const [reload, setReload] = useState(false);
-  
+  const sectionStyle = {
+    marginBottom: "16px",
+    paddingBottom: "12px",
+    borderBottom: "1px solid rgba(0, 0, 0, 0.08)"
+  }
+  const lastSectionStyle = { marginBottom: "16px" }
+
   return (
     <>
       <Node
@@ -33,7 +39,7 @@ const Cleaning = ({ id, data, type }) => {
           <>
             <Row className="form-group-box" style={{ textAlign: "center", alignItems: "center", justifyContent: "center" }}>
               {/* missingCutoffps */}
-              <Form.Group controlId="missingCutoffps">
+              <Form.Group controlId="missingCutoffps" style={sectionStyle}>
               <Form.Label className="missingCutoffps">Missing Cut Off/Sample</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Maximum percentage of missing features allowed per sample.</p>
                 <InputNumber
@@ -57,7 +63,7 @@ const Cleaning = ({ id, data, type }) => {
               </Form.Group>
 
               {/* missingCutoffpf */}
-              <Form.Group controlId="missingCutoffpf">
+              <Form.Group controlId="missingCutoffpf" style={sectionStyle}>
               <Form.Label className="missingCutoffpf">Missing Patients Cut Off/Feature</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Maximum percentage of missing samples allowed per feature.</p>
                 <InputNumber
@@ -81,7 +87,7 @@ const Cleaning = ({ id, data, type }) => {
               </Form.Group>
 
               {/* covCutoff */}
-              <Form.Group controlId="covCutoff">
+              <Form.Group controlId="covCutoff" style={sectionStyle}>
                 <Form.Label className="covCutoff">Minimum Variation Percentage</Form.Label>
                 <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
                   Minimum coefficient of variation threshold to retain features.
@@ -107,7 +113,7 @@ const Cleaning = ({ id, data, type }) => {
               </Form.Group>
 
               {/* imputation */}
-              <Form.Group controlId="imputation">
+              <Form.Group controlId="imputation" style={lastSectionStyle}>
               <Form.Label className="imputation">Imputation Method</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Strategy for filling missing values in features.</p>
                 <Dropdown 
