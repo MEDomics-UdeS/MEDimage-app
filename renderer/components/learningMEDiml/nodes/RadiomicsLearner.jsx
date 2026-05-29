@@ -19,6 +19,13 @@ import Node, { updateHasWarning } from "../../flow/node";
  */
 const RadiomicsLearner = ({ id, data, type }) => {
   const [reload, setReload] = useState(false);  
+  const sectionStyle = {
+    marginBottom: "16px",
+    paddingBottom: "12px",
+    borderBottom: "1px solid rgba(0, 0, 0, 0.08)"
+  }
+  const lastSectionStyle = { marginBottom: "16px" }
+
   return (
     <>
       <Node
@@ -32,10 +39,10 @@ const RadiomicsLearner = ({ id, data, type }) => {
             {/* Show segmentation warning when there is no roisList or the roisList is empty */}
             <Row className="form-group-box" style={{ maxHeight: "400px", overflowY: "auto", overflowX: "hidden", paddingRight: "8px" }}>
               {/* Model type */}
-              <Form.Group controlId="algo" style={{ marginBottom: "16px" }}>
-              <Form.Label className="algo">Algorithm</Form.Label>
-              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Learning algorithm for model training.</p>
-                <Dropdown 
+              <Form.Group controlId="algo" style={sectionStyle}>
+                <Form.Label className="algo">Algorithm</Form.Label>
+                <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Learning algorithm for model training.</p>
+                <Dropdown
                     value={data.setupParam.possibleSettings.defaultSettings.model}
                     options={[{ name: 'XGBoost' }]}
                     optionLabel="name" 
@@ -50,7 +57,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
               </Form.Group>
 
               {/* varImportanceThreshold */}
-              <Form.Group controlId="varImportanceThreshold" style={{ marginBottom: "16px" }}>
+              <Form.Group controlId="varImportanceThreshold" style={sectionStyle}>
               <Form.Label className="varImportanceThreshold">Variable Importance Threshold</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Higher threshold keeps fewer important variables in the model.</p>
                 <InputNumber
@@ -75,7 +82,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
               </Form.Group>
 
               {/* optimizeThreshold */}
-              <Form.Group controlId="optimizeThreshold" style={{ marginBottom: "16px" }}>
+              <Form.Group controlId="optimizeThreshold" style={sectionStyle}>
                 <Form.Label className="optimizeThreshold">Model's Optimize Threshold</Form.Label>
                 <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
                   Identify the best probability cutoff.
@@ -92,7 +99,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
               </Form.Group>
 
               {/* finalizeModel */}
-              <Form.Group controlId="finalizeModel" style={{ marginBottom: "16px" }}>
+              <Form.Group controlId="finalizeModel" style={sectionStyle}>
                 <Form.Label className="finalizeModel">Finalize Model</Form.Label>
                 <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
                   Retrain a final model on the entire learning set.
@@ -109,7 +116,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
               </Form.Group>
 
               {/* optimizationMetric */}
-              <Form.Group controlId="optimizationMetric" style={{ marginBottom: "16px" }}>
+              <Form.Group controlId="optimizationMetric" style={sectionStyle}>
               <Form.Label className="optimizationMetric">Optimization Metric</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Performance metric used when tuning with PyCaret.</p>
               <InputText
@@ -127,7 +134,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
               </Form.Group>
 
               {/* Seed */}
-              <Form.Group controlId="seed" style={{ marginBottom: "16px" }}>
+              <Form.Group controlId="seed" style={sectionStyle}>
               <Form.Label className="seed">Random Seed</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Seed value for reproducible random number generation.</p>
                 <InputNumber
@@ -146,7 +153,7 @@ const RadiomicsLearner = ({ id, data, type }) => {
               </Form.Group>
 
               {/* nameSave */}
-              <Form.Group controlId="nameSave" style={{ marginBottom: "16px" }}>
+              <Form.Group controlId="nameSave" style={lastSectionStyle}>
               <Form.Label className="nameSave">Model's Save Name</Form.Label>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Name for saving the trained model.</p>
                 <InputText
