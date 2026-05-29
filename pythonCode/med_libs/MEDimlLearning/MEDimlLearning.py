@@ -6,6 +6,7 @@ from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 
+from MEDiml.learning.ml_utils import find_best_model
 import jupytext
 import pandas as pd
 from numpyencoder import NumpyEncoder
@@ -96,6 +97,7 @@ class MEDimlLearning:
             design_settings = dict()
             path_study = None
             holdout_test = False
+            evaluate_holdout = False
             cleaned_data = False
             normalized_features = False
             reduced_features = False
@@ -103,7 +105,13 @@ class MEDimlLearning:
             loaded_data = False
             split_counter = 0
             saved_results = False
-            
+            finalize_model = False
+            all_patients = None
+            patients_final_train = None
+            patients_holdout = None
+            rad_table_final = None
+            rad_tables_final = []
+
             # ------------------------------------------ NODE EXECUTION ------------------------------------------
             while True:
                 for node in pip:
@@ -151,6 +159,7 @@ class MEDimlLearning:
                                     holdout_test = False
                                 else:
                                     holdout_test = True
+                                    evaluate_holdout = True
 
                                 # Reset progress
                                 self.set_progress(label=f"Pip {str(pip_idx+1)} | Spliting data")
@@ -162,6 +171,7 @@ class MEDimlLearning:
                                     outcome_name=outcome_name,
                                     method=method
                                 )
+                                path_study = Path(path_study) if type(path_study) != Path else path_study
                                 splitted_data = True
                                 self.set_progress(now=self._progress['now'] + 5//len(pips))
 
@@ -254,7 +264,10 @@ class MEDimlLearning:
                                 # Machine learning assets
                                 patients_train = ml_info_dict['patientsTrain']
                                 patients_test = ml_info_dict['patientsTest']
-                                patients_holdout = MEDiml.utils.load_json(path_study / 'patientsHoldOut.json') if holdout_test else None
+                                if holdout_test and not (path_study / 'patientsHoldOut.json').exists():
+                                    evaluate_holdout = False
+                                else:
+                                    patients_holdout = MEDiml.utils.load_json(path_study / 'patientsHoldOut.json') if holdout_test else None
                                 outcome_table_binary = ml_info_dict['outcome_table_binary']
                                 path_results = ml_info_dict['path_results']
                                 patient_ids = list(outcome_table_binary.index)
@@ -262,6 +275,13 @@ class MEDimlLearning:
                                 flags_preprocessing = []
                                 flags_preprocessing_test = []
                                 rad_tables_learning = list()
+
+                                # Finalize model assets
+                                if finalize_model and split_counter == nb_split-1:
+                                    patients_final_train = MEDiml.utils.load_json(path_study / 'patientsLearn.json')
+                                    all_patients = patients_final_train + (patients_holdout or [])
+                                    all_patients = MEDiml.learning.ml_utils.intersect(all_patients, list(outcome_table_binary.index))
+                                    outcome_table_binary_final = outcome_table_binary.loc[all_patients]
 
                                 # --> B. Pre-processing phase
                                 # B.1. Pre-processing initialization, settings tables paths
@@ -337,26 +357,50 @@ class MEDimlLearning:
                                     path_radiomics_csv = item['csv']
                                     path_radiomics_txt = item['txt']
                                     image_type = item['type']
-                                    rad_table_learning = MEDiml.learning.ml_utils.get_radiomics_table(path_radiomics_csv, path_radiomics_txt, image_type, patient_ids)
+                                    rad_table_learning = MEDiml.learning.ml_utils.get_radiomics_table(
+                                        path_radiomics_csv, 
+                                        path_radiomics_txt, 
+                                        image_type, 
+                                        patient_ids
+                                    )
+
+                                    # Loading finalize assets
+                                    if finalize_model and split_counter == nb_split-1:
+                                        rad_table_final = MEDiml.learning.ml_utils.get_radiomics_table(
+                                            path_radiomics_csv, 
+                                            path_radiomics_txt, 
+                                            image_type, 
+                                            all_patients
+                                        )
 
                                     # Avoid future bugs (caused in Windows)
                                     if type(rad_table_learning.Properties['Description']) not in [str, Path]:
                                         rad_table_learning.Properties['Description'] = str(rad_table_learning.Properties['Description'])
+                                    if rad_table_final is not None:
+                                        if type(rad_table_final.Properties['Description']) not in [str, Path]:
+                                            rad_table_final.Properties['Description'] = str(rad_table_final.Properties['Description'])
                                     
                                     # Temp save of properties
                                     temp_properties = deepcopy(rad_table_learning.Properties)
+                                    if rad_table_final is not None:
+                                        temp_properties_final = deepcopy(rad_table_final.Properties)
 
                                     # Data cleaning
                                     data_cln_method = list(content["data"].keys())[0]
                                     cleaning_dict = content['data'][data_cln_method]['feature']['continuous']
                                     data_cleaner = MEDiml.learning.DataCleaner(cleaning_dict)
                                     rad_table_learning = data_cleaner.fit_transform(rad_table_learning)
+                                    if rad_table_final is not None:
+                                        rad_table_final = data_cleaner.fit_transform(rad_table_final)
                                     if rad_table_learning is None:
                                         continue
                                         
                                     # Re-assign properties and append cleaned table to list
                                     rad_table_learning.Properties = temp_properties
                                     rad_tables_learning.append(rad_table_learning)
+                                    if rad_table_final is not None:
+                                        rad_table_final.Properties = temp_properties_final
+                                        rad_tables_final.append(rad_table_final)
                                 
                                 # Finalization steps
                                 flags_preprocessing.append("var_datacleaning")
@@ -388,6 +432,16 @@ class MEDimlLearning:
                                         image_type = item['type']
                                         rad_table_learning = MEDiml.learning.ml_utils.get_radiomics_table(path_radiomics_csv, path_radiomics_txt, image_type, patient_ids)
                                         rad_tables_learning.append(rad_table_learning)
+                                    
+                                        # Loading finalize assets
+                                        if finalize_model and split_counter == nb_split-1:
+                                            rad_table_final = MEDiml.learning.ml_utils.get_radiomics_table(
+                                                path_radiomics_csv, 
+                                                path_radiomics_txt, 
+                                                image_type, 
+                                                all_patients
+                                            )
+                                            rad_tables_final.append(rad_table_final)
 
                                 # Start features normalization for each table
                                 for rad_table_learning in rad_tables_learning:
@@ -407,6 +461,8 @@ class MEDimlLearning:
                                         # Apply ComBat
                                         normalization = MEDiml.learning.Normalization.CombatNormalization()
                                         rad_table_learning = normalization.fit_transform(rad_table_learning)  # Training data
+                                        if rad_table_final is not None:
+                                            rad_table_final = normalization.transform(rad_table_final)
                                     else:
                                         return {"error":  f"Normalization: method {normalization_method} not implemented yet!"}
                                 
@@ -427,8 +483,23 @@ class MEDimlLearning:
                                         path_radiomics_csv = item['csv']
                                         path_radiomics_txt = item['txt']
                                         image_type = item['type']
-                                        rad_table_learning = MEDiml.learning.ml_utils.get_radiomics_table(path_radiomics_csv, path_radiomics_txt, image_type, patient_ids)
+                                        rad_table_learning = MEDiml.learning.ml_utils.get_radiomics_table(
+                                            path_radiomics_csv, 
+                                            path_radiomics_txt, 
+                                            image_type, 
+                                            patient_ids
+                                        )
                                         rad_tables_learning.append(rad_table_learning)
+
+                                        # Loading finalize assets
+                                        if finalize_model and split_counter == nb_split-1:
+                                            rad_table_final = MEDiml.learning.ml_utils.get_radiomics_table(
+                                                path_radiomics_csv, 
+                                                path_radiomics_txt, 
+                                                image_type, 
+                                                all_patients
+                                            )
+                                            rad_tables_final.append(rad_table_final)
 
                                 # Update progress
                                 self.set_progress(label=f"Pip {str(pip_idx+1)} | Split {split_counter+1} | Reducing data")
@@ -440,10 +511,22 @@ class MEDimlLearning:
                                     patients_ids = MEDiml.learning.ml_utils.intersect(patients_train, list(rad_tab.index))
                                     rad_tables_training.append(deepcopy(rad_tab.loc[patients_ids]))
 
+                                if rad_tables_final:
+                                    processed_holdout = deepcopy(rad_tables_final)
+                                    processed_full_train = []
+                                    for rad_tab in rad_tables_final:
+                                        patients_ids_final = MEDiml.learning.ml_utils.intersect(all_patients, list(rad_tab.index))
+                                        processed_full_train.append(deepcopy(rad_tab.loc[patients_ids_final]))
+
                                 # Deepcopy properties
                                 temp_properties = list()
                                 for rad_tab in rad_tables_testing:
                                     temp_properties.append(deepcopy(rad_tab.Properties))
+                                
+                                if rad_tables_final:
+                                    temp_properties_final = list()
+                                    for rad_tab in processed_holdout:
+                                        temp_properties_final.append(deepcopy(rad_tab.Properties))
                                 
                                 # Feature set reduction
                                 if "method" in content["data"].keys() and content["data"]["method"] != "":
@@ -470,11 +553,22 @@ class MEDimlLearning:
                                     outcome_table_binary_training, 
                                     path_save_logging=path_results
                                 )
-                            
+
+                                # Finalize turn
+                                if rad_tables_final:
+                                    processed_full_train = fsr.apply_fsr(
+                                        fsr_dict, 
+                                        processed_full_train, 
+                                        outcome_table_binary_final, 
+                                    )
+
                                 # Finalize processing tables
                                 # Re-assign properties
                                 for i in range(len(rad_tables_testing)):
                                     rad_tables_testing[i].Properties = temp_properties[i]
+                                if rad_tables_final:
+                                    for i in range(len(processed_holdout)):
+                                        processed_holdout[i].Properties = temp_properties_final[i]
                                 del temp_properties
 
                                 # Finalization steps
@@ -483,6 +577,12 @@ class MEDimlLearning:
                                 rad_tables_testing.Properties['userData']['flags_processing'] = flags_preprocessing_test
                                 reduced_features = True
                                 self.set_progress(now=self._progress['now'] + 20 // len(paths_splits) // len(pips))
+
+                                if rad_tables_final:
+                                    processed_full_train.Properties['userData']['flags_preprocessing'] = flags_preprocessing
+                                    processed_holdout = MEDiml.learning.ml_utils.combine_rad_tables(processed_holdout)
+                                    processed_holdout.Properties['userData']['flags_processing'] = flags_preprocessing_test
+
                             except Exception as e:
                                 traceback.print_exc()
                                 raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
@@ -518,12 +618,12 @@ class MEDimlLearning:
                                 patient_ids = list(outcome_table_binary.index)
                                 patients_train = MEDiml.learning.ml_utils.intersect(MEDiml.learning.ml_utils.intersect(patient_ids, patients_train), rad_tables_training.index)
                                 patients_test = MEDiml.learning.ml_utils.intersect(MEDiml.learning.ml_utils.intersect(patient_ids, patients_test), rad_tables_testing.index)
-                                patients_holdout = MEDiml.learning.ml_utils.intersect(patient_ids, patients_holdout) if holdout_test else None
+                                patients_holdout = MEDiml.learning.ml_utils.intersect(patient_ids, patients_holdout) if evaluate_holdout else None
 
                                 # Initializing outcome tables for training and test sets
                                 outcome_table_binary_train = outcome_table_binary.loc[patients_train, :]
                                 outcome_table_binary_test = outcome_table_binary.loc[patients_test, :]
-                                outcome_table_binary_holdout = outcome_table_binary.loc[patients_holdout, :] if holdout_test else None
+                                outcome_table_binary_holdout = outcome_table_binary.loc[patients_holdout, :] if evaluate_holdout else None
 
                                 # Initializing XGBoost model settings
                                 if "model" in content["data"].keys() and content["data"]["model"] is not None:
@@ -536,6 +636,10 @@ class MEDimlLearning:
                                     optimize_threshold = content["data"][model_name]["optimizeThreshold"]
                                 else:
                                     optimize_threshold = True
+                                if "finalizeModel" in content["data"][model_name].keys() and content["data"][model_name]["finalizeModel"] is not None:
+                                    finalize_model = content["data"][model_name]["finalizeModel"]
+                                else:
+                                    finalize_model = True
                                 if "optimizationMetric" in content["data"][model_name].keys() and content["data"][model_name]["optimizationMetric"] is not None:
                                     optimization_metric = content["data"][model_name]["optimizationMetric"]
                                 else:
@@ -582,13 +686,9 @@ class MEDimlLearning:
                                 # Computing model response on the training and test sets
                                 response_train = estimator.predict_proba(var_table_test.loc[patients_train, :])
                                 response_test = estimator.predict_proba(var_table_test.loc[patients_test, :])
-                                """response_train, response_test = learner.test_xgb_model(
-                                    model,
-                                    rad_tables_testing,
-                                    [patients_train, patients_test]
-                                ) """               
+        
+                                # --> D. Holdoutset testing phase
                                 if holdout_test:
-                                    # --> D. Holdoutset testing phase
                                     # D.1. Prepare holdout test data
                                     # Loading and pre-processing
                                     rad_tables_holdout = list()
@@ -605,8 +705,10 @@ class MEDimlLearning:
                                     var_table_all_holdout.Properties['userData']['flags_processing'] = {}
 
                                     # D.2. Testing the XGBoost model and computing model response on the holdout set
-                                    response_holdout = estimator.predict_proba(var_table_all_holdout.loc[patients_holdout, :])
-                                                
+                                    if evaluate_holdout:
+                                        patients_ids = MEDiml.learning.ml_utils.intersect(patients_holdout, list(var_table_all_holdout.index))
+                                        response_holdout = estimator.predict_proba(var_table_all_holdout.loc[patients_ids, :])
+
                                 # E. Computing performance metrics
                                 # Initialize the Results class
                                 result = MEDiml.learning.Results(estimator.estimator_.model_info_, model_id)
@@ -641,7 +743,7 @@ class MEDimlLearning:
                                     outcome_table_binary_test
                                 )
 
-                                if holdout_test:
+                                if evaluate_holdout:
                                     # Calculating performance metrics for holdout phase and saving the ROC curve
                                     run_results[model_id]['holdout']['metrics'] = result.get_model_performance(
                                         response_holdout, 
@@ -666,6 +768,85 @@ class MEDimlLearning:
 
                         # Break the loop
                         break
+
+                # Finalize model
+                if finalize_model and split_counter == len(paths_splits):
+                    try:
+                        # Set up logging
+                        path_study = Path(path_study) if type(path_study) != Path else path_study
+                        path_learn = path_study / f'learn__{experiment_label}'
+                        
+                        # --> Phase 1: Find best model from splits
+                        final_results = None
+                        best_model, best_results_dict = find_best_model(path_learn, metric='AUC')
+                        model_name = list(best_results_dict.keys())[0]
+                        
+                        # Load patient lists
+                        if not (path_study / 'patientsLearn.json').exists():
+                            raise FileNotFoundError(f"patientsLearn.json not found at {path_study}")
+                        
+                        patients_final_train = MEDiml.learning.ml_utils.load_json(path_study / 'patientsLearn.json')
+                        
+                        patients_holdout = None
+                        if (path_study / 'patientsHoldOut.json').exists():
+                            patients_holdout = MEDiml.learning.ml_utils.load_json(path_study / 'patientsHoldOut.json')
+                        elif finalize_model:
+                            patients_holdout = []
+                        
+                        # Load outcomes table
+                        outcome_table = pd.read_csv(ml_dict_paths['outcomes'], index_col=0)
+                        outcome_table_binary = outcome_table.iloc[:, [0]]
+
+                        # Get ML configuration from one of the splits
+                        test_paths = list(path_learn.glob('test__*'))
+                        if not test_paths:
+                            raise ValueError(f"No test folders found at {path_learn}")
+
+                        # Get intersection of patients that survived preprocessing
+                        patients_final_train = MEDiml.learning.ml_utils.intersect(patients_final_train, list(processed_full_train.index))                
+
+                        # Filter outcome tables
+                        outcome_final_train = outcome_table_binary.loc[patients_final_train, :]
+
+                        # Apply the process to the holdout set if it exists
+                        if patients_holdout:
+                            patients_holdout = MEDiml.learning.ml_utils.intersect(patients_holdout, list(processed_holdout.index))
+                            outcome_final_holdout = outcome_table_binary.loc[patients_holdout, :]
+
+                        # Prepare training data
+                        var_table_final_train = processed_full_train.loc[patients_final_train, :]
+
+                        # Re-train the final model
+                        best_model.fit(var_table_final_train, outcome_final_train)
+
+                        # Save the final model
+                        model_id += '_FINAL'
+                        path_final_model = path_learn / f'{model_id}.pickle'
+                        best_model.save(str(path_final_model))
+
+                        if patients_holdout:
+                            # --> Phase 5: Evaluate on holdout set
+                            # Prepare holdout data with aligned features
+                            var_table_final_holdout = MEDiml.learning.ml_utils.get_ml_test_table(best_model, processed_holdout)
+                            var_table_final_holdout = var_table_final_holdout.loc[patients_holdout, :]
+
+                            # Generate predictions
+                            response_holdout = best_model.predict_proba(var_table_final_holdout)
+
+                            # --> Phase 6: Compute and save results
+                            result = MEDiml.learning.Results(best_model.estimator_.model_info_, model_id)
+                            final_results = result.to_json(
+                                response_holdout=response_holdout,
+                                patients_holdout=patients_holdout,
+                                outcome_table_binary_holdout=outcome_final_holdout
+                            )
+                            
+                            # Save results
+                            path_final_results = path_learn / 'final_model_results.json'
+                            MEDiml.learning.ml_utils.save_json(path_final_results, final_results, cls=NumpyEncoder)
+                    except Exception as e:
+                        traceback.print_exc()
+                        raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
 
                 if saved_results and split_counter == len(paths_splits):
                     try:
@@ -730,15 +911,20 @@ class MEDimlLearning:
                         if "test" in results_avg_dict.keys() and results_avg_dict["test"] != {}:
                             results_avg_dict["test"] = dict(sorted(results_avg_dict["test"].items()))
                             results_avg_dict["test"] = self.__round_dict(results_avg_dict["test"], 2)
-                        if "holdout" in results_avg_dict.keys() and results_avg_dict["holdout"] != {}:
+                        
+                        if finalize_model and final_results:
+                            results_avg_dict["holdout"] = self.__round_dict(dict(sorted(final_results[model_id]['holdout']['metrics'].items())), 2)
+                        elif "holdout" in results_avg_dict.keys() and results_avg_dict["holdout"] != {} and not np.isnan(results_avg_dict["holdout"]["AUC_mean"]):
                             results_avg_dict["holdout"] = dict(sorted(results_avg_dict["holdout"].items()))
                             results_avg_dict["holdout"] = self.__round_dict(results_avg_dict["holdout"], 2)
+                        else:
+                            if "holdout" in results_avg_dict.keys(): del results_avg_dict["holdout"]
                         results_avg.append({pip_name: {experiment_label: results_avg_dict, "analysis": analysis_dict}})
 
                     except Exception as e:
                         traceback.print_exc()
                         raise ValueError(f"Exception : {e}. Traceback: {traceback.format_exc()}")
-                
+
                 # Check if all the splits are done
                 if designed_experiment and split_counter == len(paths_splits):
                     break

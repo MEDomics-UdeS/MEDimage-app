@@ -37,6 +37,7 @@ const learningMEDimlDefaultSettings = {
     XGBoost: {
       varImportanceThreshold: 0.3,
       optimizeThreshold: true,
+      finalizeModel: true,
       nameSave: "xgboost_5perc",
       optimizationMetric: "MCC",
       seed: 54288

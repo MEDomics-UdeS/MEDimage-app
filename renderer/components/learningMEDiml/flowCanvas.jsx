@@ -70,7 +70,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
   const [resultsFolder, setResultsFolder] = useState([])   // resultsFolder is used to store the path to the machine learning results
   const [experiments, setExperiments] = useState([]) // experiments is used to store the experiments to be done in the learning experiment
   const { pageId } = useContext(PageInfosContext) // used to get the page infos such as id and config path
-  const { setIsResults, isResults, updateFlowResults } = useContext(FlowResultsContext)
+  const { setIsResults, isResults, setShowResultsPane, updateFlowResults } = useContext(FlowResultsContext)
   const { canRun } = useContext(FlowInfosContext) // used to get the flow infos
   const { groupNodeId, changeSubFlow, updateNode } = useContext(FlowFunctionsContext)
   const { globalData } = useContext(DataContext)
@@ -802,6 +802,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
     // Start progress bar
     setProgress({now: 0, currentLabel: progress.currentLabel})
     setIsProgressUpdating(true)
+    setShowResultsPane(false)
     
     requestBackend(
       port,
