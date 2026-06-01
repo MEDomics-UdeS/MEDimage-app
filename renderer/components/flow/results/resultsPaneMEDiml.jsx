@@ -13,11 +13,14 @@ import { useContext, useEffect, useRef, useState } from "react"
 import { Col, Row } from "react-bootstrap"
 import Card from "react-bootstrap/Card"
 import { toast } from "react-toastify"
+import Lightbox from "yet-another-react-lightbox"
+import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen"
+import Zoom from "yet-another-react-lightbox/plugins/zoom"
+import "yet-another-react-lightbox/styles.css"
 import { requestBackend } from "../../../utilities/requests"
 import { WorkspaceContext } from "../../workspace/workspaceContext"
 import { FlowInfosContext } from "../context/flowInfosContext"
 import { FlowResultsContext } from "../context/flowResultsContext"
-
 
 /**
  *
@@ -39,6 +42,7 @@ const ResultsPaneMEDiml = () => {
   const [histogramImages, setHistogramImages] = useState([])
   const [heatMap, setHeatMap] = useState()
   const [treePlot, setTreePlot] = useState("")
+  const [open, setOpen] = useState(false)
   const { port } = useContext(WorkspaceContext)
 
   const op = useRef(null);
@@ -148,10 +152,24 @@ const ResultsPaneMEDiml = () => {
                       {/*Histograms*/}
                       <Accordion key={`AccordionTab-Histograms-${index+indexPip}`}>
                         <AccordionTab disabled={!isResults} key={`AccordionTab-Figures-${index+indexPip}`} header={"Analysis Plots"}>
-                            <Image key={indexPip+index} src={histogramImages[indexPip+index]} alt="Image" width="300" preview/>
+                          <Lightbox
+                            open={open}
+                            plugins={[Zoom, Fullscreen]}
+                            close={() => setOpen(false)}
+                            slides={[
+                              { src: histogramImages[indexPip+index] },
+                            ]}
+                            carousel={{ finite: true }}
+                          />
+                          <Image 
+                            key={indexPip+index} 
+                            src={histogramImages[indexPip+index]} 
+                            alt="Image" 
+                            width="300" 
+                            onClick={() => setOpen(true)}
+                          />
                         </AccordionTab>
                       </Accordion>
-
                     </AccordionTab>
                   </Accordion>
                 );
