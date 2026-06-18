@@ -23,7 +23,7 @@
 }
 
 .btnSidebar:focus {
-  background-color: #414141;
+  background-color: transparent;
   color: #fff;
   /* border-left: 0.2rem solid #d3d3d3; */
 }
