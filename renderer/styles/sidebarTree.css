@@ -97,18 +97,14 @@
 
 /* ===== HOVER STATE ===== */
 .btnSidebar:hover {
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
+  background: transparent;
   color: #ffffff !important;
 }
 
 /* ===== ACTIVE / PRIMARY BUTTON ===== */
-.btnSidebar.active,
 .btnSidebar:active {
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow:
-    inset 0 0 6px rgba(255, 255, 255, 0.08),
-    0 0 10px rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: #ffffff !important;
 }
 
 /* ===== GOLD TOP ICON (FOCAL POINT) ===== */
