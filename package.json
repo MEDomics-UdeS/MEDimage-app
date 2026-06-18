@@ -93,6 +93,7 @@
     "ipynb-editor": "^1.1.0",
     "jimp": "^0.22.10",
     "jquery-csv": "^1.0.21",
+    "lucide-react": "^1.21.0",
     "mongodb": "^6.6.2",
     "mongodb-client-encryption": "6.1.0",
     "prettier": "^3.0.3",
