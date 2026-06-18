@@ -15,6 +15,10 @@ import DocLink from "../extractionMEDiml/docLink"
 import { ErrorRequestContext } from "../generalPurpose/errorRequestContext"
 import { DataContext } from "../workspace/dataContext"
 import { WorkspaceContext } from "../workspace/workspaceContext"
+import Lightbox from "yet-another-react-lightbox"
+import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen"
+import Zoom from "yet-another-react-lightbox/plugins/zoom"
+import "yet-another-react-lightbox/styles.css"
 
 /**
  * @param {Object} nodeForm form associated to the discretization node
@@ -30,6 +34,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
   const { setError, setShowError } = useContext(ErrorRequestContext)
   const { globalData } = useContext(DataContext) // Get the workspace data
   const [progress, setProgress] = useState(0)
+  const [open, setOpen] = useState(false)
   const [refreshEnabled, setRefreshEnabled] = useState(false) // A boolean variable to control refresh
   const [refreshEnabledPreChecks, setRefreshEnabledPreChecks] = useState(false) // A boolean variable to control refresh for preChecks
   const [selectedDcmFolder, setSelectedDcmFolder] = useState('')
@@ -155,9 +160,28 @@ const DataManager = ({ pageId, configPath = "" }) => {
     else {
       setSelectedSaveFolder(event.target.files.path)
     }
-    // Update npy folder automatically
-    setSelectedNpyFolder(selectedSaveFolder);
-  };
+  }
+
+  const handleChecksSaveFolderChange = (event) => {
+    var fileList = event.target.files
+    if (fileList.length > 0) {
+      fileList = fileList[0].path
+      // The path of the image needs to be the path of the common folder of all the files
+      // If the directory is constructed according to standard DICOM format, the path
+      // of the image is the one containning the folders image and mask
+      if (fileList.indexOf("\\") >= 0) {
+        fileList = fileList.split("\\").slice(0, -1).join("\\")
+      } else if (fileList.indexOf("/") >= 0) {
+        fileList = fileList.split("/").slice(0, -1).join("/")
+      } else {
+        fileList = fileList.split("/").slice(0, -1).join("/")
+      }
+      setSelectedSavePreChecksFolder(fileList)
+    }
+    else {
+      setSelectedSavePreChecksFolder(event.target.files.path)
+    }
+  }
 
   const handleNBatchChange = (event) => {
     const nBatch = event.target.value;
@@ -282,25 +306,25 @@ const DataManager = ({ pageId, configPath = "" }) => {
         for (let j = 0; j < institutions.length; j++) {
           for (let k = 0; k < modalities.length; k++) {
             if (institutions[j].label === '' && modalities[k].label === '') {
-              finalWildCards.push(studies[i].label + '*.npy');
+              finalWildCards.push(studies[i].label + '*');
             }
             else if (studies[i].label === '' && modalities[k].label === '') {
-              finalWildCards.push('*' + institutions[j].label + '*.npy');
+              finalWildCards.push('*' + institutions[j].label + '*');
             }
             else if (studies[i].label === '' && institutions[j].label === '') {
-              finalWildCards.push('*' + modalities[k].label + '*.npy');
+              finalWildCards.push('*' + modalities[k].label + '*');
             }
             else if (studies[i].label === '') {
-              finalWildCards.push('*' + institutions[j].label + '*' + modalities[k].label + '*.npy');
+              finalWildCards.push('*' + institutions[j].label + '*' + modalities[k].label + '*');
             }
             else if (institutions[j].label === '') {
-              finalWildCards.push(studies[i].label + '*' + '*' + modalities[k].label + '*.npy');
+              finalWildCards.push(studies[i].label + '*' + '*' + modalities[k].label + '*');
             }
             else if (modalities[k].label === '') {
-              finalWildCards.push(studies[i].label + '*' + institutions[j].label + '*.npy');
+              finalWildCards.push(studies[i].label + '*' + institutions[j].label + '*');
             }
             else{
-              finalWildCards.push(studies[i].label + '-' + institutions[j].label + '*' + modalities[k].label + '*.npy');
+              finalWildCards.push(studies[i].label + '-' + institutions[j].label + '*' + modalities[k].label + '*');
             }
           }
         }
@@ -438,8 +462,6 @@ const DataManager = ({ pageId, configPath = "" }) => {
     let finalwildcard = null;
     if (!costumWildCard) {
       finalwildcard = getFinalWildCards();
-    } else if (!costumWildCard.endsWith('.npy')) {
-      finalwildcard = costumWildCard + '.npy';
     } else {
       finalwildcard = costumWildCard;
     }
@@ -896,7 +918,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
             <Col style={{ width: "150px" }}>
               <h6 className="csv-file-ws">CSV from workspace</h6>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
-                CSV file containing the scans to check and their associated ROI (Region of Interest)
+                CSV file containing the scans to check and their associated ROIs (Region of Interest)
               </p>
               <Dropdown
                 style={{ maxWidth: "100%", height: "auto", width: "auto" }}
@@ -967,16 +989,16 @@ const DataManager = ({ pageId, configPath = "" }) => {
               </Form>
             </Col>
 
-            {/* UPLOAD SAVING FOLDER*/}
+            {/* DATASET FOLDER*/}
             <Col style={{ width: "150px" }}>
               <Form method="post" encType="multipart/form-data" className="inputFile">
                 <Form.Label 
                   className="npy-path"
                   htmlFor="file">
-                    NPY dataset folder
+                    Dataset folder (npy, nifti or dicom)
                 </Form.Label>
                 <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
-                  Path to the folder containing the .npy files to check (If empty, path save will be used)
+                  Path to the folder containing the .npy files to check
                 </p>
                 <Form.Group controlId="enterFile">
                   <Form.Control
@@ -985,6 +1007,29 @@ const DataManager = ({ pageId, configPath = "" }) => {
                     webkitdirectory="true"
                     directory="true"
                     onChange={handleNpyFolderChange}
+                  />
+                </Form.Group>
+              </Form>
+            </Col>
+
+            {/* UPLOAD SAVING FOLDER*/}
+            <Col style={{ width: "150px" }}>
+              <Form method="post" encType="multipart/form-data" className="inputFile">
+                <Form.Label 
+                  className="save-path"
+                  htmlFor="file">
+                    Save folder
+                </Form.Label>
+                <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+                  Path to the folder where the checked files will be saved
+                </p>
+                <Form.Group controlId="enterFile">
+                  <Form.Control
+                    name="pathSave"
+                    type="file"
+                    webkitdirectory="true"
+                    directory="true"
+                    onChange={handleChecksSaveFolderChange}
                   />
                 </Form.Group>
               </Form>
@@ -1064,7 +1109,10 @@ const DataManager = ({ pageId, configPath = "" }) => {
             severity="secondary"
             label="Show results"
             name="ShowResultsButton"
-            onClick={() => setShowPreChecksImages(true)}
+            onClick={() => {
+              setShowPreChecksImages(true)
+              setOpen(true)
+            }}
             icon="pi pi-images"
             raised
             rounded
@@ -1075,22 +1123,23 @@ const DataManager = ({ pageId, configPath = "" }) => {
     </Card>
     
     {/*PreChecks images dialog*/}
-    <Dialog 
-      header="Radiomics Pre-Checks Results" 
-      visible={showPreChecksImages} 
-      style={{ width: '50vw' }}
-      position={'right'}
-      onHide={() => setShowPreChecksImages(false)}
-    >
-      {((preChecksImagesUrls.length !== 0) && 
-        (<Galleria value={preChecksImagesUrls} style={{ maxWidth: '640px' }} showThumbnails={false} showIndicators item={itemTemplate} />)
-      )}
-      {((preChecksImagesUrls.length === 0) && 
-        (<Alert variant="danger" className="warning-message">
-          <b>No results available</b>
-        </Alert>)
-      )}
-    </Dialog>
+    {(preChecksImagesUrls.length !== 0 && open) &&
+      (
+        <>
+        {console.log("preChecksImagesUrls: ", preChecksImagesUrls)}
+        <Lightbox
+            open={open}
+            plugins={[Zoom, Fullscreen]}
+            close={() => setOpen(false)}
+            slides={preChecksImagesUrls.map((image) => ({
+              src: image.itemImageSrc,
+              alt: image.alt,
+              thumbnail: image.thumbnailImageSrc, // Use the thumbnail for the gallery view
+            }))}
+          />
+        </>
+      )
+    }
 
   </div>
   </>
