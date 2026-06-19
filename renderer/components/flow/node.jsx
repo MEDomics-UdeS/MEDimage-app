@@ -5,11 +5,6 @@ import { Tag } from "primereact/tag"
 import { Tooltip } from "primereact/tooltip"
 import React, { useContext, useEffect, useRef, useState } from "react"
 import { Stack } from "react-bootstrap"
-import * as Icon from "react-bootstrap-icons"
-import { AiOutlineInfoCircle } from "react-icons/ai"
-import { BsPlay } from "react-icons/bs"
-import { BsPause } from "react-icons/bs"
-import { IoClose, IoDuplicateOutline } from "react-icons/io5"
 import EditableLabel from "react-simple-editlabel"
 import { toast } from "react-toastify"; // https://www.npmjs.com/package/react-toastify
 import { defaultValueFromType } from "../../utilities/learning/inputTypesUtils"
@@ -19,6 +14,7 @@ import { FlowInfosContext } from "./context/flowInfosContext"
 import { FlowResultsContext } from "./context/flowResultsContext"
 import Handlers from "./handlers"
 import NodeWrapperResults from "./nodeWrapperResults"
+import { CopyPlus, Info, Pause, Pencil, Play, X } from "lucide-react"
 // keep this import for the code editor (to be implemented)
 // import dynamic from "next/dynamic"
 // const CodeEditor = dynamic(() => import("./codeEditor"), {
@@ -128,7 +124,8 @@ const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClick
 
               <div className="btn-node-div">
                 {/* here are the buttons to duplicate and run the node*/}
-                <IoDuplicateOutline
+                <CopyPlus
+                  size={16}
                   className="btn-duplicate-node"
                   onClick={(e) => {
                     e.stopPropagation()
@@ -136,7 +133,8 @@ const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClick
                   }}
                 />
                 {/* here are the buttons to delete and run the node*/}
-                <IoClose
+                <X
+                  size={16}
                   className="btn-close-node"
                   onClick={(e) => {
                     if (!showResultsPane) {
@@ -151,7 +149,8 @@ const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClick
                 {data.setupParam!== null && data.setupParam.classes.split(" ").includes("run") && (
                   <>
                   { canRun ? 
-                    <BsPlay
+                    <Play
+                      size={16}
                       className="btn-run-node"
                       onClick={(e) => {
                         console.log("canRun", canRun)
@@ -164,7 +163,8 @@ const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClick
                       }}
                       disabled={showResultsPane || !canRun}
                     /> :
-                    <BsPause
+                    <Pause
+                      size={16}
                       className="btn-run-node"
                       onClick={(e) => {
                         console.log("canRun", canRun)
@@ -195,7 +195,7 @@ const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClick
             <Stack direction="vertical" gap={1}>
               <div className="header">
                 <div className="editable-node-name">
-                  <Icon.Pencil width="18px" height="18px" />
+                  <Pencil size={18} />
                   <EditableLabel
                     text={data.internal.name}
                     labelClassName="node-editableLabel"
@@ -209,7 +209,7 @@ const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClick
                     }}
                   />
                 </div>
-                <AiOutlineInfoCircle
+                <Info
                   className="btn-info-node"
                   onClick={() => {
                     shell.openExternal(nodeLink)

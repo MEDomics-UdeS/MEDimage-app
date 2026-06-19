@@ -52,7 +52,7 @@ import { showPopup } from "./popupMenu"
 import { TabStorage } from "./tabStorage"
 import { Utils } from "./utils"
 import ZoomPanPinchComponent from "./zoomPanPinchComponent"
-import { BrainCircuit, Briefcase, Component, Layers, Pickaxe } from "lucide-react"
+import { Braces, BrainCircuit, Briefcase, Component, Layers, Pickaxe, SquareArrowRightExit, SquareTerminal } from "lucide-react"
 
 var fields = ["Name", "Field1", "Field2", "Field3", "Field4", "Field5"]
 
@@ -999,13 +999,16 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
         return <Component style={{ marginRight: 3 }} size={16} color="gray" />
       }
       if (component === "terminal") {
-        return <span style={{ marginRight: 3 }}>🖥️</span>
+        return <SquareTerminal style={{ marginRight: 3 }} size={16}/>
       }
       if (component === "output") {
-        return <span style={{ marginRight: 3 }}>🚀</span>
+        return <SquareArrowRightExit style={{ marginRight: 3 }} size={16}/>
       }
       if (component === "Settings") {
         return <span style={{ marginRight: 3 }}>⚙️</span>
+      }
+      if (component.toLowerCase() === "json") {
+        return <Braces style={{ marginRight: 3 }} size={16}/>
       }
     }
   }

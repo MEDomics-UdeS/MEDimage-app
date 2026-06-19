@@ -299,7 +299,7 @@ export default function ModulesLandingPage() {
   }
 
   return (
-    <div className="h-100 w-100">
+    <div className="h-100 w-100" style={{ height: "100vh", overflowY: "auto" }}>
       <h1 className="text-center  fw-bold text-secondary mt-5" style={{ fontSize: "3rem", letterSpacing: "1px" }}>
         MEDiml Modules
       </h1>
@@ -318,7 +318,7 @@ export default function ModulesLandingPage() {
         </h5>
       </div>
 
-      <div style={{ paddingTop: "1rem", display: "flex", flexDirection: "vertical", flexGrow: "10", width: "100%", margin: "auto" }}>
+      <div style={{ paddingTop: "1rem", display: "flex", flexDirection: "column", flexGrow: "10", width: "100%", margin: "auto" }}>
           {/* Main Title and Subtitle */}
           <div className="h-100 w-100 d-flex justify-content-center align-items-center">
             <Stack
@@ -329,7 +329,7 @@ export default function ModulesLandingPage() {
             >
               {/* Extraction Module Card */}
               <Card
-                className="shadow-sm border-primary h-100 hover-border-primary"
+                className="shadow-sm border-primary hover-border-primary"
                 style={{ cursor: "pointer", flex: "1 1 320px", minWidth: "280px" }}
               >
                 <Card.Header className="bg-primary text-white d-flex align-items-center">
@@ -362,7 +362,7 @@ export default function ModulesLandingPage() {
 
               {/* Learning Module Card */}
               <Card
-                className="shadow-sm border-success h-100"
+                className="shadow-sm border-success"
                 style={{ cursor: "pointer", flex: "1 1 320px", minWidth: "280px" }}
               >
                 <Card.Header className="bg-success text-white d-flex align-items-center">
