@@ -52,7 +52,7 @@ import { showPopup } from "./popupMenu"
 import { TabStorage } from "./tabStorage"
 import { Utils } from "./utils"
 import ZoomPanPinchComponent from "./zoomPanPinchComponent"
-import { BrainCircuit, Component, Pickaxe } from "lucide-react"
+import { BrainCircuit, Briefcase, Component, Layers, Pickaxe } from "lucide-react"
 
 var fields = ["Name", "Field1", "Field2", "Field3", "Field4", "Field5"]
 
@@ -981,10 +981,10 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
         return <span style={{ marginRight: 3 }}>🛢️</span>
       }
       if (component === "BatchExtractor") {
-        return <span style={{ marginRight: 3 }}>🔍</span>
+        return <Layers style={{ marginRight: 3 }} size={16} color="#014b88" />
       }
       if (component == "DataManager") {
-        return <span style={{ marginRight: 3 }}>💼</span>
+        return <Briefcase style={{ marginRight: 3 }} size={16} color="#018850" />
       }
       if (component === "resultsPage") {
         return <span style={{ marginRight: 3 }}>📊</span>
