@@ -1,9 +1,9 @@
 /* eslint-disable no-undef */
 import fs from "fs"
+import { EraserIcon, Eye, EyeOff, Folder, FolderPlusIcon, RefreshCcw, RotateCw, SquareArrowOutUpRight, Trash2 } from "lucide-react"
 import { Tooltip } from "primereact/tooltip"
 import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import { Accordion, Stack } from "react-bootstrap"
-import { ArrowClockwise, ArrowRepeat, BoxArrowUpRight, ChevronBarContract, ChevronBarExpand, Eraser, EyeFill, EyeSlashFill, FolderPlus, Trash } from "react-bootstrap-icons"
 import { ControlledTreeEnvironment, Tree } from "react-complex-tree"
 import { Item, Menu, Submenu, useContextMenu } from "react-contexify"
 import { FiFolder } from "react-icons/fi"
@@ -439,7 +439,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
                         createFolder(globalData, selectedItems, workspace.workingDirectory.path)
                       }}
                     >
-                      <FolderPlus size={"1rem"} className="context-menu-icon add-folder-icon" data-pr-at="right bottom" data-pr-tooltip="New Folder" data-pr-my="left top" />
+                      <FolderPlusIcon size={"1rem"} className="context-menu-icon add-folder-icon" data-pr-at="right bottom" data-pr-tooltip="New Folder" data-pr-my="left top" />
                     </a>
                     <a
                       onClick={(e) => {
@@ -449,7 +449,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
                         MEDDataObject.verifyLockedObjects(globalData)
                       }}
                     >
-                      <ArrowClockwise size={"1rem"} className="context-menu-icon refresh-icon" data-pr-at="right bottom" data-pr-tooltip="Refresh" data-pr-my="left top" />
+                      <RotateCw size={"1rem"} className="context-menu-icon refresh-icon" data-pr-at="right bottom" data-pr-tooltip="Refresh" data-pr-my="left top" />
                     </a>
                     <a
                       onClick={(e) => {
@@ -458,9 +458,9 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
                         setShowHiddenFiles(!showHiddenFiles)
                       }}
                     >
-                      {showHiddenFiles && <EyeFill size={"1rem"} className="context-menu-icon refresh-icon" data-pr-at="right bottom" data-pr-tooltip="Hide hidden files" data-pr-my="left top" />}
+                      {showHiddenFiles && <Eye size={"1rem"} className="context-menu-icon refresh-icon" data-pr-at="right bottom" data-pr-tooltip="Hide hidden files" data-pr-my="left top" />}
                       {!showHiddenFiles && (
-                        <EyeSlashFill size={"1rem"} className="context-menu-icon refresh-icon" data-pr-at="right bottom" data-pr-tooltip="Show hidden files" data-pr-my="left top" />
+                        <EyeOff size={"1rem"} className="context-menu-icon refresh-icon" data-pr-at="right bottom" data-pr-tooltip="Show hidden files" data-pr-my="left top" />
                       )}
                     </a>
                   </div>
@@ -526,7 +526,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             className="context-submenu"
             label={
               <>
-                <BoxArrowUpRight size={"1rem"} className="context-menu-icon" />
+                <SquareArrowOutUpRight size={"1rem"} className="context-menu-icon" />
                 Open in...
               </>
             }
@@ -542,23 +542,23 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             </Item>
           </Submenu>
           <Item id="revealInFileExplorer" onClick={handleContextMenuAction}>
-            <FiFolder size={"1rem"} className="context-menu-icon" />
+            <Folder size={"1rem"} className="context-menu-icon" />
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
-            <ArrowRepeat size={"1rem"} className="context-menu-icon" />
+            <RefreshCcw size={"1rem"} className="context-menu-icon" />
             Sync
           </Item>
           <Item id="rename" onClick={handleContextMenuAction}>
-            <Eraser size={"1rem"} className="context-menu-icon" />
+            <EraserIcon size={"1rem"} className="context-menu-icon" />
             Rename
           </Item>
           <Item id="delete" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Delete
           </Item>
           <Item id="rmFromWs" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Remove from Workspace
           </Item>
         </Menu>
@@ -567,7 +567,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             className="context-submenu"
             label={
               <>
-                <BoxArrowUpRight size={"1rem"} className="context-menu-icon" />
+                <SquareArrowOutUpRight size={"1rem"} className="context-menu-icon" />
                 Open in...
               </>
             }
@@ -587,19 +587,19 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
-            <ArrowRepeat size={"1rem"} className="context-menu-icon" />
+            <RefreshCcw size={"1rem"} className="context-menu-icon" />
             Sync
           </Item>
           <Item id="rename" onClick={handleContextMenuAction}>
-            <Eraser size={"1rem"} className="context-menu-icon" />
+            <EraserIcon size={"1rem"} className="context-menu-icon" />
             Rename
           </Item>
           <Item id="delete" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Delete
           </Item>
           <Item id="rmFromWs" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Remove from Workspace
           </Item>
         </Menu>
@@ -609,7 +609,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             className="context-submenu"
             label={
               <>
-                <BoxArrowUpRight size={"1rem"} className="context-menu-icon" />
+                <SquareArrowOutUpRight size={"1rem"} className="context-menu-icon" />
                 Open in...
               </>
             }
@@ -623,19 +623,19 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
-            <ArrowRepeat size={"1rem"} className="context-menu-icon" />
+            <RefreshCcw size={"1rem"} className="context-menu-icon" />
             Sync
           </Item>
           <Item id="rename" onClick={handleContextMenuAction}>
-            <Eraser size={"1rem"} className="context-menu-icon" />
+            <EraserIcon size={"1rem"} className="context-menu-icon" />
             Rename
           </Item>
           <Item id="delete" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Delete
           </Item>
           <Item id="rmFromWs" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Remove from Workspace
           </Item>
         </Menu>
@@ -646,19 +646,19 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
-            <ArrowRepeat size={"1rem"} className="context-menu-icon" />
+            <RefreshCcw size={"1rem"} className="context-menu-icon" />
             Sync
           </Item>
           <Item id="rename" onClick={handleContextMenuAction}>
-            <Eraser size={"1rem"} className="context-menu-icon" />
+            <EraserIcon size={"1rem"} className="context-menu-icon" />
             Rename
           </Item>
           <Item id="delete" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Delete
           </Item>
           <Item id="rmFromWs" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Remove from Workspace
           </Item>
         </Menu>
@@ -668,7 +668,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             className="context-submenu"
             label={
               <>
-                <BoxArrowUpRight size={"1rem"} className="context-menu-icon" />
+                <SquareArrowOutUpRight size={"1rem"} className="context-menu-icon" />
                 Open in...
               </>
             }
@@ -694,19 +694,19 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
-            <ArrowRepeat size={"1rem"} className="context-menu-icon" />
+            <RefreshCcw size={"1rem"} className="context-menu-icon" />
             Sync
           </Item>
           <Item id="rename" onClick={handleContextMenuAction}>
-            <Eraser size={"1rem"} className="context-menu-icon" />
+            <EraserIcon size={"1rem"} className="context-menu-icon" />
             Rename
           </Item>
           <Item id="delete" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Delete
           </Item>
           <Item id="rmFromWs" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Remove from Workspace
           </Item>
         </Menu>
@@ -716,7 +716,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             className="context-submenu"
             label={
               <>
-                <BoxArrowUpRight size={"1rem"} className="context-menu-icon" />
+                <SquareArrowOutUpRight size={"1rem"} className="context-menu-icon" />
                 Open in...
               </>
             }
@@ -730,19 +730,19 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
-            <ArrowRepeat size={"1rem"} className="context-menu-icon" />
+            <RefreshCcw size={"1rem"} className="context-menu-icon" />
             Sync
           </Item>
           <Item id="rename" onClick={handleContextMenuAction}>
-            <Eraser size={"1rem"} className="context-menu-icon" />
+            <EraserIcon size={"1rem"} className="context-menu-icon" />
             Rename
           </Item>
           <Item id="delete" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Delete
           </Item>
           <Item id="rmFromWs" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Remove from Workspace
           </Item>
         </Menu>
@@ -752,7 +752,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             className="context-submenu"
             label={
               <>
-                <BoxArrowUpRight size={"1rem"} className="context-menu-icon" />
+                <SquareArrowOutUpRight size={"1rem"} className="context-menu-icon" />
                 Open in...
               </>
             }
@@ -766,19 +766,19 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
-            <ArrowRepeat size={"1rem"} className="context-menu-icon" />
+            <RefreshCcw size={"1rem"} className="context-menu-icon" />
             Sync
           </Item>
           <Item id="rename" onClick={handleContextMenuAction}>
-            <Eraser size={"1rem"} className="context-menu-icon" />
+            <EraserIcon size={"1rem"} className="context-menu-icon" />
             Rename
           </Item>
           <Item id="delete" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Delete
           </Item>
           <Item id="rmFromWs" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Remove from Workspace
           </Item>
         </Menu>
@@ -788,7 +788,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             className="context-submenu"
             label={
               <>
-                <BoxArrowUpRight size={"1rem"} className="context-menu-icon" />
+                <SquareArrowOutUpRight size={"1rem"} className="context-menu-icon" />
                 Open in...
               </>
             }
@@ -800,19 +800,19 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
-            <ArrowRepeat size={"1rem"} className="context-menu-icon" />
+            <RefreshCcw size={"1rem"} className="context-menu-icon" />
             Sync
           </Item>
           <Item id="rename" onClick={handleContextMenuAction}>
-            <Eraser size={"1rem"} className="context-menu-icon" />
+            <EraserIcon size={"1rem"} className="context-menu-icon" />
             Rename
           </Item>
           <Item id="delete" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Delete
           </Item>
           <Item id="rmFromWs" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Remove from Workspace
           </Item>
         </Menu>
@@ -822,7 +822,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             className="context-submenu"
             label={
               <>
-                <BoxArrowUpRight size={"1rem"} className="context-menu-icon" />
+                <SquareArrowOutUpRight size={"1rem"} className="context-menu-icon" />
                 Open in...
               </>
             }
@@ -842,19 +842,19 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
-            <ArrowRepeat size={"1rem"} className="context-menu-icon" />
+            <RefreshCcw size={"1rem"} className="context-menu-icon" />
             Sync
           </Item>
           <Item id="rename" onClick={handleContextMenuAction}>
-            <Eraser size={"1rem"} className="context-menu-icon" />
+            <EraserIcon size={"1rem"} className="context-menu-icon" />
             Rename
           </Item>
           <Item id="delete" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Delete
           </Item>
           <Item id="rmFromWs" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Remove from Workspace
           </Item>
         </Menu>
@@ -865,19 +865,19 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
-            <ArrowRepeat size={"1rem"} className="context-menu-icon" />
+            <RefreshCcw size={"1rem"} className="context-menu-icon" />
             Sync
           </Item>
           <Item id="rename" onClick={handleContextMenuAction}>
-            <Eraser size={"1rem"} className="context-menu-icon" />
+            <EraserIcon size={"1rem"} className="context-menu-icon" />
             Rename
           </Item>
           <Item id="delete" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Delete
           </Item>
           <Item id="rmFromWs" onClick={handleContextMenuAction}>
-            <Trash size={"1rem"} className="context-menu-icon" />
+            <Trash2 size={"1rem"} className="context-menu-icon" />
             Remove from Workspace
           </Item>
         </Menu>
