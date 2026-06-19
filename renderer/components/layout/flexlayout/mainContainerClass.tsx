@@ -40,6 +40,7 @@ import HomePage from "../../mainPages/home"
 import HtmlViewer from "../../mainPages/htmlViewer"
 import LearningMEDimlPage from "../../mainPages/learningMEDiml"
 import ModulePage from "../../mainPages/moduleBasics/modulePage"
+import ModulesLandingPage from "../../mainPages/modulesLandingPage"
 import OutputPage from "../../mainPages/output"
 import SettingsPage from "../../mainPages/settings"
 import TerminalPage from "../../mainPages/terminal"
@@ -51,6 +52,7 @@ import { showPopup } from "./popupMenu"
 import { TabStorage } from "./tabStorage"
 import { Utils } from "./utils"
 import ZoomPanPinchComponent from "./zoomPanPinchComponent"
+import { BrainCircuit, Component, Pickaxe } from "lucide-react"
 
 var fields = ["Name", "Field1", "Field2", "Field3", "Field4", "Field5"]
 
@@ -736,6 +738,8 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
           return <ExtractionTextPage pageId={"ExtractionTextPage"} />
         }
       }
+    } else if (component === "modulesLandingPage") {
+      return <ModulesLandingPage/>
     } else if (component === "MEDprofilesViewer") {
       if (node.getExtraData().data == null) {
         const config = node.getConfig()
@@ -986,16 +990,19 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
         return <span style={{ marginRight: 3 }}>📊</span>
       }
       if (component === "extractionMEDimlPage") {
-        return <span style={{ marginRight: 3 }}>📷</span>
+        return <Pickaxe style={{ marginRight: 3 }} size={16} color="gray" />
       }
       if (component === "LearningMEDimlPage") {
-        return <span style={{ marginRight: 3 }}>📖</span>
+        return <BrainCircuit style={{ marginRight: 3 }} size={16} color="gray" />
+      }
+      if (component === "modulesLandingPage") {
+        return <Component style={{ marginRight: 3 }} size={16} color="gray" />
       }
       if (component === "terminal") {
         return <span style={{ marginRight: 3 }}>🖥️</span>
       }
       if (component === "output") {
-        return <span style={{ marginRight: 3 }}>🏁</span>
+        return <span style={{ marginRight: 3 }}>🚀</span>
       }
       if (component === "Settings") {
         return <span style={{ marginRight: 3 }}>⚙️</span>

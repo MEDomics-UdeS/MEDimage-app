@@ -10,6 +10,7 @@ import { FaHeadSideVirus } from "react-icons/fa6"
 import { GiDigDug } from "react-icons/gi"
 import { WorkspaceContext } from "../workspace/workspaceContext"
 import { LayoutModelContext } from "./layoutContext"
+import { Briefcase, Layers, Star, Target } from "lucide-react"
 
 
 /**
@@ -20,6 +21,7 @@ import { LayoutModelContext } from "./layoutContext"
 const IconSidebar = ({ onSidebarItemSelect }) => {
   // eslint-disable-next-line no-unused-vars
   const { dispatchLayout, developerMode, setDeveloperMode } = useContext(LayoutModelContext)
+  const { workspace } = useContext(WorkspaceContext)
   const [appVersion, setAppVersion] = useState("")
   const [activeKey, setActiveKey] = useState("home") // activeKey is the name of the page
   const [disabledIcon, setDisabledIcon] = useState("disabled") // disabled is the state of the page
@@ -60,7 +62,16 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
     dispatchLayout({ type: `open${name}Module`, payload: { pageId: name } })
   }
 
-  const { workspace } = useContext(WorkspaceContext)
+  /**
+   *
+   * @param {Event} event
+   * @param {string} name
+   */
+  function handleDoubleClickLanding(event, name) {
+    event.stopPropagation()
+    console.log(`Double clicked ${name}`, event, `open${name}LandingPage`)
+    dispatchLayout({ type: `open${name}LandingPage`, payload: { pageId: name } })
+  }
 
   /**
    * @description Sets the active key and disabled state of the sidebar icons
@@ -102,7 +113,6 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
         <Tooltip target=".ExtMEDimgNav" {...delayOptions} className="tooltip-icon-sidebar" />
         <Tooltip target=".BatchExtractorNav" {...delayOptions} className="tooltip-icon-sidebar" />
         <Tooltip target=".DataManagerNav" {...delayOptions} className="tooltip-icon-sidebar" />
-        <Tooltip target=".MLMEDimgNav" {...delayOptions} className="tooltip-icon-sidebar" />
         {/* ------------------------------------------- END Tooltips ----------------------------------------- */}
 
         {/* ------------------------------------------- ICON NAVBAR ----------------------------------------- */}
@@ -131,17 +141,17 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
                   className={`ExtMEDimgNav btnSidebar align-center`}
                   data-pr-at="right center"
                   data-pr-my="left center"
-                  data-pr-tooltip="Extraction Module"
+                  data-pr-tooltip="MEDiml Modules"
                   data-is-ext-btn
                   onClick={(event) => {
                     event.stopPropagation()
                     event.preventDefault()
-                    handleClick(event, "extractionMEDiml")
+                    handleDoubleClickLanding(event, "Modules")
                     setExtractionBtnstate(!extractionBtnstate)
                   }}
-                  onDoubleClick={(event) => handleDoubleClick(event, "extractionMEDiml")}
+                  onDoubleClick={(event) => handleDoubleClickLanding(event, "Modules")}
                 >
-                  <GiDigDug style={{ height: "1.5rem", width: "auto" }} />
+                  <Target style={{ height: "1.5rem", width: "auto" }} />
                 </Nav.Link>
             </div>
           </div>
@@ -164,7 +174,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
                 }}
                 onDoubleClick={(event) => handleDoubleClick(event, "DataManager")}
               >
-                <FaBriefcase style={{ height: "1.5rem", width: "auto" }} />
+                <Briefcase style={{ height: "1.5rem", width: "auto" }} />
               </Nav.Link>
             </div>
           </div>
@@ -185,29 +195,8 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
                 }}
                 onDoubleClick={(event) => handleDoubleClick(event, "BatchExtractor")}
               >
-                <FaLayerGroup style={{ height: "1.5rem", width: "auto" }} />
+                <Layers style={{ height: "1.5rem", width: "auto" }} />
               </Nav.Link>
-            </div>
-          </div>
-          <div className="medomics-layer">
-            <div className="sidebar-icons">
-                {/* Machine Learning MEDiml */}
-                <Nav.Link
-                  className="MLMEDimgNav btnSidebar align-center"
-                  data-pr-at="right center"
-                  data-pr-my="left center"
-                  data-pr-tooltip="Learning Module"
-                  data-is-ext-btn
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    event.preventDefault()
-                    handleClick(event, "LearningMEDiml")
-                    setExtractionBtnstate(!extractionBtnstate)
-                  }}
-                  onDoubleClick={(event) => handleClick(event, "LearningMEDiml")}
-                >
-                  <FaHeadSideVirus style={{ height: "1.5rem", width: "auto" }} />
-                </Nav.Link>
             </div>
           </div>
           <NavDropdown.Divider style={{ height: "3rem" }} />
