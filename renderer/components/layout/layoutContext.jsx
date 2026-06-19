@@ -96,6 +96,8 @@ function LayoutModelProvider({ children, layoutModel, setLayoutModel }) {
         case "openInModelViewer":
           return openModelViewer(action)
         /*********** OPEN *****************/
+        case "openModulesLandingPage":
+          return openGeneric(action, "MEDiml Modules", "modulesLandingPage")
         case "openExtractionMEDimlModule":
           return openExtractionMEDiml(action)
         case "openLearningMEDimlModule":
