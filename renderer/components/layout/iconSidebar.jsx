@@ -1,16 +1,12 @@
 /* eslint-disable no-unused-vars */
 import { ipcRenderer } from "electron"
+import { Briefcase, House, Layers, Settings, Target } from "lucide-react"
 import { Tooltip } from "primereact/tooltip"
 import { useContext, useEffect, useState } from "react"
 import { NavDropdown } from "react-bootstrap"
-import { Gear, HouseFill } from "react-bootstrap-icons"
 import Nav from "react-bootstrap/Nav"
-import { FaBriefcase, FaLayerGroup } from "react-icons/fa"
-import { FaHeadSideVirus } from "react-icons/fa6"
-import { GiDigDug } from "react-icons/gi"
 import { WorkspaceContext } from "../workspace/workspaceContext"
 import { LayoutModelContext } from "./layoutContext"
-import { Briefcase, Layers, Star, Target } from "lucide-react"
 
 
 /**
@@ -129,7 +125,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
             onClick={(event) => handleClick(event, "home")}
             onDoubleClick={(event) => handleDoubleClick(event, "Home")}
           >
-            <HouseFill size={"1.25rem"} width={"100%"} height={"100%"} />
+            <House style={{ height: "1.5rem", width: "auto" }} />
           </Nav.Link>
           
           <NavDropdown.Divider style={{ height: "3rem" }} />
@@ -216,7 +212,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
             onClick={() => dispatchLayout({ type: `openSettings`, payload: { pageId: "Settings" } })}
             disabled={disabledIcon}
           >
-            <Gear size={"1.5rem"} />
+            <Settings size={"1.25rem"} width={"100%"} height={"100%"} />
           </Nav.Link>
         </Nav>
         {/* ------------------------------------------- END ICON NAVBAR ----------------------------------------- */}

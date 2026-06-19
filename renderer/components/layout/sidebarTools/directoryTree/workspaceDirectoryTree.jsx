@@ -1,10 +1,12 @@
-import React, { useContext, useEffect, useState } from "react"
-import { SidebarFolder } from "../components"
-import { WorkspaceContext } from "../../../workspace/workspaceContext"
-import { deepCopy } from "../../../../utilities/staticFunctions"
-import { ArrowClockwise } from "react-bootstrap-icons"
 import { ipcRenderer } from "electron"
+import { RotateCw } from "lucide-react"
+import { useContext, useEffect, useState } from "react"
+import { deepCopy } from "../../../../utilities/staticFunctions"
 import { DataContext } from "../../../workspace/dataContext"
+import { WorkspaceContext } from "../../../workspace/workspaceContext"
+import { SidebarFolder } from "../components"
+
+
 /**
  * @description This is an element that is displayed after the header of the workspace directory tree
  * @summary It contains a refresh button that will refresh the workspace directory tree
@@ -20,7 +22,7 @@ const AfterHeader = () => {
     <>
       <div className="d-flex" style={{ flexGrow: "1" }} />
       <a type="button" className="buttonNoStyle" onClick={handleRefreshClick} style={{ display: "inline-block", marginInlineEnd: "1rem" }}>
-        <ArrowClockwise id={"test"} size={"1.2rem"} />
+        <RotateCw id={"test"} size={"1.2rem"} />
       </a>
     </>
   )
@@ -96,4 +98,5 @@ const WorkspaceDirectoryTree = (props) => {
   )
 }
 
-export { WorkspaceDirectoryTree, AfterHeader }
+export { AfterHeader, WorkspaceDirectoryTree }
+
