@@ -1,10 +1,7 @@
 import React from "react"
 import { Button } from "react-bootstrap"
-import * as Icon from "react-bootstrap-icons"
-import { TfiSave } from "react-icons/tfi"
-import { PiDownload } from "react-icons/pi"
-import { AiOutlineImport } from "react-icons/ai"
-import { Tooltip } from 'primereact/tooltip';
+import { Tooltip } from 'primereact/tooltip'
+import { ArrowBigLeft, Download, FolderDown, Import, Play, Save, Trash2 } from "lucide-react"
 
 
 /**
@@ -42,7 +39,7 @@ const buttonType = {
         onClick={onClear}
         disabled={disabled}
         >
-        <Icon.Trash width="30px" height="30px" />
+        <Trash2 size={25} />
       </Button>
       </>
     )
@@ -60,7 +57,7 @@ const buttonType = {
         onClick={onSave}
         disabled={disabled}
         >
-        <TfiSave style={{ width: "30px", height: "auto" }} />
+        <Save size={25} />
       </Button>
       </>
     )
@@ -68,7 +65,7 @@ const buttonType = {
   download: (onDownload, disabled = false) => {
     return (
       <Button key="download" variant="outline margin-left-10 padding-5" onClick={onDownload} disabled={disabled}>
-        <PiDownload style={{ width: "30px", height: "auto" }} />
+        <Download style={{ width: "30px", height: "auto" }} />
       </Button>
     )
   },
@@ -85,7 +82,7 @@ const buttonType = {
         onClick={onLoad}
         disabled={disabled}
         >
-        <AiOutlineImport style={{ width: "30px", height: "auto" }} />
+        <Import size={25} />
       </Button>
       </>
     )
@@ -103,7 +100,7 @@ const buttonType = {
         onClick={onRun}
         disabled={disabled}
         >
-        <Icon.PlayCircle width="30px" height="30px" />
+        <Play size={25} />
       </Button>
       </>
     )
@@ -111,7 +108,7 @@ const buttonType = {
   back: (onBack, disabled = false) => {
     return (
       <Button key="back" variant="outline margin-left-10 padding-5" onClick={onBack} disabled={disabled}>
-        <Icon.Backspace width="30px" height="30px" />
+        <ArrowBigLeft size={25} />
       </Button>
     )
   },
@@ -131,7 +128,7 @@ const buttonType = {
             onExport;
             op.current.toggle(e)
           }}>
-          <i className="pi pi-file-export" style={{ fontSize: '1.8rem' }}></i>
+          <FolderDown size={25} />
       </Button>
       </>
     )
@@ -147,7 +144,7 @@ const buttonType = {
         data-pr-position="left"
         variant="outline-info uccess margin-left-10 padding-5" 
         onClick={onLoadDeafult}>
-          <AiOutlineImport style={{ width: "30px", height: "auto" }} />
+          <FolderDown size={25} />
       </Button>
       </>
     )
