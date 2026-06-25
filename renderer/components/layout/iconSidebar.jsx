@@ -156,7 +156,6 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
               {/* DataManager */}
               <Nav.Link
                 className={`DataManagerNav btnSidebar align-center`}
-                icon="pi pi-book"
                 data-pr-at="right center"
                 data-pr-my="left center"
                 data-pr-tooltip="DataManager"
