@@ -109,6 +109,7 @@ const IconSidebar = ({ onSidebarItemSelect }) => {
         <Tooltip target=".ExtMEDimgNav" {...delayOptions} className="tooltip-icon-sidebar" />
         <Tooltip target=".BatchExtractorNav" {...delayOptions} className="tooltip-icon-sidebar" />
         <Tooltip target=".DataManagerNav" {...delayOptions} className="tooltip-icon-sidebar" />
+        <Tooltip target=".settingsNav" {...delayOptions} className="tooltip-icon-sidebar" />
         {/* ------------------------------------------- END Tooltips ----------------------------------------- */}
 
         {/* ------------------------------------------- ICON NAVBAR ----------------------------------------- */}
