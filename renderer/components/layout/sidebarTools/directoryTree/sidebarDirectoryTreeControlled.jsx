@@ -6,7 +6,6 @@ import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import { Accordion, Stack } from "react-bootstrap"
 import { ControlledTreeEnvironment, Tree } from "react-complex-tree"
 import { Item, Menu, Submenu, useContextMenu } from "react-contexify"
-import { FiFolder } from "react-icons/fi"
 import { toast } from "react-toastify"
 import { DataContext } from "../../../workspace/dataContext"
 import { MEDDataObject } from "../../../workspace/NewMedDataObject"
@@ -583,7 +582,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             </Item>
           </Submenu>
           <Item id="revealInFileExplorer" onClick={handleContextMenuAction}>
-            <FiFolder size={"1rem"} className="context-menu-icon" />
+            <Folder size={"1rem"} className="context-menu-icon" />
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
@@ -619,7 +618,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             </Item>
           </Submenu>
           <Item id="revealInFileExplorer" onClick={handleContextMenuAction}>
-            <FiFolder size={"1rem"} className="context-menu-icon" />
+            <Folder size={"1rem"} className="context-menu-icon" />
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
@@ -642,7 +641,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
 
         <Menu id="MENU_FOLDER">
           <Item id="revealInFileExplorer" onClick={handleContextMenuAction}>
-            <FiFolder size={"1rem"} className="context-menu-icon" />
+            <Folder size={"1rem"} className="context-menu-icon" />
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
@@ -685,12 +684,12 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
               Jupyter Notebook
             </Item>
             <Item id="openInVSCode" onClick={() => openInVSCode(globalData[selectedItems[0]].path)}>
-              <FiFolder size={"1rem"} className="context-menu-icon" />
+              <Folder size={"1rem"} className="context-menu-icon" />
               VSCode
             </Item>
           </Submenu>
           <Item id="revealInFileExplorer" onClick={handleContextMenuAction}>
-            <FiFolder size={"1rem"} className="context-menu-icon" />
+            <Folder size={"1rem"} className="context-menu-icon" />
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
@@ -726,7 +725,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             </Item>
           </Submenu>
           <Item id="revealInFileExplorer" onClick={handleContextMenuAction}>
-            <FiFolder size={"1rem"} className="context-menu-icon" />
+            <Folder size={"1rem"} className="context-menu-icon" />
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
@@ -762,7 +761,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             </Item>
           </Submenu>
           <Item id="revealInFileExplorer" onClick={handleContextMenuAction}>
-            <FiFolder size={"1rem"} className="context-menu-icon" />
+            <Folder size={"1rem"} className="context-menu-icon" />
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
@@ -796,7 +795,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             <Item>Text editor (default)</Item>
           </Submenu>
           <Item id="revealInFileExplorer" onClick={handleContextMenuAction}>
-            <FiFolder size={"1rem"} className="context-menu-icon" />
+            <Folder size={"1rem"} className="context-menu-icon" />
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
@@ -838,7 +837,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
             </Item>
           </Submenu>
           <Item id="revealInFileExplorer" onClick={handleContextMenuAction}>
-            <FiFolder size={"1rem"} className="context-menu-icon" />
+            <Folder size={"1rem"} className="context-menu-icon" />
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
@@ -861,7 +860,7 @@ const SidebarDirectoryTreeControlled = ({ setExternalSelectedItems, setExternalD
 
         <Menu id="MENU_DEFAULT">
           <Item id="revealInFileExplorer" onClick={handleContextMenuAction}>
-            <FiFolder size={"1rem"} className="context-menu-icon" />
+            <Folder size={"1rem"} className="context-menu-icon" />
             Reveal in File Explorer
           </Item>
           <Item id="sync" onClick={handleContextMenuAction}>
