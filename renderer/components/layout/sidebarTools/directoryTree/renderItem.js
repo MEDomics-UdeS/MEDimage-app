@@ -1,95 +1,126 @@
 import Image from "next/image"
 import React, { useEffect, useState } from "react"
-import * as Icon from "react-bootstrap-icons"
-import { PiGraph } from "react-icons/pi"
+import {
+  AlignLeft,
+  Archive,
+  BarChart3,
+  Braces,
+  Building2,
+  Eye,
+  FileCode,
+  Folder,
+  FolderOpen,
+  Globe,
+  Image as ImageIcon,
+  Lock,
+  Microscope,
+  Network,
+  Notebook,
+  Target,
+  FileSpreadsheet,
+} from "lucide-react"
 import medomicsImg from "../../../../../resources/medomics.svg"
 import DropzoneComponent from "../../../mainPages/dataComponents/dropzoneComponent"
 import { collectionExists } from "../../../mongoDB/mongoDBUtils"
 
+const iconClass = "icon-offset"
+const iconSize = 14
+
 const iconExtension = {
-  "folder": (isExpanded) => (isExpanded ? <span style={{ paddingBottom: "0.15rem" }}>📂</span> : <span style={{ paddingBottom: "0.15rem" }}>📁</span>),
-  "csv": <span className="emoji">🛢️</span>,
-  "view": <span className="emoji">👁️</span>,
-  "json": (
+  folder: (isExpanded) =>
+    isExpanded ? (
+      <FolderOpen size={iconSize} className={iconClass} style={{ paddingBottom: "0.15rem" }} />
+    ) : (
+      <Folder size={iconSize} className={iconClass} style={{ paddingBottom: "0.15rem" }} />
+    ),
+  csv: <FileSpreadsheet size={iconSize} className="emoji" />,
+  view: <Eye size={iconSize} className="emoji" />,
+  json: (
     <span>
-      <Icon.Braces className="icon-offset" style={{ color: "yellow" }} />
+      <Braces size={iconSize} className={iconClass} style={{ color: "yellow" }} />
     </span>
   ),
-  "txt": (
+  txt: (
     <span>
-      <Icon.TextLeft className="icon-offset" />
+      <AlignLeft size={iconSize} className={iconClass} />
     </span>
   ),
-  "pdf": <span className="emoji">📕</span>,
-  "html": <span className="emoji">🌐</span>,
-  "medomics": (
+  pdf: <FileSpreadsheet size={iconSize} className="emoji" style={{ color: "#e74c3c" }} />,
+  html: <Globe size={iconSize} className="emoji" />,
+  medomics: (
     <span>
       <Image src={medomicsImg} width={12} height={12} alt="medomics.svg" style={{ marginRight: "0.15rem" }} />
     </span>
   ),
-  "medml": <span className="emoji">🎯</span>,
-  "medext": <span className="emoji"><Image src={medomicsImg} width={18} height={18} alt="medomics.svg" style={{ marginRight: "0.15rem" }} /></span>,
-  "mediml": <span className="emoji"><Image src={medomicsImg} width={18} height={18} alt="medomics.svg" style={{ marginRight: "0.15rem" }} /></span>,
-  "medmlres": <span className="emoji">📊</span>,
-  "medeval": <span className="emoji">🔬</span>,
-  "zip": <span className="emoji">🔒</span>,
-  "medmodel": (
-    <span>
-      <PiGraph className="icon-offset" style={{ color: "#97edfb" }} />
+  medml: <Target size={iconSize} className="emoji" />,
+  medext: (
+    <span className="emoji">
+      <Image src={medomicsImg} width={18} height={18} alt="medomics.svg" style={{ marginRight: "0.15rem" }} />
     </span>
   ),
-  "pkl": (
-    <span>
-      <PiGraph className="icon-offset" style={{ color: "#5b95ff" }} />
+  mediml: (
+    <span className="emoji">
+      <Image src={medomicsImg} width={18} height={18} alt="medomics.svg" style={{ marginRight: "0.15rem" }} />
     </span>
   ),
-  "ipynb": (
+  medmlres: <BarChart3 size={iconSize} className="emoji" />,
+  medeval: <Microscope size={iconSize} className="emoji" />,
+  zip: <Lock size={iconSize} className="emoji" />,
+  medmodel: (
     <span>
-      <Icon.JournalCode className="icon-offset" style={{ color: "#5b95ff" }} />
+      <Network size={iconSize} className={iconClass} style={{ color: "#97edfb" }} />
     </span>
   ),
-  "png": (
+  pkl: (
     <span>
-      <Icon.Image className="icon-offset" style={{ color: "#5b95ff" }} />
+      <Network size={iconSize} className={iconClass} style={{ color: "#5b95ff" }} />
     </span>
   ),
-  "jpg": (
+  ipynb: (
     <span>
-      <Icon.Image className="icon-offset" style={{ color: "#5b95ff" }} />
+      <Notebook size={iconSize} className={iconClass} style={{ color: "#5b95ff" }} />
     </span>
   ),
-  "jpeg": (
+  png: (
     <span>
-      <Icon.Image className="icon-offset" style={{ color: "#5b95ff" }} />
+      <ImageIcon size={iconSize} className={iconClass} style={{ color: "#5b95ff" }} />
     </span>
   ),
-  "svg": (
+  jpg: (
     <span>
-      <Icon.Image className="icon-offset" style={{ color: "#5b95ff" }} />
+      <ImageIcon size={iconSize} className={iconClass} style={{ color: "#5b95ff" }} />
     </span>
   ),
-  "rar": (
+  jpeg: (
     <span>
-      <Icon.ArchiveFill className="icon-offset" style={{ color: "#5b95ff" }} />
+      <ImageIcon size={iconSize} className={iconClass} style={{ color: "#5b95ff" }} />
     </span>
   ),
-  "dcm": (
+  svg: (
     <span>
-      <Icon.Hospital className="icon-offset" style={{ color: "rgb(17, 231, 63)" }} />
+      <ImageIcon size={iconSize} className={iconClass} style={{ color: "#5b95ff" }} />
     </span>
   ),
-  "dicom": (
+  rar: (
     <span>
-      <Icon.Hospital className="icon-offset" style={{ color: "rgb(17, 231, 63)" }} />
+      <Archive size={iconSize} className={iconClass} style={{ color: "#5b95ff" }} />
     </span>
   ),
-  "npy": (
+  dcm: (
     <span>
-      <Icon.FileEarmarkBinary className="icon-offset" style={{ color: "rgb(255, 208, 0)" }} />
+      <Building2 size={iconSize} className={iconClass} style={{ color: "rgb(17, 231, 63)" }} />
     </span>
   ),
-
-  // 📗📙📘📒📑📈📊🧮🎯💊🧬🔬🧰💾📄🗒️💥🎛️⚙️
+  dicom: (
+    <span>
+      <Building2 size={iconSize} className={iconClass} style={{ color: "rgb(17, 231, 63)" }} />
+    </span>
+  ),
+  npy: (
+    <span>
+      <FileCode size={iconSize} className={iconClass} style={{ color: "rgb(255, 208, 0)" }} />
+    </span>
+  ),
 }
 
 /**
@@ -267,7 +298,7 @@ const RenderItem = ({ item, depth, children, title, context, arrow }, additional
                   <span className="label">{title}</span>
                   {item.isLocked && (
                     <span className="emoji" title={`This item is used in ${additionalParams.dirTree[item.usedIn] ? additionalParams.dirTree[item.usedIn].data : "a generated notebook"}`}>
-                      🔒
+                      <Lock size={iconSize} />
                     </span>
                   )}
                   {additionalParams.showMongoDetails && itemInMongoDB && <img src="https://cdn3.emoji.gg/emojis/21146-mongodb.png" width="16px" height="16px" alt="mongodb" />}
