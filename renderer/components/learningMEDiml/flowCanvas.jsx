@@ -743,8 +743,8 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
     for (const [key, value] of Object.entries(newFlow.drawflow.Home.data)) {
       let nodeData = value.data
       let nodeName = value.name
-      if (nodeName === "design") {
-        let methodDesing = nodeData.active_method
+      if (nodeName === "split") {
+        let methodDesing = nodeData.active_method[0]
         if (!experimentsTemp.includes(nodeData.expName)){
           experimentsTemp.push(nodeData.expName)
         }
@@ -757,7 +757,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
       let nodeData = value.data
       let nodeName = value.name
       let pathSave = ""
-      if (nodeName === "split") {
+      if (nodeName === "design") {
         // loop over folderNames
         for (const folder of folderNames) {
           if (folder !== "") {
