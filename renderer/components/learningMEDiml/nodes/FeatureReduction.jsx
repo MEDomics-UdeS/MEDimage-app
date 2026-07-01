@@ -1,10 +1,8 @@
-import React from "react"
-import Node from "../../flow/node"
-import { Form, Row } from "react-bootstrap"
-import {useState} from 'react';
 import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
-import { updateHasWarning } from "../../flow/node";
+import { React, useEffect, useState } from "react";
+import { Form, Row } from "react-bootstrap";
+import Node, { updateHasWarning } from "../../flow/node";
 
 
 /**
@@ -26,6 +24,44 @@ const FeatureReduction = ({ id, data, type }) => {
     borderBottom: "1px solid rgba(0, 0, 0, 0.08)"
   }
   const lastSectionStyle = { marginBottom: "16px" }
+
+  useEffect(() => {
+    if (!data.setupParam.possibleSettings.defaultSettings.FDA.minNfeat || 
+      data.setupParam.possibleSettings.defaultSettings.FDA.minNfeat !== data.internal.settings.FDA.minNfeat
+    ){
+      data.setupParam.possibleSettings.defaultSettings.FDA.minNfeat = data.internal.settings.FDA.minNfeat
+    }
+    if (!data.setupParam.possibleSettings.defaultSettings.FDA.minNfeatInterCorr || 
+      data.setupParam.possibleSettings.defaultSettings.FDA.minNfeatInterCorr !== data.internal.settings.FDA.minNfeatInterCorr
+    ){
+      data.setupParam.possibleSettings.defaultSettings.FDA.minNfeatInterCorr = data.internal.settings.FDA.minNfeatInterCorr
+    }
+    if (!data.setupParam.possibleSettings.defaultSettings.FDA.minNfeatStable || 
+      data.setupParam.possibleSettings.defaultSettings.FDA.minNfeatStable !== data.internal.settings.FDA.minNfeatStable
+    ){
+      data.setupParam.possibleSettings.defaultSettings.FDA.minNfeatStable = data.internal.settings.FDA.minNfeatStable
+    }
+    if (!data.setupParam.possibleSettings.defaultSettings.FDA.nSplits || 
+      data.setupParam.possibleSettings.defaultSettings.FDA.nSplits !== data.internal.settings.FDA.nSplits
+    ){
+      data.setupParam.possibleSettings.defaultSettings.FDA.nSplits = data.internal.settings.FDA.nSplits
+    }
+    if (!data.setupParam.possibleSettings.defaultSettings.FDA.corrType || 
+      data.setupParam.possibleSettings.defaultSettings.FDA.corrType !== data.internal.settings.FDA.corrType
+    ){
+      data.setupParam.possibleSettings.defaultSettings.FDA.corrType = data.internal.settings.FDA.corrType
+    }
+    if (!data.setupParam.possibleSettings.defaultSettings.FDA.threshStableStart || 
+      data.setupParam.possibleSettings.defaultSettings.FDA.threshStableStart !== data.internal.settings.FDA.threshStableStart
+    ){
+      data.setupParam.possibleSettings.defaultSettings.FDA.threshStableStart = data.internal.settings.FDA.threshStableStart
+    }
+    if (!data.setupParam.possibleSettings.defaultSettings.FDA.threshInterCorr || 
+      data.setupParam.possibleSettings.defaultSettings.FDA.threshInterCorr !== data.internal.settings.FDA.threshInterCorr
+    ){
+      data.setupParam.possibleSettings.defaultSettings.FDA.threshInterCorr = data.internal.settings.FDA.threshInterCorr
+    }
+  }, [])
 
   return (
     <>
@@ -51,6 +87,7 @@ const FeatureReduction = ({ id, data, type }) => {
                     value={data.setupParam.possibleSettings.defaultSettings.FDA.nSplits}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.FDA.nSplits = event.target.value;
+                      data.internal.settings.FDA.nSplits = event.target.value;
                       updateHasWarning(data);
                       setReload(!reload);
                     }}
@@ -75,6 +112,7 @@ const FeatureReduction = ({ id, data, type }) => {
                     placeholder={data.setupParam.possibleSettings.defaultSettings.FDA.corrType}
                     onChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.FDA.corrType = event.target.value.name;
+                      data.internal.settings.FDA.corrType = event.target.value.name;
                       updateHasWarning(data);
                       setReload(!reload);
                     }} 
@@ -91,6 +129,7 @@ const FeatureReduction = ({ id, data, type }) => {
                     value={data.setupParam.possibleSettings.defaultSettings.FDA.threshStableStart}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.FDA.threshStableStart = event.target.value;
+                      data.internal.settings.FDA.threshStableStart = event.target.value;
                       updateHasWarning(data);
                       setReload(!reload);
                     }}
@@ -116,6 +155,7 @@ const FeatureReduction = ({ id, data, type }) => {
                     value={data.setupParam.possibleSettings.defaultSettings.FDA.threshInterCorr}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.FDA.threshInterCorr = event.target.value;
+                      data.internal.settings.FDA.threshInterCorr = event.target.value;
                       updateHasWarning(data);
                       setReload(!reload);
                     }}
@@ -141,6 +181,7 @@ const FeatureReduction = ({ id, data, type }) => {
                     value={data.setupParam.possibleSettings.defaultSettings.FDA.minNfeatStable}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.FDA.minNfeatStable = event.target.value;
+                      data.internal.settings.FDA.minNfeatStable = event.target.value;
                       updateHasWarning(data);
                       setReload(!reload);
                     }}
@@ -163,6 +204,7 @@ const FeatureReduction = ({ id, data, type }) => {
                     value={data.setupParam.possibleSettings.defaultSettings.FDA.minNfeatInterCorr}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.FDA.minNfeatInterCorr = event.target.value;
+                      data.internal.settings.FDA.minNfeatInterCorr = event.target.value;
                       updateHasWarning(data);
                       setReload(!reload);
                     }}
@@ -185,6 +227,7 @@ const FeatureReduction = ({ id, data, type }) => {
                     value={data.setupParam.possibleSettings.defaultSettings.FDA.minNfeat}
                     onValueChange={(event) => {
                       data.setupParam.possibleSettings.defaultSettings.FDA.minNfeat = event.target.value;
+                      data.internal.settings.FDA.minNfeat = event.target.value;
                       updateHasWarning(data);
                       setReload(!reload);
                     }}
