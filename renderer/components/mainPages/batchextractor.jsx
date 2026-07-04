@@ -3,6 +3,7 @@ import { Column } from 'primereact/column'
 import { Dialog } from 'primereact/dialog'
 import { Dropdown } from 'primereact/dropdown'
 import { InputSwitch } from 'primereact/inputswitch'
+import { SelectButton } from 'primereact/selectbutton'
 import { TreeTable } from 'primereact/treetable'
 import React, { useContext, useEffect, useState } from 'react'
 import { Alert, Card, Col, Form, ProgressBar, Row } from 'react-bootstrap'
@@ -14,7 +15,6 @@ import { DataContext } from '../workspace/dataContext'
 import { MEDDataObject } from '../workspace/NewMedDataObject'
 import { WorkspaceContext } from "../workspace/workspaceContext"
 import SettingsEditor from "./dataComponents/settingsEditor"
-import { SelectButton } from 'primereact/selectbutton';
 
 /**
  * @param {Object} nodeForm form associated to the discretization node
@@ -47,9 +47,12 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
   const [saveFolder, setSaveFolder] = useState('') // Path of the folder where the results are saved
   const [showRadiomicsResults, setShowRadiomicsResults] = useState(false) // used to display the extraction results
   const [showEdit, setShowEdit] = useState(false) // used to display the extraction results
-  const [useNiftis, setUseNiftis] = useState(false) // A boolean variable to control the use of NIfTI dataset instead of NPY dataset
+  const [useDatasetType, setUseDatasetType] = useState("npy") // A boolean variable to control the use of NIfTI dataset instead of NPY dataset
   const [nodes, setNodes] = useState([])
   const [useWorkspace, setUseWorkspace] = useState(true) // A boolean variable to control the use of the workspace
+  const [analyzeDoseMaps, setAnalyzeDoseMaps] = useState(false) // A boolean variable to control the analysis of dose maps
+  const [selectedPredDosesCSV, setSelectedPredDosesCSV] = useState('') // Path to CSV file containing prescribed doses per patient
+  const [prescDoseColumn, setPrescDoseColumn] = useState('') // Column name for prescribed dose values in pred_doses_csv
 
   useEffect(() => {
     updateWSfolder()
@@ -174,6 +177,17 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
     }
   };
 
+  const handlePredDosesCSVChange = (event) => {
+    var fileList = event.target.files
+    if (fileList.length > 0) {
+      fileList = fileList[0].path
+      setSelectedPredDosesCSV(fileList)
+    }
+    else {
+      setSelectedPredDosesCSV(event.target.files.path)
+    }
+  };
+
   const handleShowResultsClick = () => {
     if (nodes.length === 0 && saveFolder !== '') {
       fillNodesData(saveFolder);
@@ -285,10 +299,6 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
 
   const handleRunClick = async () => {
 
-    // Simulate page refresh
-    setRefreshEnabled(true)
-    setProgress(0)
-
     // Create an object with the input values
     const requestData = {
       path_read: selectedReadFolder,
@@ -297,10 +307,19 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
       path_save: selectedSaveFolder,
       n_batch: parseInt(selectedNBatch),
       skip_existing: skipExisting,
-      use_niftis: useNiftis
+      use_format: useDatasetType
+    }
+
+    if (analyzeDoseMaps) {
+      requestData.pred_doses_csv = selectedPredDosesCSV
+      requestData.presc_dose_column = prescDoseColumn
     }
 
     console.log("requestData", requestData);
+
+    // Simulate page refresh
+    setRefreshEnabled(true)
+    setProgress(0)
 
     // Make a POST request to the backend API
     requestBackend(
@@ -502,57 +521,103 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
         </Col>
       </Row>
 
+      {/* Ask user if he is analyzing dose metrics*/}
       <Row className="form-group-box">
-        {/* UPLOAD NPY DATASET FOLDER*/}
-          <SelectButton
-            value={useNiftis}
-            onChange={(e) => setUseNiftis(e.value)}
-            options={[
-              { label: 'Use NPY', value: false },
-              { label: 'Use NIfTI', value: true }
-            ]}
-            style={{ width: '100%', marginBottom: '10px' }}
+        <Form.Label htmlFor="file">Analyzing dose maps?</Form.Label>
+        <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+          If this is checked, dose metrics will be extracted.
+        </p>
+        <Col style={{ width: "150px" }}>
+          <InputSwitch
+            checked={analyzeDoseMaps}
+            onChange={(e) => setAnalyzeDoseMaps(e.value)}
           />
-        {!useNiftis ? (
-          <Col>
-          <Form.Label className="npy-folder" htmlFor="file">
-            NPY dataset folder (MEDscan objects)
-          </Form.Label>
-          <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Path to the folder containing the NPY dataset to use for radiomics features extraction</p>
-            {useWorkspace ? (
-            <Col>
-              <Dropdown
-                style={{ maxWidth: "100%", height: "auto", width: "auto" }}
-                filter
-                value={selectedReadFolder}
-                onChange={(e) => setSelectedReadFolder(e.value)}
-                options={listWSFolders}
-                optionLabel="name"
-                display="chip"
-                placeholder="Select a folder"
-              />
-            </Col>
+        </Col>
+      </Row>
+
+      {analyzeDoseMaps && (
+        <>
+          <Row className="form-group-box">
+            <Col md={6}>
+              <Form.Label className="pred-doses-csv" htmlFor="file">
+                Prescribed doses CSV file
+              </Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+                Path to the CSV file containing prescribed doses per patient. The file must include a PatientID column.
+              </p>
+              {useWorkspace ? (
+                <Dropdown
+                  style={{ maxWidth: "100%", height: "auto", width: "100%" }}
+                  filter
+                  value={selectedPredDosesCSV}
+                  onChange={(e) => setSelectedPredDosesCSV(e.value)}
+                  options={listCSVFiles}
+                  optionLabel="name"
+                  display="chip"
+                  placeholder="Select a file"
+                />
               ) : (
-            <Col>
-              <Form.Group controlId="enterFile">
+                <Form.Group controlId="enterPredDosesFile">
+                  <Form.Control
+                    name="pred_doses_csv"
+                    accept='.csv'
+                    type="file"
+                    onChange={handlePredDosesCSVChange}
+                  />
+                </Form.Group>
+              )}
+            </Col>
+            <Col md={6}>
+              <Form.Label className="presc-dose-column" htmlFor="presc_dose_column">
+                Prescribed dose column name
+              </Form.Label>
+              <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+                Name of the column in the prescribed doses CSV that contains the prescription dose value for each patient.
+              </p>
+              <Form.Group controlId="prescDoseColumn">
                 <Form.Control
-                  name="path_read"
-                  type="file"
-                  webkitdirectory="true"
-                  directory="true"
-                  onChange={handleReadFolderChange}
+                  name="presc_dose_column"
+                  type="text"
+                  value={prescDoseColumn}
+                  placeholder="e.g. PrescriptionDose"
+                  onChange={(event) => setPrescDoseColumn(event.target.value)}
                 />
               </Form.Group>
             </Col>
-          
-          )}
-        </Col>) : (
+          </Row>
+  
+        </>
+      )}
+
+      <Row className="form-group-box">
+        {/* UPLOAD DATASET FOLDER */}
+        <SelectButton
+          value={useDatasetType}
+          onChange={(e) => setUseDatasetType(e.value)}
+          optionLabel="label"
+          options={[
+            { label: 'Use NPY', value: "npy" },
+            { label: 'Use NIfTI', value: "nifti" },
+            { label: 'Use DICOM', value: "dicom" }
+          ]}
+          style={{ width: '100%', marginBottom: '10px' }}
+        />
         <Col>
           <Form.Label className="npy-folder" htmlFor="file">
-            NIfTI dataset folder
+            {{
+              npy: 'NPY dataset folder (MEDscan objects)',
+              nifti: 'NIfTI dataset folder',
+              dicom: 'DICOM dataset folder'
+            }[useDatasetType]}
           </Form.Label>
-          <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>Path to the folder containing the NIfTI dataset to use for radiomics features extraction</p>
-            {useWorkspace ? (
+          <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+            {{
+              npy: 'Path to the folder containing the NPY dataset to use for radiomics features extraction',
+              nifti: 'Path to the folder containing the NIfTI dataset to use for radiomics features extraction',
+              dicom: 'Path to the folder containing the DICOM dataset to use for radiomics features extraction'
+            }[useDatasetType]}
+          </p>
+          {useWorkspace ? (
             <Col>
               <Dropdown
                 style={{ maxWidth: "100%", height: "auto", width: "auto" }}
@@ -565,7 +630,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
                 placeholder="Select a folder"
               />
             </Col>
-              ) : (
+          ) : (
             <Col>
               <Form.Group controlId="enterFile">
                 <Form.Control
@@ -579,7 +644,6 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
             </Col>
           )}
         </Col>
-      )}
       </Row>
 
         {/* UPLOAD SETTINGS FILE*/}
@@ -689,8 +753,8 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
             />
           </Col> ) :(
           <Col>
-            <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0", color: "red"}}>
-              Warning: to select a folder, it must contain at least one file.
+            <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0", color: "#F88379"}}>
+              Warning: to select a folder, it must contain at least one file, even if it is empty.
             </p>
             <Form.Group controlId="enterFile">
               <Form.Control
@@ -706,7 +770,7 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
         </Row>
 
       {/* NUMBER OF BATCH*/}
-        <Row className="form-group-box">
+      <Row className="form-group-box">
         <Col>
         <Form.Group controlId="n_cores" style={{ paddingTop: "10px" }}>
             <Form.Label 
@@ -774,7 +838,14 @@ const BatchExtractor = ({ pageId, configPath = "" }) => {
                   label="RUN"
                   name="ProcessButton"
                   onClick={handleRunClick}
-                  disabled={(!selectedReadFolder || !selectedSaveFolder || !selectedCSVFile || refreshEnabled || !selectedSettingsFile)}
+                  disabled={(
+                    !selectedReadFolder ||
+                    !selectedSaveFolder ||
+                    !selectedCSVFile ||
+                    refreshEnabled ||
+                    !selectedSettingsFile ||
+                    (analyzeDoseMaps && (!selectedPredDosesCSV || !prescDoseColumn.trim()))
+                  )}
                   icon="pi pi-play"
                   raised
                   rounded
