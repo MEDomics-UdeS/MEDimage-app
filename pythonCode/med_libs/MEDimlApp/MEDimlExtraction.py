@@ -572,31 +572,16 @@ class MEDimlExtraction:
             path_to_niftis = None
         
         # Required paths
-        path_npy = None
-        if "pathNpy" in data.keys() and data["pathNpy"] != "":
-            path_npy = Path(data["pathNpy"])
-        else:
-            raise ValueError("No path to npy files given!")
-        if "pathSave" in data.keys() and data["pathSave"] != "":
-            path_save = Path(data["pathSave"])
-        elif path_npy:
-            path_save = path_npy
-        else:
-            raise ValueError("No path to npy files given!")
-        if "pathCSV" in data.keys() and data["pathCSV"] != "":
-            path_csv = Path(data["pathCSV"])
-        else:
-            path_csv = None
-        if "nBatch" in data.keys():
-            n_batch = data["nBatch"]
-        if "wildcards_dimensions" in data.keys():
-            wildcards_dimensions = data["wildcards_dimensions"]
-        else:
-            wildcards_dimensions = None
-        if "wildcards_window" in data.keys():
-            wildcards_window = data["wildcards_window"]
-        else:
-            wildcards_window = None
+        path_data = Path(data.get("pathData", None))
+        path_save = Path(data.get("pathSave", None))
+        path_csv = Path(data.get("pathCSV", None))
+        n_batch = data.get("nBatch", 4)
+        wildcards_dimensions = data.get("wildcards_dimensions", None)
+        wildcards_window = data.get("wildcards_window", None)
+        dimensions_only = data.get("dimensions_only", False)
+        intensity_only = data.get("intensity_only", False)
+        use_niftis = data.get("use_niftis", False)
+        use_dicoms = data.get("use_dicoms", False)
         
         # Check if wildcards are given
         if not wildcards_dimensions and not wildcards_window:
@@ -605,20 +590,23 @@ class MEDimlExtraction:
         try:            
             # Init DataManager instance
             dm = MEDiml.wrangling.DataManager(
-                path_to_dicoms=path_to_dicoms,
-                path_to_niftis=path_to_niftis,
-                path_save=path_save,
                 path_csv=path_csv,
                 path_save_checks=path_save,
-                n_batch=n_batch)
+                n_batch=n_batch
+            )
 
             # Run the DataManager
             dm.pre_radiomics_checks(
-                path_data=path_npy,
+                path_data=path_data,
                 wildcards_dimensions=wildcards_dimensions, 
                 wildcards_window=wildcards_window, 
                 path_csv=path_csv,
-                save=True)
+                dimensions_only=dimensions_only,
+                intensity_only=intensity_only,
+                use_niftis=use_niftis,
+                use_dicoms=use_dicoms,
+                save=True
+            )
 
             # Get pre-checks images
             if not (path_save / 'checks').exists():
@@ -744,6 +732,8 @@ class MEDimlExtraction:
         """
         # Retrieve data from json request
         data = self.json_config
+        use_niftis = False
+        use_dicoms = False
         if "path_read" in data.keys() and data["path_read"] != "":
             path_read = Path(data["path_read"])
         else:
@@ -762,12 +752,26 @@ class MEDimlExtraction:
             skip_existing = data["skip_existing"]
         else:
             skip_existing = False
-        if "use_niftis" in data.keys():
-            use_niftis = data["use_niftis"]
-        else:
-            use_niftis = False
+        if "use_format" in data.keys():
+            use_format = data["use_format"]
+            if use_format == "nifti":
+                use_niftis = True
+            elif use_format == "dicom":
+                use_dicoms = True
         if "n_batch" in data.keys():
             n_batch = data["n_batch"]
+        
+        # Dose settings
+        pred_doses_csv = None
+        presc_dose_column = None
+        if "pred_doses_csv" in data.keys():
+            pred_doses_csv = Path(data["pred_doses_csv"])
+        else:
+            pred_doses_csv = None
+        if "presc_dose_column" in data.keys():
+            presc_dose_column = data["presc_dose_column"]
+        else:
+            presc_dose_column = None
 
         try:
             # CSV file path process
@@ -791,7 +795,10 @@ class MEDimlExtraction:
                 path_save=path_save,
                 skip_existing=skip_existing,
                 use_niftis=use_niftis,
-                n_batch=n_batch
+                use_dicoms=use_dicoms,
+                n_batch=n_batch,
+                pred_doses_csv=pred_doses_csv,
+                presc_dose_column=presc_dose_column,
             )
 
             # Run the BatchExtractor
