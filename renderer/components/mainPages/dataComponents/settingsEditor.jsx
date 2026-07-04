@@ -8,7 +8,7 @@ import { InputText } from 'primereact/inputtext';
 import { TabPanel, TabView } from 'primereact/tabview';
 import { Toast } from 'primereact/toast';
 import { Tooltip } from 'primereact/tooltip';
-import { useContext, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { Col, Form, Row } from "react-bootstrap";
 import { toast } from 'react-toastify';
 import { requestBackend } from '../../../utilities/requests';
@@ -29,7 +29,6 @@ function TextureParams({ModSettings, activeIndex, setActiveIndex, discretisation
                 optionLabel="name"
                 placeholder={ModSettings.discretisation.texture.type[indexAlgo]}
                 onChange={(event) => {
-                    console.log(ModSettings);
                     ModSettings.discretisation.texture.type[indexAlgo] = event.target.value.name;
                     setActiveIndex(!activeIndex);
                 }}/>
@@ -44,7 +43,6 @@ function TextureParams({ModSettings, activeIndex, setActiveIndex, discretisation
                 id='valueTexture'
                 value={ModSettings.discretisation.texture.val[indexAlgo][indexVal]}
                 onValueChange={(event) => {
-                    console.log(ModSettings);
                     ModSettings.discretisation.texture.val[indexAlgo][indexVal] = event.target.value;
                     setActiveIndex(!activeIndex);
                 }}
@@ -768,6 +766,8 @@ const renderFiltering = (params, filter_type, activeIndex, setActiveIndex) => {
         return (<></>)
     }
 }
+const DEFAULT_DOSE_VX_THRESHOLDS = [2, 4, 8, 10, 12, 15, 20, 25, 30];
+
 /**
  * @param {boolean} showEdit if true, the settings editor is displayed
  * @param {function} setShowEdit function to set the showEdit state
@@ -779,6 +779,23 @@ const renderParamsPanel = (activeIndex, setActiveIndex, setShowEdit, ModSettings
     const toastPrime = useRef(null);
     const [oldValueMin, setoldValueMin] = useState(ModSettings.reSeg.range[0]);
     const [oldValueMax, setoldValueMax] = useState(ModSettings.reSeg.range[1]);
+
+    useEffect(() => {
+        if ('extract' in ModSettings && ModSettings.extract.Dose) {
+            let changed = false;
+            if (ModSettings.dose_vx_thresholds === undefined) {
+                ModSettings.dose_vx_thresholds = [...DEFAULT_DOSE_VX_THRESHOLDS];
+                changed = true;
+            }
+            if (ModSettings.dose_mask_extension === undefined) {
+                ModSettings.dose_mask_extension = 0;
+                changed = true;
+            }
+            if (changed) {
+                setActiveIndex((current) => !current);
+            }
+        }
+    }, [ModSettings.extract?.Dose]);
     const discretisationAlgos = [
         { name: 'FBS' },
         { name: 'FBSequal' },
@@ -859,7 +876,6 @@ const renderParamsPanel = (activeIndex, setActiveIndex, setShowEdit, ModSettings
                     checked={ModSettings.compute_suv_map} 
                     onChange={(event) => {
                         ModSettings.compute_suv_map = event.target.value;
-                        console.log(ModSettings.compute_suv_map);
                         setActiveIndex(!activeIndex);
                     }} />
                 </Col>
@@ -1242,7 +1258,6 @@ const renderParamsPanel = (activeIndex, setActiveIndex, setShowEdit, ModSettings
                             optionLabel="name" 
                             placeholder={ModSettings.discretisation.IH.type} 
                             onChange={(event) => {
-                                console.log(event.target.value);
                                 ModSettings.discretisation.IH.type = event.target.value.name;
                                 setActiveIndex(!activeIndex);
                             }} 
@@ -1364,7 +1379,7 @@ const renderParamsPanel = (activeIndex, setActiveIndex, setShowEdit, ModSettings
 
             {/* FILTERING DISCRETIZATION */}
             <Row className="form-group-box">
-                <Form.Group as={Row}>
+                <Form.Group as={Row} className="align-items-center mb-4">
                     <Tooltip target=".filtering"/>
                     <Form.Label 
                         className="filtering" 
@@ -1392,10 +1407,6 @@ const renderParamsPanel = (activeIndex, setActiveIndex, setShowEdit, ModSettings
                     </Col>
                     {renderFiltering(imParamFilter, ModSettings.filter_type, activeIndex, setActiveIndex)}
                 </Form.Group>
-            </Row>
-
-            {/* INTENSITY TYPE */}
-            <Row className="form-group-box">
                 <Form.Group as={Row}>
                     <Tooltip target=".inttype"/>
                     <Form.Label 
@@ -1425,7 +1436,6 @@ const renderParamsPanel = (activeIndex, setActiveIndex, setShowEdit, ModSettings
                                     });
                             }
                             ModSettings.intensity_type = event.target.value.name;
-                            console.log(ModSettings.intensity_type);
                             setActiveIndex(!activeIndex);
                         }}/>
                     </div>
@@ -1436,7 +1446,7 @@ const renderParamsPanel = (activeIndex, setActiveIndex, setShowEdit, ModSettings
             <br/>
             <div className="text-center">
                 <span className="p-inputgroup-addon">
-                    <i className="pi pi-list-check"></i>
+                    <i className="pi pi-list"></i>
                 </span>
             </div>
             <Row className="form-group-box">
@@ -1449,140 +1459,208 @@ const renderParamsPanel = (activeIndex, setActiveIndex, setShowEdit, ModSettings
                         Features to extract :
                     </Form.Label>
                 </Form.Group>
-                {('extract' in ModSettings && 'Morph' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
-                    <Toast ref={toastPrime} position="bottom-right"/>
-                    <h6>Morphology</h6>
-                    <InputSwitch 
-                        checked={ModSettings.extract.Morph}
-                        onChange={(e) => {
-                            console.log(e)
-                            console.log("ModSettings", ModSettings)
-                            ModSettings.extract.Morph = e.value
-                            setActiveIndex(!activeIndex)
-                        }} 
-                    />
-                </div>}
-                {('extract' in ModSettings && 'LocalIntensity' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
-                    <Toast ref={toastPrime} position="bottom-right"/>
-                    <h6>Local Intensity</h6>
-                    <InputSwitch 
-                        checked={ModSettings.extract.LocalIntensity}
-                        onChange={(e) => {
-                            console.log(e)
-                            ModSettings.extract.LocalIntensity = e.value
-                            setActiveIndex(!activeIndex)
-                        }} 
-                    />
-                </div>}
-                {('extract' in ModSettings && 'Stats' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
-                    <Toast ref={toastPrime} position="bottom-right"/>
-                    <h6>Statistical</h6>
-                    <InputSwitch 
-                        checked={ModSettings.extract.Stats}
-                        onChange={(e) => {
-                            console.log(e)
-                            ModSettings.extract.Stats = e.value
-                            setActiveIndex(!activeIndex)
-                        }} 
-                    />
-                </div>}
-                {('extract' in ModSettings && 'IntensityHistogram' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
-                    <Toast ref={toastPrime} position="bottom-right"/>
-                    <h6>Intensity Histogram</h6>
-                    <InputSwitch 
-                        checked={ModSettings.extract.IntensityHistogram}
-                        onChange={(e) => {
-                            console.log(e)
-                            ModSettings.extract.IntensityHistogram = e.value
-                            setActiveIndex(!activeIndex)
-                        }} 
-                    />
-                </div>}
-                {('extract' in ModSettings && 'IntensityVolumeHistogram' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
-                    <Toast ref={toastPrime} position="bottom-right"/>
-                    <h6>Intensity Volume Histogram</h6>
-                    <InputSwitch 
-                        checked={ModSettings.extract.IntensityVolumeHistogram}
-                        onChange={(e) => {
-                            console.log(e)
-                            ModSettings.extract.IntensityVolumeHistogram = e.value
-                            setActiveIndex(!activeIndex)
-                        }} 
-                    />
-                </div>}
-                {('extract' in ModSettings && 'GLCM' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
-                    <Toast ref={toastPrime} position="bottom-right"/>
-                    <h6>GLCM</h6>
-                    <InputSwitch 
-                        checked={ModSettings.extract.GLCM}
-                        onChange={(e) => {
-                            console.log(e)
-                            ModSettings.extract.GLCM = e.value
-                            setActiveIndex(!activeIndex)
-                        }} 
-                    />
-                </div>}
-                {('extract' in ModSettings && 'GLRLM' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
-                    <Toast ref={toastPrime} position="bottom-right"/>
-                    <h6>GLRLM</h6>
-                    <InputSwitch 
-                        checked={ModSettings.extract.GLRLM}
-                        onChange={(e) => {
-                            console.log(e)
-                            ModSettings.extract.GLRLM = e.value
-                            setActiveIndex(!activeIndex)
-                        }} 
-                    />
-                </div>}
-                {('extract' in ModSettings && 'GLSZM' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
-                    <Toast ref={toastPrime} position="bottom-right"/>
-                    <h6>GLSZM</h6>
-                    <InputSwitch 
-                        checked={ModSettings.extract.GLSZM}
-                        onChange={(e) => {
-                            console.log(e)
-                            ModSettings.extract.GLSZM = e.value
-                            setActiveIndex(!activeIndex)
-                        }} 
-                    />
-                </div>}
-                {('extract' in ModSettings && 'GLDZM' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
-                    <Toast ref={toastPrime} position="bottom-right"/>
-                    <h6>GLDZM</h6>
-                    <InputSwitch 
-                        checked={ModSettings.extract.GLDZM}
-                        onChange={(e) => {
-                            console.log(e)
-                            ModSettings.extract.GLDZM = e.value
-                            setActiveIndex(!activeIndex)
-                        }} 
-                    />
-                </div>}
-                {('extract' in ModSettings && 'NGTDM' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
-                    <Toast ref={toastPrime} position="bottom-right"/>
-                    <h6>NGTDM</h6>
-                    <InputSwitch 
-                        checked={ModSettings.extract.NGTDM}
-                        onChange={(e) => {
-                            console.log(e)
-                            ModSettings.extract.NGTDM = e.value
-                            setActiveIndex(!activeIndex)
-                        }} 
-                    />
-                </div>}
-                {('extract' in ModSettings && 'NGLDM' in ModSettings.extract) && <div className="justify-content-center" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: "10px" }}>
-                    <Toast ref={toastPrime} position="bottom-right"/>
-                    <h6>NGLDM</h6>
-                    <InputSwitch 
-                        checked={ModSettings.extract.NGLDM}
-                        onChange={(e) => {
-                            console.log(e)
-                            ModSettings.extract.NGLDM = e.value
-                            setActiveIndex(!activeIndex)
-                        }} 
-                    />
-                </div>}
-            </Row>
+                {!('extract' in ModSettings) && 
+                    <p style={{ fontSize: '14px', fontStyle: 'italic', fontWeight: 'normal', margin: '0 0 8px 0', color: 'red' }}>
+                        No features selected for extraction.
+                    </p>}
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '5px' }}>
+                {[
+                    { key: "Morph", label: "Morphology" },
+                    { key: "LocalIntensity", label: "Local Intensity" },
+                    { key: "Stats", label: "Statistical" },
+                    { key: "IntensityHistogram", label: "Intensity Histogram" },
+                    { key: "IntensityVolumeHistogram", label: "Intensity Volume Histogram" },
+                    { key: "GLCM", label: "GLCM" },
+                    { key: "GLRLM", label: "GLRLM" },
+                    { key: "GLSZM", label: "GLSZM" },
+                    { key: "GLDZM", label: "GLDZM" },
+                    { key: "NGTDM", label: "NGTDM" },
+                    { key: "NGLDM", label: "NGLDM" },
+                    { key: "Dose", label: "Dose Features" },
+                ].map(({ key, label }, idx) => (
+                    ('extract' in ModSettings && key in ModSettings.extract) &&
+                    <div
+                        key={key}
+                        className="feature-extract-row"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '0 8px',
+                            minHeight: '42px',
+                            borderBottom: idx !== 11 ? '1px solid #eee' : undefined,
+                            marginBottom: '0',
+                            gap: 0,
+                        }}>
+                        <Toast ref={toastPrime} position="bottom-right"/>
+                        {/* Feature Label */}
+                        <div style={{
+                            flex: 1,
+                            textAlign: 'left',
+                            fontWeight: 500,
+                            fontSize: '1.05rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            height: '100%',
+                            minHeight: 36,
+                            paddingLeft: '6px',
+                            letterSpacing: '0.02em'
+                        }}>
+                            <span>{label}</span>
+                        </div>
+                        {/* Vertical Divider */}
+                        <div style={{
+                            width: '1px',
+                            backgroundColor: '#d4d4d4',
+                            alignSelf: 'stretch',
+                            margin: '0 18px 0 10px',
+                        }} />
+                        {/* Switch */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            minWidth: '70px',
+                        }}>
+                            <InputSwitch
+                                checked={ModSettings.extract[key]}
+                                onChange={e => {
+                                    // optional: feature-specific logic for Dose Features
+                                    if (key === "Dose" && e.value) {
+                                        if (ModSettings.dose_vx_thresholds === undefined) {
+                                            ModSettings.dose_vx_thresholds = [...DEFAULT_DOSE_VX_THRESHOLDS];
+                                        }
+                                        if (ModSettings.dose_mask_extension === undefined) {
+                                            ModSettings.dose_mask_extension = 0;
+                                        }
+                                    }
+                                    ModSettings.extract[key] = e.value;
+                                    setActiveIndex(!activeIndex);
+                                }}
+                            />
+                        </div>
+                    </div>
+                    ))}
+                    </div>
+                </Row>
+
+                {('extract' in ModSettings && 'Dose' in ModSettings.extract && ModSettings.extract.Dose) && (
+                <Row className="form-group-box">
+                    <div style={{ marginTop: '10px', marginBottom: '10px' }}>
+                        <div className="text-center mb-4">
+                            <span className="p-inputgroup-addon">
+                                <i className="pi pi-arrows-alt"></i>
+                            </span>
+                            <label style={{paddingTop: "10px"}}><b>Dose features</b></label>
+                        </div>
+                        <Form.Group as={Row} controlId="doseMaskExtension" className="align-items-center mb-4">
+                            <Tooltip target=".doseMaskExtension" />
+                            <Form.Label
+                                column
+                                className="doseMaskExtension"
+                                data-pr-tooltip="Extension distance in voxels applied to the ROI bounding box for dose feature computation"
+                                data-pr-position="bottom"
+                            >
+                                Dose mask extension :
+                            </Form.Label>
+                            <Col>
+                                {ModSettings.dose_mask_extension < 1 ? (
+                                <InputNumber
+                                    style={{ display: "flex", maxWidth: "6rem" }}
+                                    value={ModSettings.dose_mask_extension}
+                                    onValueChange={(event) => {
+                                        // Accept any float from 0 up
+                                        ModSettings.dose_mask_extension = parseFloat(event.target.value.toFixed(2))
+                                        setActiveIndex(!activeIndex)
+                                    }}
+                                    mode="decimal"
+                                    min={0}
+                                    max={1}
+                                    maxFractionDigits={2}
+                                    showButtons
+                                    incrementButtonClassName="p-button-info"
+                                    decrementButtonClassName="p-button-info"
+                                    step={0.01}
+                                /> ) : (
+                                <InputNumber
+                                    style={{ display: "flex", maxWidth: "6rem" }}
+                                    value={ModSettings.dose_mask_extension}
+                                    onValueChange={(event) => {
+                                        // Accept any float from 0 up
+                                        const val = event.target.value
+                                        if (val === null || val === undefined || isNaN(val) || val < 0) return
+                                        ModSettings.dose_mask_extension = parseInt(val)
+                                        setActiveIndex(!activeIndex)
+                                    }}
+                                    step={1}
+                                    showButtons
+                                    incrementButtonClassName="p-button-info"
+                                    decrementButtonClassName="p-button-info"
+                                /> )}
+                                <div style={{ fontSize: "13px", fontStyle: "italic", margin: "6px 0 0 0" }}>
+                                    You may enter an integer (number of voxels) or a float between 0 and 1 (percentage) to extend the ROI bounding box.
+                                </div>
+                            </Col>
+                        </Form.Group>
+                        <Form.Group as={Row} controlId="doseVxThresholds">
+                            <Tooltip target=".doseVxThresholds" />
+                            <Form.Label
+                                column
+                                className="doseVxThresholds"
+                                data-pr-tooltip="Dose thresholds in Gy used to compute Vx volume features (Fdos_Vx_cc and Fdos_Vx_p)"
+                                data-pr-position="bottom"
+                            >
+                                Dose Vx thresholds (Gy) :
+                            </Form.Label>
+                            <Col>
+                                {ModSettings.dose_vx_thresholds.map((threshold, index) => (
+                                    <div
+                                        key={index}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}
+                                    >
+                                        <InputNumber
+                                            style={{ width: '8rem' }}
+                                            value={threshold}
+                                            onValueChange={(event) => {
+                                                ModSettings.dose_vx_thresholds[index] = event.target.value;
+                                                setActiveIndex(!activeIndex);
+                                            }}
+                                            mode="decimal"
+                                            min={0}
+                                            minFractionDigits={0}
+                                            maxFractionDigits={2}
+                                        />
+                                        <Button
+                                            icon="pi pi-minus"
+                                            rounded
+                                            text
+                                            severity="danger"
+                                            disabled={ModSettings.dose_vx_thresholds.length <= 1}
+                                            onClick={() => {
+                                                ModSettings.dose_vx_thresholds.splice(index, 1);
+                                                setActiveIndex(!activeIndex);
+                                            }}
+                                        />
+                                    </div>
+                                ))}
+                                <Button
+                                    icon="pi pi-plus"
+                                    rounded
+                                    text
+                                    severity="info"
+                                    onClick={() => {
+                                        const thresholds = ModSettings.dose_vx_thresholds;
+                                        const lastThreshold = thresholds[thresholds.length - 1];
+                                        thresholds.push(
+                                            typeof lastThreshold === 'number' ? lastThreshold + 5 : 2
+                                        );
+                                        setActiveIndex(!activeIndex);
+                                    }}
+                                />
+                            </Col>
+                        </Form.Group>
+                    </div>
+                </Row>
+            )}
         </>
     )
 }
@@ -1592,7 +1670,6 @@ const SettingsEditor = ({ showEdit, setShowEdit, settings, pathSettings, onHideB
     const [loading, setLoading] = useState(false)
     const { port } = useContext(WorkspaceContext) // Get the port of the backend
     const accept = (settings) => {
-        console.log("settings", settings)
         setLoading(true)
         requestBackend(
             port, 
