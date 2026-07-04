@@ -1,24 +1,22 @@
 import { Button } from "primereact/button"
-import { Dialog } from 'primereact/dialog'
 import { Dropdown } from "primereact/dropdown"
-import { Galleria } from 'primereact/galleria'
-import { Image } from "primereact/image"
 import { InputSwitch } from "primereact/inputswitch"
 import { InputText } from 'primereact/inputtext'
 import { MultiSelect } from 'primereact/multiselect'
+import { SelectButton } from 'primereact/selectbutton'
 import React, { useContext, useEffect, useState } from 'react'
 import { Alert, Card, Col, Container, Form, Offcanvas, ProgressBar, Row } from 'react-bootstrap'
 import Table from 'react-bootstrap/Table'
 import { toast } from 'react-toastify'
+import Lightbox from "yet-another-react-lightbox"
+import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen"
+import Zoom from "yet-another-react-lightbox/plugins/zoom"
+import "yet-another-react-lightbox/styles.css"
 import { requestBackend } from "../../utilities/requests"
 import DocLink from "../extractionMEDiml/docLink"
 import { ErrorRequestContext } from "../generalPurpose/errorRequestContext"
 import { DataContext } from "../workspace/dataContext"
 import { WorkspaceContext } from "../workspace/workspaceContext"
-import Lightbox from "yet-another-react-lightbox"
-import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen"
-import Zoom from "yet-another-react-lightbox/plugins/zoom"
-import "yet-another-react-lightbox/styles.css"
 
 /**
  * @param {Object} nodeForm form associated to the discretization node
@@ -40,6 +38,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
   const [selectedDcmFolder, setSelectedDcmFolder] = useState('')
   const [listWSFolders, setListWSFolders] = useState([])
   const [listCSVFiles, setListCSVFiles] = useState([])
+  const [selectedDatasetFolder, setSelectedDatasetFolder] = useState('')
   const [selectedNiftiFolder, setSelectedNiftiFolder] = useState('')
   const [selectedSaveFolder, setSelectedSaveFolder] = useState('')
   const [selectedSavePreChecksFolder, setSelectedSavePreChecksFolder] = useState('')
@@ -60,6 +59,9 @@ const DataManager = ({ pageId, configPath = "" }) => {
   const [preChecksImagesUrls, setPreChecksImagesUrls] = useState([]) // used to display the offcanvas
   const [useWorkspace, setUseWorkspace] = useState(true) // A boolean variable to control the use of the workspace
   const [useWorkspacePC, setUseWorkspacePC] = useState(true) // A boolean variable to control the use of the workspace for pre-checks
+  const [runVoxelChecks, setRunVoxelChecks] = useState(true) // Voxel (dimensions) pre-checks
+  const [runWindowChecks, setRunWindowChecks] = useState(true) // Window (intensity) pre-checks
+  const [useDatasetType, setUseDatasetType] = useState("npy") // Dataset format for pre-checks: npy, nifti, or dicom
 
   useEffect(() => {
     updateWSfolder()
@@ -120,7 +122,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
   };
 
 
-  const handleNiftiFolderChange = (event) => {
+  const handleDatasetFolderChange = (event) => {
     var fileList = event.target.files
     if (fileList.length > 0) {
       fileList = fileList[0].path
@@ -134,10 +136,10 @@ const DataManager = ({ pageId, configPath = "" }) => {
       } else {
         fileList = fileList.split("/").slice(0, -1).join("/")
       }
-      setSelectedNiftiFolder(fileList)
+      setSelectedDatasetFolder(fileList)
     }
     else {
-      setSelectedNiftiFolder(event.target.files.path)
+      setSelectedDatasetFolder(event.target.files.path)
     }
   };
 
@@ -198,34 +200,6 @@ const DataManager = ({ pageId, configPath = "" }) => {
       setSelectedCSVFile(event.target.files.path)
     }
   };
-
-  const handleNpyFolderChange = (event) => {
-    var fileList = event.target.files
-    if (fileList.length > 0) {
-      fileList = fileList[0].path
-
-      // The path of the image needs to be the path of the common folder of all the files
-      // If the directory is constructed according to standard DICOM format, the path
-      // of the image is the one containning the folders image and mask
-      if (fileList.indexOf("\\") >= 0) {
-        fileList = fileList.split("\\").slice(0, -1).join("\\")
-      } else if (fileList.indexOf("/") >= 0) {
-        fileList = fileList.split("/").slice(0, -1).join("/")
-      } else {
-        fileList = fileList.split("/").slice(0, -1).join("/")
-      }
-      setSelectedNpyFolder(fileList)
-    }
-    else {
-      setSelectedNpyFolder(event.target.files.path)
-    }
-  };
-
-  const itemTemplate = (item) => {
-    return <Image src={item.itemImageSrc} height="500" alt={item.alt} preview downloadable/>
-  }
-
-  const fs = require('fs');
 
   function countFoldersInPath(path) {
     try {
@@ -378,7 +352,6 @@ const DataManager = ({ pageId, configPath = "" }) => {
         return el != "";
       });
       modalities = modalities.map((value, key) => ({ label: value}));
-      console.log("modalities: ", modalities);
     } catch (error) {
       console.error('Error counting modalities:', error);
     }
@@ -456,7 +429,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
   /**
    * @description Handles the click on the run button for the pre-checks
   */
-  const handleRunClick = () => {
+  const handlePreChecksRunClick = () => {
 
     // Get the final wildcards
     let finalwildcard = null;
@@ -466,11 +439,14 @@ const DataManager = ({ pageId, configPath = "" }) => {
       finalwildcard = costumWildCard;
     }
 
-    //Check if npy folder is defined
-    if (selectedNpyFolder === null && selectedSaveFolder === null) {
-      console.log(selectedNpyFolder);
-      console.log(selectedSaveFolder);
-      toast.error('Please select a npy folder');
+    //Check if dataset folder is defined
+    if (!selectedDatasetFolder) {
+      toast.error('Please select a dataset folder');
+      return;
+    }
+
+    if (!runVoxelChecks && !runWindowChecks) {
+      toast.error('Please enable at least one check type (voxel or window).');
       return;
     }
 
@@ -479,14 +455,16 @@ const DataManager = ({ pageId, configPath = "" }) => {
     
     // Create an object with the input values
     let requestData = {
-      pathDicoms: selectedDcmFolder,
-      pathNiftis: selectedNiftiFolder,
-      pathNpy: selectedNpyFolder,
+      pathData: selectedDatasetFolder,
       pathSave: selectedSavePreChecksFolder,
       pathCSV: selectedCSVFile,
       wildcards_dimensions: finalwildcard,
       wildcards_window: finalwildcard,
       nBatch: parseInt(selectedNBatch),
+      dimensions_only: runVoxelChecks && !runWindowChecks,
+      intensity_only: !runVoxelChecks && runWindowChecks,
+      use_niftis: useDatasetType === "nifti",
+      use_dicoms: useDatasetType === "dicom",
     };
     console.log("requestData: ", requestData);
     
@@ -913,6 +891,20 @@ const DataManager = ({ pageId, configPath = "" }) => {
           </Col>
         </Row>
 
+        <Row className="form-group-box">
+          <SelectButton
+            value={useDatasetType}
+            onChange={(e) => setUseDatasetType(e.value)}
+            optionLabel="label"
+            options={[
+              { label: 'Use NPY', value: "npy" },
+              { label: 'Use NIfTI', value: "nifti" },
+              { label: 'Use DICOM', value: "dicom" }
+            ]}
+            style={{ width: '100%', marginBottom: '10px' }}
+          />
+        </Row>
+
         {useWorkspacePC ?  (
           <Row className="form-group-box">
             <Col style={{ width: "150px" }}>
@@ -933,10 +925,18 @@ const DataManager = ({ pageId, configPath = "" }) => {
             </Col>
             <Col style={{ width: "150px" }}>
               <h6 className="npy-dataset-ws">
-                NPY dataset from workspace
+                {{
+                  npy: 'NPY dataset from workspace',
+                  nifti: 'NIfTI dataset from workspace',
+                  dicom: 'DICOM dataset from workspace'
+                }[useDatasetType]}
               </h6>
               <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
-                Folder containing the .npy files to check
+                {{
+                  npy: 'Folder containing the .npy files to check',
+                  nifti: 'Folder containing the .nii files to check',
+                  dicom: 'Folder containing the .dcm files to check'
+                }[useDatasetType]}
               </p>
               <Dropdown
                 style={{ maxWidth: "100%", height: "auto", width: "auto" }}
@@ -995,10 +995,18 @@ const DataManager = ({ pageId, configPath = "" }) => {
                 <Form.Label 
                   className="npy-path"
                   htmlFor="file">
-                    Dataset folder (npy, nifti or dicom)
+                    {{
+                      npy: 'NPY dataset folder (MEDscan objects)',
+                      nifti: 'NIfTI dataset folder',
+                      dicom: 'DICOM dataset folder'
+                    }[useDatasetType]}
                 </Form.Label>
                 <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
-                  Path to the folder containing the .npy files to check
+                  {{
+                    npy: 'Path to the folder containing the .npy files to check',
+                    nifti: 'Path to the folder containing the .nii files to check',
+                    dicom: 'Path to the folder containing the .dcm files to check'
+                  }[useDatasetType]}
                 </p>
                 <Form.Group controlId="enterFile">
                   <Form.Control
@@ -1006,7 +1014,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
                     type="file"
                     webkitdirectory="true"
                     directory="true"
-                    onChange={handleNpyFolderChange}
+                    onChange={handleDatasetFolderChange}
                   />
                 </Form.Group>
               </Form>
@@ -1085,6 +1093,36 @@ const DataManager = ({ pageId, configPath = "" }) => {
               <InputText placeholder="Costum" onChange={(e) => setCostumWildCard(e.target.value)}/>
             </Col>
           </Row>
+          <Row className="form-group-box">
+            <Form.Label htmlFor="check-types">Check types</Form.Label>
+            <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
+              Choose which pre-checks to run. Both are enabled by default.
+            </p>
+            <Col md={12} style={{ display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column" }}>
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "36px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <InputSwitch
+                    checked={runVoxelChecks}
+                    onChange={(e) => setRunVoxelChecks(e.value)}
+                  />
+                  <span>Voxel checks (dimensions)</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <InputSwitch
+                    checked={runWindowChecks}
+                    onChange={(e) => setRunWindowChecks(e.value)}
+                  />
+                  <span>Window checks (intensity)</span>
+                </div>
+              </div>
+              {!runWindowChecks && !runVoxelChecks && (
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", color: "red", margin: "12px" }}>
+                  <span><b>Warning:</b> No checks selected. Please enable at least one check type (voxel or window).</span>
+                </div>
+              )}
+            </Col>
+     
+          </Row>
         </Form>
       
       {/* RUN PRE-CHECKS BUTTON*/}
@@ -1094,10 +1132,11 @@ const DataManager = ({ pageId, configPath = "" }) => {
             severity="success"
             label="RUN"
             name="RunButton"
-            onClick={handleRunClick}
+            onClick={handlePreChecksRunClick}
             disabled={
               (!selectedCSVFile || refreshEnabledPreChecks) || 
-              (selectedModalities.length === 0 && selectedInstitutions.length === 0 && selectedStudies.length === 0 && !costumWildCard)}
+              (selectedModalities.length === 0 && selectedInstitutions.length === 0 && selectedStudies.length === 0 && !costumWildCard) ||
+              (!runVoxelChecks && !runWindowChecks)}
             icon="pi pi-play"
             raised
             rounded
@@ -1126,7 +1165,6 @@ const DataManager = ({ pageId, configPath = "" }) => {
     {(preChecksImagesUrls.length !== 0 && open) &&
       (
         <>
-        {console.log("preChecksImagesUrls: ", preChecksImagesUrls)}
         <Lightbox
             open={open}
             plugins={[Zoom, Fullscreen]}
