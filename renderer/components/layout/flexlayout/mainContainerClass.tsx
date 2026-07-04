@@ -901,7 +901,7 @@ class MainInnerContainer extends React.Component<any, { layoutFile: string | nul
         return <CodeEditorWithOpenState id={config.uuid} path={config.path} updateSavedCode={this.updateSavedCode} setIsEditorOpen={setIsEditorOpen} />
       }
     } else if (component === "Settings") {
-      return <SettingsPage />
+      return <SettingsPage isActive={node.isVisible()} />
     } else if (component !== "") {
       if (node.getExtraData().data == null) {
         const config = node.getConfig()
