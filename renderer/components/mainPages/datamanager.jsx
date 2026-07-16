@@ -733,7 +733,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
                   type="file"
                   webkitdirectory="true"
                   directory="true"
-                  onChange={handleNiftiFolderChange}
+                  onChange={handleDatasetFolderChange}
                 />
               </Form.Group>
             </Col>
