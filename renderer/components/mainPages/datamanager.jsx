@@ -201,6 +201,8 @@ const DataManager = ({ pageId, configPath = "" }) => {
     }
   };
 
+  const fs = require('fs');
+
   function countFoldersInPath(path) {
     try {
       let folderCount = 0;
