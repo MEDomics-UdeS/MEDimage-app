@@ -161,5 +161,3 @@ package-lock.json
 pythonCode/local_dir/*
 
 !*.gitkeep
-
-python
