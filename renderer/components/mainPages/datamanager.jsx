@@ -49,7 +49,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
   const [selectedInstitutions, setSelectedInstitutions] = useState([])
   const [selectedStudies, setSelectedStudies] = useState([])
   const [selectedModalities, setSelectedModalities] = useState([])
-  const [costumWildCard, setCostumWildCard] = useState(null) // A boolean variable to control refresh
+  const [customWildCard, setCustomWildCard] = useState(null) // A boolean variable to control refresh
   const [summary, setSummary] = useState('') // A string variable to store the summary of the node
   const [showOffCanvas, setShowOffCanvas] = useState(false) // used to display the offcanvas
   const [showPreChecksImages, setShowPreChecksImages] = useState(false) // used to display the offcanvas
@@ -435,10 +435,10 @@ const DataManager = ({ pageId, configPath = "" }) => {
 
     // Get the final wildcards
     let finalwildcard = null;
-    if (!costumWildCard) {
+    if (!customWildCard) {
       finalwildcard = getFinalWildCards();
     } else {
-      finalwildcard = costumWildCard;
+      finalwildcard = customWildCard;
     }
 
     //Check if dataset folder is defined
@@ -1056,7 +1056,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
                 Pre-checks options
             </Form.Label>
             <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
-              Options to select the scans to check (institutions, modalities, etc.). If empty, use a costum wildcard (e.g. 'STS*CECT*.npy')
+              Options to select the scans to check (institutions, modalities, etc.). If empty, use a custom wildcard (e.g. 'STS*CECT*.npy')
             </p>
             <Col>
               <MultiSelect 
@@ -1092,7 +1092,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
               />
             </Col>
             <Col>
-              <InputText placeholder="Costum" onChange={(e) => setCostumWildCard(e.target.value)}/>
+              <InputText placeholder="Custom" onChange={(e) => setCustomWildCard(e.target.value)}/>
             </Col>
           </Row>
           <Row className="form-group-box">
@@ -1137,7 +1137,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
             onClick={handlePreChecksRunClick}
             disabled={
               (!selectedCSVFile || refreshEnabledPreChecks) || 
-              (selectedModalities.length === 0 && selectedInstitutions.length === 0 && selectedStudies.length === 0 && !costumWildCard) ||
+              (selectedModalities.length === 0 && selectedInstitutions.length === 0 && selectedStudies.length === 0 && !customWildCard) ||
               (!runVoxelChecks && !runWindowChecks)}
             icon="pi pi-play"
             raised
