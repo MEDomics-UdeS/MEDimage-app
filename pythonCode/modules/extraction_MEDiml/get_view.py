@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(os.path.dirname(os.path.abspath(__file__))).parent.parent))
 from med_libs.GoExecutionScript import GoExecutionScript, parse_arguments
-from med_libs.MEDimlApp.MEDimlExtraction import MEDimlExtraction
+from med_libs.MEDimlExtraction.MEDimlExtraction import MEDimlExtraction
 from med_libs.server_utils import go_print
 
 USE_RAM_FOR_EXPERIMENTS_STORING = 1
