@@ -199,7 +199,7 @@ const ExtractionNode = ({ id, data }) => {
                 </Offcanvas.Header>
                 <Offcanvas.Body>
                   <Button 
-                    label="Donwload" 
+                    label="Download" 
                     icon="pi pi-save" 
                     severity="success" 
                     size="small"
