@@ -76,6 +76,12 @@ node_modules
 app
 dist
 
+# Go server stuff:
+go_executables
+go_server/main
+go_server/main.exe
+build/.DS_Store
+.DS_Store
 
 # Sphinx documentation
 docs/_build/
