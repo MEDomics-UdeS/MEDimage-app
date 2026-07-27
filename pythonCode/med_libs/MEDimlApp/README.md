@@ -1,7 +1,8 @@
-# MEDiml package in the MEDiml-app
+# Features extraction process according to the IBSI
+[What is the IBSI?](https://www.ibsi.org/)
 <figure>
   <img
   src="IBSI_image_processing_scheme.png"
   alt="IBSI.">
-  <figcaption>Schéma du processus de traitement d'images pour le calcul des caractéristiques radiomiques selon l'IBSI</figcaption>
+  <figcaption>Image processing scheme for radiomic features extraction according to the IBSI</figcaption>
 </figure>
