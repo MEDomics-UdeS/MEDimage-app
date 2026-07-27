@@ -155,8 +155,8 @@ test
 /renderer/public/tmp/*
 *.idea
 /learning-tests-scene*
-flask_server/extraction_MEDiml/MEDimlApp/tmp/*
-renderer/public/pythonCode/MedLibs/MEDimlApp/tmp/*
+flask_server/extraction_MEDiml/MEDimlExtraction/tmp/*
+renderer/public/pythonCode/MedLibs/MEDimlExtraction/tmp/*
 /flask_server/local_dir/*
 renderer/public/pythonCode/local_dir/*
 renderer/public/images/checks/*
