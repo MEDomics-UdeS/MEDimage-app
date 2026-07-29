@@ -5,33 +5,33 @@ import { toast } from "react-toastify"
 import uuid from "react-native-uuid"
 import { loadJsonSync, processBatchSettings } from "../../utilities/fileManagementUtils.js"
 import { requestBackend } from "../../utilities/requests.js"
-import ProgressBarRequests from "../generalPurpose/progressBarRequests.jsx"
 import { getCollectionData } from "../dbComponents/utils.js"
-import { overwriteMEDDataObjectContent } from "../mongoDB/mongoDBUtils.js"
 import { updateHasWarning } from "../flow/node.jsx"
+import ProgressBarRequests from "../generalPurpose/progressBarRequests.jsx"
+import { overwriteMEDDataObjectContent } from "../mongoDB/mongoDBUtils.js"
 
 
 // Workflow imports
 import { useEdgesState, useNodesState, useReactFlow } from "reactflow"
 import { FlowFunctionsContext } from "../flow/context/flowFunctionsContext.jsx"
-import { FlowResultsContext } from "../flow/context/flowResultsContext.jsx"
 import { FlowInfosContext } from "../flow/context/flowInfosContext.jsx"
+import { FlowResultsContext } from "../flow/context/flowResultsContext.jsx"
 import WorkflowBase from "../flow/workflowBase.jsx"
 import { ErrorRequestContext } from "../generalPurpose/errorRequestContext.jsx"
-import { WorkspaceContext } from "../workspace/workspaceContext.jsx"
+import { PageInfosContext } from "../mainPages/moduleBasics/pageInfosContext.jsx"
 import { MEDDataObject } from "../workspace/NewMedDataObject.js"
 import { DataContext } from "../workspace/dataContext.jsx"
-import { PageInfosContext } from "../mainPages/moduleBasics/pageInfosContext.jsx"
+import { WorkspaceContext } from "../workspace/workspaceContext.jsx"
 
 // Import node types
 import Analyze from "./nodes/Analyze.jsx"
 import Cleaning from "./nodes/Cleaning.jsx"
 import Data from "./nodes/Data.jsx"
-import Split from "./nodes/Split.jsx"
+import Design from "./nodes/Design.jsx"
 import FeatureReduction from "./nodes/FeatureReduction.jsx"
 import Normalization from "./nodes/Normalization.jsx"
 import RadiomicsLearner from "./nodes/RadiomicsLearner.jsx"
-import Design from "./nodes/Design.jsx"
+import Split from "./nodes/Split.jsx"
 
 // Import node parameters
 import nodesParams from "../../public/setupVariables/allNodesParams.jsx"
@@ -803,6 +803,25 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
     setProgress({now: 0, currentLabel: progress.currentLabel})
     setIsProgressUpdating(true)
     setShowResultsPane(false)
+
+    // Make all edges animated
+    setEdges((prevEdges) =>
+      prevEdges.map((edge) => ({
+        ...edge,
+        animated: true,
+        selectable: false
+      }))
+    )
+
+    // Freeze all nodes to avoid user interaction during the execution of the workflow
+    setNodes((prevNodes) =>
+      prevNodes.map((node) => ({
+        ...node,
+        draggable: false,
+        selectable: false,
+        connectable: false
+      }))
+    )
     
     requestBackend(
       port,
@@ -823,6 +842,23 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
             now: 100,
             currentLabel: "Done!"
           })
+          // Make all edges dull
+          setEdges((prevEdges) =>
+            prevEdges.map((edge) => ({
+              ...edge,
+              animated: false,
+              selectable: true
+            }))
+          )
+          // Unfreeze all nodes
+          setNodes((prevNodes) =>
+            prevNodes.map((node) => ({
+              ...node,
+              draggable: true,
+              selectable: true,
+              connectable: true
+            }))
+          )
           setIsResults(true)
           setNodes((prevNodes) =>
             prevNodes.map((node) => {
@@ -861,6 +897,23 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
             now: 0,
             currentLabel: ""
           })
+          // Make all edges dull
+          setEdges((prevEdges) =>
+            prevEdges.map((edge) => ({
+              ...edge,
+              animated: false,
+              selectable: true
+            }))
+          )
+          // Unfreeze all nodes
+          setNodes((prevNodes) =>
+            prevNodes.map((node) => ({
+              ...node,
+              draggable: true,
+              selectable: true,
+              connectable: true
+            }))
+          )
           if (typeof response.error === "string") {
             toast.error(response.error)
             console.log("error", response.error)
@@ -887,6 +940,23 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
           now: 0,
           currentLabel: ""
         })
+        // Make all edges dull
+        setEdges((prevEdges) =>
+          prevEdges.map((edge) => ({
+            ...edge,
+            animated: false,
+            selectable: true
+          }))
+        )
+        // Unfreeze all nodes
+        setNodes((prevNodes) =>
+          prevNodes.map((node) => ({
+            ...node,
+            draggable: true,
+            selectable: true,
+            connectable: true
+          }))
+        )
         toast.error("Error detected while running the experiment", error)
         console.log("error detected", error)
         setError(error)
