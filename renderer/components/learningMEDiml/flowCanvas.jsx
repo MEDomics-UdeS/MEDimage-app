@@ -803,6 +803,25 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
     setProgress({now: 0, currentLabel: progress.currentLabel})
     setIsProgressUpdating(true)
     setShowResultsPane(false)
+
+    // Make all edges animated
+    setEdges((prevEdges) =>
+      prevEdges.map((edge) => ({
+        ...edge,
+        animated: true,
+        selectable: false
+      }))
+    )
+
+    // Freeze all nodes to avoid user interaction during the execution of the workflow
+    setNodes((prevNodes) =>
+      prevNodes.map((node) => ({
+        ...node,
+        draggable: false,
+        selectable: false,
+        connectable: false
+      }))
+    )
     
     requestBackend(
       port,
@@ -823,6 +842,23 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
             now: 100,
             currentLabel: "Done!"
           })
+          // Make all edges dull
+          setEdges((prevEdges) =>
+            prevEdges.map((edge) => ({
+              ...edge,
+              animated: false,
+              selectable: true
+            }))
+          )
+          // Unfreeze all nodes
+          setNodes((prevNodes) =>
+            prevNodes.map((node) => ({
+              ...node,
+              draggable: true,
+              selectable: true,
+              connectable: true
+            }))
+          )
           setIsResults(true)
           setNodes((prevNodes) =>
             prevNodes.map((node) => {
@@ -861,6 +897,23 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
             now: 0,
             currentLabel: ""
           })
+          // Make all edges dull
+          setEdges((prevEdges) =>
+            prevEdges.map((edge) => ({
+              ...edge,
+              animated: false,
+              selectable: true
+            }))
+          )
+          // Unfreeze all nodes
+          setNodes((prevNodes) =>
+            prevNodes.map((node) => ({
+              ...node,
+              draggable: true,
+              selectable: true,
+              connectable: true
+            }))
+          )
           if (typeof response.error === "string") {
             toast.error(response.error)
             console.log("error", response.error)
@@ -887,6 +940,23 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
           now: 0,
           currentLabel: ""
         })
+        // Make all edges dull
+        setEdges((prevEdges) =>
+          prevEdges.map((edge) => ({
+            ...edge,
+            animated: false,
+            selectable: true
+          }))
+        )
+        // Unfreeze all nodes
+        setNodes((prevNodes) =>
+          prevNodes.map((node) => ({
+            ...node,
+            draggable: true,
+            selectable: true,
+            connectable: true
+          }))
+        )
         toast.error("Error detected while running the experiment", error)
         console.log("error detected", error)
         setError(error)

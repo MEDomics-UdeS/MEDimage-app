@@ -1,17 +1,17 @@
 /* eslint-disable react/prop-types */
-import React, { useRef, useCallback, useEffect, useContext, useState } from "react"
+import { Button } from "primereact/button"
+import { ToggleButton } from "primereact/togglebutton"
+import { useCallback, useContext, useEffect, useRef, useState } from "react"
+import Col from "react-bootstrap/Col"
+import Row from "react-bootstrap/Row"
 import { toast } from "react-toastify"
-import ReactFlow, { Controls, ControlButton, Background, MiniMap, addEdge, useReactFlow } from "reactflow"
-import { FlowFunctionsContext } from "./context/flowFunctionsContext"
+import ReactFlow, { Background, ControlButton, Controls, MiniMap, addEdge, useReactFlow } from "reactflow"
+import { deepCopy, getId } from "../../utilities/staticFunctions"
+import { ErrorRequestContext } from "../generalPurpose/errorRequestContext"
 import { PageInfosContext } from "../mainPages/moduleBasics/pageInfosContext"
+import { FlowFunctionsContext } from "./context/flowFunctionsContext"
 import { FlowInfosContext } from "./context/flowInfosContext"
 import { FlowResultsContext } from "./context/flowResultsContext"
-import { getId, deepCopy } from "../../utilities/staticFunctions"
-import { ToggleButton } from "primereact/togglebutton"
-import Row from "react-bootstrap/Row"
-import Col from "react-bootstrap/Col"
-import { Button } from "primereact/button"
-import { ErrorRequestContext } from "../generalPurpose/errorRequestContext"
 
 /**
  *
