@@ -18,7 +18,7 @@ import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen"
 import Zoom from "yet-another-react-lightbox/plugins/zoom"
 import "yet-another-react-lightbox/styles.css"
 import { requestBackend } from "../../../utilities/requests"
-import { WorkspaceContext } from "../../workspace/workspaceContext"
+import { EXPERIMENTS, WorkspaceContext } from "../../workspace/workspaceContext"
 import { FlowInfosContext } from "../context/flowInfosContext"
 import { FlowResultsContext } from "../context/flowResultsContext"
 
@@ -35,7 +35,8 @@ const ResultsPaneMEDiml = () => {
   const [selectedResults, setSelectedResults] = useState([])
   const [selectedPipelines, setSelectedPipelines] = useState([])
   const [generatedPipelines, setGeneratedPipelines] = useState([])
-  const { flowContent } = useContext(FlowInfosContext)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const { flowContent, sceneName } = useContext(FlowInfosContext)
   const [expNames, setExpNames] = useState([])
   const [compareMode, setCompareMode] = useState(false)
   const [showMetrics, setShowMetrics] = useState(true)
@@ -43,34 +44,104 @@ const ResultsPaneMEDiml = () => {
   const [heatMap, setHeatMap] = useState()
   const [treePlot, setTreePlot] = useState("")
   const [open, setOpen] = useState(false)
-  const { port } = useContext(WorkspaceContext)
+  const { getBasePath, port } = useContext(WorkspaceContext)
 
   const op = useRef(null);
+
+  /*
+  * @Description: This function is used to get the save path for the generated notebook
+  */
+  const getSavePath = (flowContent) => {
+    try {
+      let savePath = null
+      savePath = [getBasePath(EXPERIMENTS), "LEARNING", sceneName, "notebooks"].join("/")
+      return savePath
+    } catch (error) {
+      console.error("Error while getting the save path:", error)
+      return null
+    }
+  }
 
   /*
   * @Description: This function is used to process the flow data
   */
   const processFlowData = (flowContent) => {
     try {
-    // process nodes params
-    const newFlow = structuredClone(flowContent);
-    newFlow.nodes.forEach((node) => {
-      node.data = node.data.internal.settings;
-    });
+      // Initialize the new dictionnary for the modified flow
+      let modifiedFlow = {
+        drawflow: {
+          Home: {
+            data: {}
+          }
+        }
+      }
+      if (!flowContent || !flowContent.nodes) {
+        throw new Error("Invalid flow content: missing nodes");
+      }
+      const newFlow = structuredClone(flowContent);
+      newFlow.nodes.forEach((node) => {
+        const nodeID = node.id.toString();
+        modifiedFlow.drawflow.Home.data[nodeID] = {
+          id: nodeID,
+          name: node.data.internal.type.replaceAll(/ |-/g, "_"),
+          data: node.data.internal.settings ? node.data.internal.settings : {},
+          class: node.className,
+          inputs: {},
+          outputs: {}
+        }
+      });
 
-    console.log("newFlow", newFlow)
+      // Note : only the nodes in home module can be connected, therefore it is not necessary to check
+      // if the edges to be in the structure other than Home in the dictionnary
+      newFlow.edges.forEach((edge) => {
+        const sourceNode = newFlow.nodes.find((node) => node.id === edge.source)
+        const targetNode = newFlow.nodes.find((node) => node.id === edge.target)
 
-    // extract selected pipelines
-    let pipIndexes = generatedPipelines.map((pip) => pip.name.split(" ")[1] - 1)
-    let pipsToGenerate = pipIndexes.map((pipIndex) => selectedPipelines[pipIndex])
-    return {
-      "nodes": newFlow.nodes,
-      "pips": pipsToGenerate,
-    };
-  }
-  catch (error) {
-    toast.error("Error detected while processing the flow data", error)
-  }
+        const sourceNodeID = sourceNode.id
+        const targetNodeID = targetNode.id
+
+        const outputKey = "output_1"
+        const inputKey = "input_1"
+
+        if (!modifiedFlow.drawflow.Home.data[sourceNodeID].outputs[outputKey]) {
+          modifiedFlow.drawflow.Home.data[sourceNodeID].outputs[outputKey] = {
+            connections: [{ node: targetNodeID, input: inputKey }]
+          }
+        } else {
+          modifiedFlow.drawflow.Home.data[sourceNodeID].outputs[outputKey].connections.push({ node: targetNodeID, input: inputKey })
+        }
+
+        if (!modifiedFlow.drawflow.Home.data[targetNodeID].inputs[inputKey]) {
+          modifiedFlow.drawflow.Home.data[targetNodeID].inputs[inputKey] = {
+            connections: [{ node: sourceNodeID, output: outputKey }]
+          }
+        } else {
+          modifiedFlow.drawflow.Home.data[targetNodeID].inputs[inputKey].connections.push({ node: sourceNodeID, output: outputKey })
+        }
+      })
+
+      // extract selected pipelines
+      let pipIndexes = generatedPipelines.map((pipName) => expNames.indexOf(pipName))
+      let pipsToGenerate = pipIndexes.map((pipIndex) => selectedPipelines[pipIndex])
+
+      // Get notebook save path
+      let notebookSavePath = getSavePath(flowContent)
+      if (!notebookSavePath) {
+        throw new Error("Notebook save path not found");
+      }
+      modifiedFlow = {
+        ...modifiedFlow,
+        "pipelines": pipsToGenerate,
+        "pipeline_names": generatedPipelines,
+        "save_path": notebookSavePath
+      };
+
+      return modifiedFlow;
+    }
+    catch (error) {
+      toast.error("Error detected while processing the flow data", error)
+      console.error("Error detected while processing the flow data", error)
+    }
   };
 
   /*
@@ -81,46 +152,57 @@ const ResultsPaneMEDiml = () => {
       toast.error("No pipeline selected");
       return;
     } else {
-      // Process data
-      let newFlow = processFlowData(flowContent)
-      console.log("newFlow sent to backend", newFlow)
-      requestBackend(
-        port,
-        "/learning_MEDiml/run_all/generate_pips",
-        newFlow,
-        (response) => {
-          console.log("received results:", response)
-          if (!response.error) {
-            console.log("Success response", response)
-            toast.success("Notebook(s) generated successfully")
+      try {
+        // Loading state
+        setIsGenerating(true)
 
-            // Open the notebook
-            try{
-              var pathNotebook = response.path_notebook;
-              var portNotebook = port + 1;
-              var exec = require('child_process').exec;
-              exec(`jupyter notebook --port=${portNotebook} ${pathNotebook}`,
-                  function (error, stdout, stderr) {
-                      console.log('stdout: ' + stdout);
-                      console.error('stderr: ' + stderr);
-                      if (error !== null) {
-                          console.error('exec error: ' + error);
-                      }
-                  });
-                }
-            catch (error) {
-              console.error("Error detected while opening the notebook", error)
+        // Process data
+        let newFlow = processFlowData(flowContent)
+        console.log("newFlow sent to backend", newFlow)
+        requestBackend(
+          port,
+          "/learning_MEDiml/run_all/generate_pips",
+          newFlow,
+          (response) => {
+            console.log("received results:", response)
+            setIsGenerating(false)
+            if (!response.error) {
+              console.log("Success response", response)
+              toast.success("Notebook(s) generated successfully")
+
+              // Open the notebook
+              try{
+                var pathNotebook = response.path_notebook;
+                var portNotebook = port + 1;
+                var exec = require('child_process').exec;
+                exec(`jupyter notebook --port=${portNotebook} ${pathNotebook}`,
+                    function (error, stdout, stderr) {
+                        console.log('stdout: ' + stdout);
+                        console.error('stderr: ' + stderr);
+                        if (error !== null) {
+                            console.error('exec error: ' + error);
+                        }
+                    });
+                  }
+              catch (error) {
+                console.error("Error detected while opening the notebook", error)
+              }
+              
+            } else {
+              toast.error(response.error)
+              console.error("error", response.error)
             }
-            
-          } else {
-            toast.error(response.error)
-            console.error("error", response.error)
+            },
+            (error) => {
+              setIsGenerating(false)
+              toast.error("Error detected while running the experiment", error)
           }
-          },
-          (error) => {
-            toast.error("Error detected while running the experiment", error)
-        }
-      )
+        )
+      } catch (error) {
+        setIsGenerating(false)
+        toast.error("Error detected while generating the code", error)
+        console.error("Error detected while generating the code", error)
+      }
     }
   }
 
@@ -445,8 +527,8 @@ const ResultsPaneMEDiml = () => {
               console.error("Error detected while processing histograms", error)
             }
           }
-          if (node.data.internal.results.hasOwnProperty("pips")){
-            setSelectedPipelines(node.data.internal.results.pips)
+          if (node.data.internal.results.hasOwnProperty("pipelines")){
+            setSelectedPipelines(node.data.internal.results.pipelines)
           }
           if (node.data.internal.results.hasOwnProperty("experiments")){
             setExpNames(node.data.internal.results.experiments)
@@ -458,15 +540,6 @@ const ResultsPaneMEDiml = () => {
       }
     }
   }, [flowContent])
-
-  const getPipelinesName = () => {
-    if (selectedPipelines.length > 0){
-      return selectedPipelines.map((_, index) => {
-        return { name: "pipeline " + (index + 1) };
-      });
-    }
-  };
-
 
   return (
     <>
@@ -532,23 +605,27 @@ const ResultsPaneMEDiml = () => {
             {compareMode ? (renderAccordionCompared(selectedResults, isResults)) : (renderAccordions(selectedResults, isResults))}
             {/*Code generation dialog*/}
             <OverlayPanel ref={op} showCloseIcon>
-                {expNames.length > 0 ? (<div className="card justify-content-center gap-3">
+                {expNames.length > 0 ? (
+                  <div className="card justify-content-center gap-3">
                     <SelectButton
                       value={generatedPipelines} 
                       onChange={(e) => setGeneratedPipelines(e.value)} 
                       optionLabel="name" 
-                      options={getPipelinesName()} 
-                      multiple/>
-                    
+                      options={expNames.map((name, index) => ({ name: `Pipeline ${index + 1}: ${name}`, value: name }))}
+                      multiple
+                    />
                     <Button 
                       label="Generate"
                       severity="secondary"
                       rounded 
                       raised 
                       onClick={() => generateCode()} 
+                      disabled={generatedPipelines.length === 0}
+                      loading={isGenerating}
                       style={{ width: 'fit-content', margin: 'auto' }}
-                    /></div>) : 
-                  (<Message severity="error" text="No pipelines detected"/>)}
+                    />
+                  </div>) : (<Message severity="error" text="No pipelines detected"/>
+                )}
             </OverlayPanel>
           </Card.Body>
         </Card>
