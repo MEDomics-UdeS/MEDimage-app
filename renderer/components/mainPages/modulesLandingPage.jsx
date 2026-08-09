@@ -1,14 +1,14 @@
 import { randomUUID } from "crypto"
 import { BrainCircuit, Pickaxe } from 'lucide-react'
 import Image from "next/image"
+import { Button } from 'primereact/button'
 import { InputText } from "primereact/inputtext"
 import { useContext, useEffect, useState } from "react"
 import { Card, Stack } from "react-bootstrap"
-import { Button } from 'primereact/button'
 import { toast } from "react-toastify"
-import { sceneDescription as learningMEDimlDefaultSettings } from "../../public/setupVariables/learningMEDimlNodesParams"
 import myimage from "../../../resources/medomics_transparent_bg.png"
 import { sceneDescription as extractionMEDimlSceneDescription } from "../../public/setupVariables/extractionMEDimlNodesParams"
+import { sceneDescription as learningMEDimlDefaultSettings } from "../../public/setupVariables/learningMEDimlNodesParams"
 import { LayoutModelContext } from "../layout/layoutContext"
 import { insertMEDDataObjectIfNotExists } from "../mongoDB/mongoDBUtils"
 import { DataContext } from "../workspace/dataContext"
@@ -81,7 +81,6 @@ export default function ModulesLandingPage() {
       isLocked: medObject.isLocked ?? null,
       usedIn: medObject.usedIn ?? null
     }
-    console.log("debug opening item", openItem)
     const type = openItem.type === "mediml" ? "openInLearningMEDimlModule" : openItem.type === "medext" ? "openInExtractionMEDimlModule" : null
     if (type === null) {
       toast.error("Cannot open this type of file: " + openItem.type)
