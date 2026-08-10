@@ -199,56 +199,107 @@ export async function insertMEDDataObjectIfNotExists(medData, path = null, jsonD
       }
     }
 
-  // Insert MEDdataObject data (if contains data)
-  if (jsonData) {
-    const dataCollection = db.collection(medData.id)
-    const result = await dataCollection.insertMany(jsonData)
-    console.log(`Data inserted with ${result.insertedCount} documents`)
-  } else if (path) {
-    switch (medData.type) {
-      case "csv":
-        await insertCSVIntoCollection(path, medData.id)
-        break
-      case "html":
-        await insertHTMLIntoCollection(path, medData.id)
-        break
-      case "png":
-        await insertPNGIntoCollection(path, medData.id)
-        break
-      case "pkl":
-        await insertPKLIntoCollection(path, medData.id)
-        break
-      case "jpg":
-        await insertJPGIntoCollection(path, medData.id)
-        break
-      case "json":
-        // Check if file exists
-        if (!fs.existsSync(path)) {
-          console.error(`File at path ${path} does not exist`)
-          break
-        }
-        const fileContent = fs.readFileSync(path, "utf8")
-        const jsonContent = JSON.parse(fileContent)
+    // Insert MEDdataObject data (if contains data)
+    try {
+      if (jsonData) {
         const dataCollection = db.collection(medData.id)
-        const result = await dataCollection.insertMany(Array.isArray(jsonContent) ? jsonContent : [jsonContent])
-        if (!result.insertedCount > 0) {
-          console.error(`No JSON data inserted for MEDDataObject with id ${medData.id}`)
+        const docs = Array.isArray(jsonData) ? jsonData : [jsonData]
+        if (docs.length > 0) {
+          const result = await dataCollection.insertMany(docs)
+          console.log(`Data inserted with ${result.insertedCount} documents`)
         }
-        break
-      default:
-        break
-    }
-  } else if (copyId) {
-    // Copy the data from the collection of the object being copied
-    const sourceCollection = db.collection(copyId)
-    const targetCollection = db.collection(medData.id)
+      } else if (path) {
+        switch (medData.type) {
+          case "csv":
+            await insertCSVIntoCollection(path, medData.id)
+            break
+          case "html":
+            await insertHTMLIntoCollection(path, medData.id)
+            break
+          case "png":
+            await insertPNGIntoCollection(path, medData.id)
+            break
+          case "pkl":
+            await insertPKLIntoCollection(path, medData.id)
+            break
+          case "jpg":
+            await insertJPGIntoCollection(path, medData.id)
+            break
+          case "json":
+            // Check if file exists
+            const fs = require('fs').promises
+            try {
+              await fs.access(path)
+            } catch (err) {
+              console.error(`File at path ${path} does not exist or is not accessible:`, err)
+              throw new Error(`File not found: ${path}`)
+            }
+            
+            const fileContent = await fs.readFile(path, "utf8")
+            let jsonContent
+            try {
+              jsonContent = JSON.parse(fileContent)
+            } catch (err) {
+              console.error(`Error parsing JSON from ${path}:`, err)
+              throw new Error(`Invalid JSON in file: ${path}`)
+            }
+            
+            const dataCollection = db.collection(medData.id)
+            const docsToInsert = Array.isArray(jsonContent) ? jsonContent : [jsonContent]
+            const result = await dataCollection.insertMany(docsToInsert)
+            if (result.insertedCount === 0) {
+              console.error(`No JSON data inserted for MEDDataObject with id ${medData.id}`)
+              throw new Error(`Failed to insert JSON data for ${medData.id}`)
+            }
+            console.log(`Inserted ${result.insertedCount} JSON documents from file`)
+            break
+          default:
+            console.log(`No handler for type: ${medData.type}`)
+            break
+        }
+      } else if (copyId) {
+        // Copy the data from the collection of the object being copied
+        const sourceCollection = db.collection(copyId)
+        const targetCollection = db.collection(medData.id)
 
-    const documentsToCopy = await sourceCollection.find({}).toArray()
-    if (documentsToCopy.length > 0) {
-      const result = await targetCollection.insertMany(documentsToCopy)
-      console.log(`Copied ${result.insertedCount} documents from collection ${copyId} to ${medData.id}`)
-    } else {
-      console.log(`No documents found in collection ${copyId} to copy`)
+        const documentsToCopy = await sourceCollection.find({}).toArray()
+        if (documentsToCopy.length > 0) {
+          const result = await targetCollection.insertMany(documentsToCopy)
+          console.log(`Copied ${result.insertedCount} documents from collection ${copyId} to ${medData.id}`)
+        } else {
+          console.log(`No documents found in collection ${copyId} to copy`)
+        }
+      }
+    } catch (err) {
+      // Data insertion failed - rollback the medData object insertion
+      console.error(`Data insertion failed for MEDDataObject ${medData.id}. Rolling back...`, err)
+      
+      try {
+        // Delete the medData object
+        await collection.deleteOne({ id: medData.id })
+        console.log(`Rolled back: deleted MEDDataObject ${medData.id}`)
+        
+        // Remove from parent's childrenIDs if it was added
+        if (parentUpdated && medData.parentID) {
+          await collection.updateOne(
+            { id: medData.parentID },
+            { $pull: { childrenIDs: medData.id } }
+          )
+          console.log(`Removed ${medData.id} from parent's childrenIDs during rollback`)
+        }
+        
+        // Drop the data collection if it was created
+        const collections = await db.listCollections({ name: medData.id }).toArray()
+        if (collections.length > 0) {
+          await db.collection(medData.id).drop()
+          console.log(`Dropped data collection ${medData.id} during rollback`)
+        }
+      } catch (rollbackErr) {
+        console.error(`CRITICAL: Rollback failed for ${medData.id}. Manual intervention may be required!`, rollbackErr)
+      }
+      
+      // Re-throw the original error
+      throw new Error(`Data insertion failed after object creation: ${err.message}`)
     }
     
     return medData.id
