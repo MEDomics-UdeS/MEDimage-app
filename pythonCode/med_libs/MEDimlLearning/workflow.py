@@ -59,10 +59,19 @@ class LearningWorkflow:
                 if not node_content.get("inputs"):
                     self._build_pipeline(str(node_content["id"]), node_content, [], self.json_config, pips)
 
+        nodes = []
+        for index, pip in enumerate(pips):
+            pip_nodes = []
+            for node_id in pip:
+                if len(nodes) > 0 and node_id in [node.id for node in nodes[max(index-1, 0)]]:
+                    pip_nodes.append([node for node in nodes[max(index-1, 0)] if node.id == node_id][0])
+                    continue
+                pip_nodes.append(LearningNode.create_node(get_node_content(node_id, self.json_config)))
+            nodes.append(pip_nodes)
+
         pipelines: list[Pipeline] = []
         for index, pip in enumerate(pips, start=1):
-            nodes = [LearningNode.create_node(get_node_content(node_id, self.json_config)) for node_id in pip]
-            pipelines.append(Pipeline(nodes, index, "pip" + "/".join(pip), "pipeline" + str(index)))
+            pipelines.append(Pipeline(nodes[index-1], index, "pip" + "/".join(pip), "pipeline" + str(index)))
         return pipelines
 
     def run_all(self) -> dict[str, Any]:
@@ -136,12 +145,7 @@ class LearningWorkflow:
                     )
 
                     path_image = Path(analyzed_context.path_study) / (f"{title}.png" if title else f"{metric}_heatmap.png")
-                    public_root = Path.cwd().parent / "renderer" / "public" / "images" / "analyze"
-                    public_root.mkdir(parents=True, exist_ok=True)
-                    copied_path = public_root / f"{path_image.stem}_{analyzed_context.pipeline_name}.png"
-                    if path_image.exists():
-                        shutil.copy(path_image, copied_path)
-                    figures_dict["heatmap"] = {"path": str(copied_path if copied_path.exists() else path_image).replace("\\", "/")}
+                    figures_dict["heatmap"] = {"path": str(path_image).replace("\\", "/")}
 
                 if analyze_settings.get("optimalLevel"):
                     metric = analyze_settings.get("heatmapParams", {}).get("metric")
