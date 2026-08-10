@@ -1,9 +1,9 @@
-import { useContext } from "react"
-import { ErrorRequestContext } from "../generalPurpose/errorRequestContext"
-import { Dialog } from "primereact/dialog"
 import { Button } from "primereact/button"
-import { Row, Col } from "react-bootstrap"
+import { Dialog } from "primereact/dialog"
+import { useContext } from "react"
+import { Col, Row } from "react-bootstrap"
 import { toast } from "react-toastify"
+import { ErrorRequestContext } from "../generalPurpose/errorRequestContext"
 
 /**
  *
@@ -32,11 +32,6 @@ const ErrorRequestDialog = () => {
         // If parsing fails, treat the original string as the message
         return error
       }
-    }
-    try {
-      parsedError = JSON.stringify(error)
-    } catch (e) {
-      return "An unknown error occurred"
     }
 
     const msg = typeof parsedError?.message === 'string' 
@@ -83,7 +78,7 @@ const ErrorRequestDialog = () => {
         </Row>
         {/* Axios error stack is usually in error.message.stack or error.stack_trace */}
         <pre className="mt-3" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-          {typeof error?.message === 'string' ? error.message : 
+          {
             error?.message?.stack || error?.stack_trace || "No stack trace available"
           }
         </pre>
