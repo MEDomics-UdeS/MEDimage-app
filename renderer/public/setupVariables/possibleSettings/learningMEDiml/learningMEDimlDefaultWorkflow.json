@@ -21,6 +21,14 @@
           },
           "hasRun": false,
           "settings": {
+            "active_method": ["Random"],
+            "Random": {
+              "method": "SubSampling",
+              "nSplits": 10,
+              "stratifyInstitutions": false,
+              "testProportion": 0.33,
+              "seed": 54288
+            },
             "path_outcome_file": "",
             "outcome_name": "",
             "path_save_experiments": "",
@@ -43,10 +51,7 @@
           "title": "Design",
           "possibleSettings": {
             "defaultSettings": {
-              "path_outcome_file": "",
-              "outcome_name": "",
-              "path_save_experiments": "",
-              "method": "all_learn"
+              "expName": ""
             }
           }
         },
@@ -82,15 +87,7 @@
           },
           "hasRun": false,
           "settings": {
-            "expName": "",
-            "active_method": ["Random"],
-            "Random": {
-              "method": "SubSampling",
-              "nSplits": 10,
-              "stratifyInstitutions": false,
-              "testProportion": 0.33,
-              "seed": 54288
-            }
+            "expName": ""
           },
           "subflowId": "MAIN",
           "enableView": false
@@ -111,7 +108,10 @@
           "title": "Split",
           "possibleSettings": {
             "defaultSettings": {
-              "expName": "",
+              "path_outcome_file": "",
+              "outcome_name": "",
+              "path_save_experiments": "",
+              "method": "all_learn",
               "active_method": ["Random"],
               "Random": {
                 "method": "SubSampling",

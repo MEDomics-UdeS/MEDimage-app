@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from .pipeline import Pipeline
+
 class Node(ABC):
     """
     Abstract class representing a node in a pipeline. 
@@ -51,7 +53,7 @@ class Node(ABC):
         self.params = new_params
     
     @abstractmethod
-    def run(self, pipeline: "Pipeline") -> None:
+    def run(self, pipeline: Pipeline) -> None:
         """
         Abstract method to run the node. The node is executed and the output is stored in the output attribute.
 

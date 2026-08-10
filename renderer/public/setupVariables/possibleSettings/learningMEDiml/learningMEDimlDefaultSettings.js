@@ -1,16 +1,16 @@
 const learningMEDimlDefaultSettings = {
-  // split
+  // design
   design : {
+    expName: "",
+  },
+
+  // split
+  split : {
     path_outcome_file: "",
     path_ws_experiments: "",
     outcome_name: "",
     path_save_experiments: "",
     method: "all_learn",
-  },
-
-  // design
-  split : {
-    expName: "",
     active_method: ["cv"],
     Random: {
       method: "SubSampling",
@@ -37,8 +37,8 @@ const learningMEDimlDefaultSettings = {
     XGBoost: {
       varImportanceThreshold: 0.3,
       optimizeThreshold: true,
-      finalizeModel: true,
-      nameSave: "xgboost_5perc",
+      finalizeModel: false,
+      nameSave: "xgboost_thresh_opt",
       optimizationMetric: "MCC",
       seed: 54288
     }
@@ -85,9 +85,9 @@ const learningMEDimlDefaultSettings = {
   },
   analyze : {
     histogram: true,
-    tree: true,
-    heatmap: true,
-    optimalLevel: true,
+    tree: false,
+    heatmap: false,
+    optimalLevel: false,
     histParams: {
       sortOption: "importance"
     },

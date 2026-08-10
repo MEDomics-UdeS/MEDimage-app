@@ -198,13 +198,20 @@ def load_med_standard_data(dataset_list, tags_list, vars_list, target) -> pandas
     return df_merged
 
 def allowed_pickle_object(filepath):
-    # TODO : Plus de paramètres que l'extension doivent être vérifiés pour le pickle object
-    return filepath.endswith('.npy')
+    path = Path(filepath)
+    return path.suffix.lower() in {'.pkl', '.pickle', '.joblib', '.medmodel'}
 
 
-# TODO : Pour remplacer la fonction formatFeatures de app_extraction_blueprint.py
 def format_features(features_dict):
-    return {k: (np.float64(v) if not isinstance(v, list) else v) for (k, v) in features_dict.items()}
+    formatted = {}
+    for key, value in features_dict.items():
+        if isinstance(value, list):
+            formatted[key] = [np.float64(item) if isinstance(item, (int, float, np.floating, np.integer)) else item for item in value]
+        elif isinstance(value, (int, float, np.floating, np.integer)):
+            formatted[key] = np.float64(value)
+        else:
+            formatted[key] = value
+    return formatted
 
 
 # Utils for nodes
