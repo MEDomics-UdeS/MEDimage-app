@@ -79,13 +79,13 @@ class Pipeline:
                 set_progress(now=min(progress, 99), label=f"Pipeline {pipeline_number} | Split {split_index} | Running node : {node.name.replace('_', ' ').title()}")
                 node.run(context)
 
-        self._finalize_pipeline(context, set_progress, pipeline_number)
+        self._finalize_pipeline(context)
 
         set_progress(now=100, label=f"Pipeline {pipeline_number} finished")
         return context
 
-    def _finalize_pipeline(self, context: LearningContext, set_progress, pipeline_number: int) -> None:
-        if not context.finalize_model or not context.extras.get("split_runs"):
+    def _finalize_pipeline(self, context: LearningContext) -> None:
+        if not context.extras.get("split_runs"):
             return
 
         # Update results dict
