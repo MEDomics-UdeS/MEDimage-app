@@ -1,9 +1,10 @@
 import { shell } from "electron"
+import { CopyPlus, Info, Pause, Pencil, Play, X } from "lucide-react"
 import { Card } from "primereact/card"
 import { OverlayPanel } from "primereact/overlaypanel"
 import { Tag } from "primereact/tag"
 import { Tooltip } from "primereact/tooltip"
-import React, { useContext, useEffect, useRef, useState } from "react"
+import { useContext, useEffect, useRef, useState } from "react"
 import { Stack } from "react-bootstrap"
 import EditableLabel from "react-simple-editlabel"
 import { toast } from "react-toastify"; // https://www.npmjs.com/package/react-toastify
@@ -14,7 +15,8 @@ import { FlowInfosContext } from "./context/flowInfosContext"
 import { FlowResultsContext } from "./context/flowResultsContext"
 import Handlers from "./handlers"
 import NodeWrapperResults from "./nodeWrapperResults"
-import { CopyPlus, Info, Pause, Pencil, Play, X } from "lucide-react"
+
+
 // keep this import for the code editor (to be implemented)
 // import dynamic from "next/dynamic"
 // const CodeEditor = dynamic(() => import("./codeEditor"), {
@@ -95,8 +97,8 @@ const NodeObject = ({ id, data, nodeSpecific, nodeBody, defaultSettings, onClick
       <div className="node">
         {data.internal.hasWarning.state && (
           <>
-            <Tag className="node-warning-tag" icon="pi pi-exclamation-triangle" severity="warning" value="" rounded data-pr-position="left" data-pr-showdelay={200} />
-            <Tooltip target=".node-warning-tag">
+            <Tag className={`node-warning-tag-${id}`} icon="pi pi-exclamation-triangle" severity="warning" value="" rounded data-pr-position="left" data-pr-showdelay={200} />
+            <Tooltip target={`.node-warning-tag-${id}`}>
               <span>{data.internal.hasWarning.tooltip}</span>
             </Tooltip>
           </>
@@ -286,26 +288,14 @@ export const updateHasWarning = (data) => {
   }
   // Split node check if all the mandatory fields are filled
   if (data && data.setupParam && data.setupParam.type === "Design") {
-    if (data.internal.settings.outcome_name === "") {
-      data.internal.hasWarning = { state: true, tooltip: <p>No outcome name is given!</p> }
-      return
-    } else if (data.internal.settings.path_outcome_file === "") {
-      data.internal.hasWarning = { state: true, tooltip: <p>No outcome file is given!</p> }
-      return
-    } else if (data.internal.settings.path_save_experiments === "") {
-      data.internal.hasWarning = { state: true, tooltip: <p>No save path is given!</p> }
-      return
-    } else {
-      data.internal.hasWarning = { state: false }
+    if (data.internal.settings.expName === "") {
+      data.internal.hasWarning = { state: true, tooltip: <p>No experiment name is given!</p> }
       return
     }
   }
   // Design node check if all the mandatory fields are filled
   if (data && data.setupParam && data.setupParam.type === "Split") {
-    if (data.internal.settings.expName === "") {
-      data.internal.hasWarning = { state: true, tooltip: <p>No experiment name is given!</p> }
-      return
-    } else if (data.internal.settings?.active_method?.[0]?.toLowerCase() === "cv"){
+    if (data.internal.settings?.active_method?.[0]?.toLowerCase() === "cv"){
       if (data.internal.settings.cv.nFolds === null || data.internal.settings.cv.nFolds === "") {
         data.internal.hasWarning = { state: true, tooltip: <p>No number of folds is given!</p> }
         return
@@ -315,7 +305,16 @@ export const updateHasWarning = (data) => {
       } else if (data.internal.settings.cv.nFolds < 2) {
         data.internal.hasWarning = { state: true, tooltip: <p>Number of folds must be at least 2!</p> }
         return
-      } else {
+      } else if (data.internal.settings.outcome_name === "") {
+      data.internal.hasWarning = { state: true, tooltip: <p>No outcome name is given!</p> }
+      return
+    } else if (data.internal.settings.path_outcome_file === "") {
+      data.internal.hasWarning = { state: true, tooltip: <p>No outcome file is given!</p> }
+      return
+    } else if (data.internal.settings.path_save_experiments === "") {
+      data.internal.hasWarning = { state: true, tooltip: <p>No save path is given!</p> }
+      return
+    } else {
         data.internal.hasWarning = { state: false }
         return
       }
