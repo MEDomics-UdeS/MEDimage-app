@@ -1,72 +1,27 @@
-# MEDiml-app - Develop branch 🛠️
+<img src="MEDimlLogo.png" width="100" align="right" align="top" >
+<br />
 
-[![GitHub issues](https://img.shields.io/github/issues/MEDomicsLab/MEDiml-app)]()
-[![GitHub forks](https://img.shields.io/github/forks/MEDomicsLab/MEDiml-app)]()
-[![GitHub stars](https://img.shields.io/github/stars/MEDomicsLab/MEDiml-app)]()
-[![GitHub license](https://img.shields.io/github/license/MEDomicsLab/MEDomicsLab)]()
+# MEDiml - The application
 
-Here is the develop branch of the MEDiml app. This branch is used to develop new features and fix bugs. The main branch is used to publish the latest stable version of the project. The develop branch is merged into the main branch when a new stable version is ready to be published.
+This application is part of the [MEDomics](https://github.com/MEDomicsLab/MEDomics) project. It allows the user to interact with the [MEDiml package](https://github.com/MEDomicsLab/MEDiml) through a graphical user interface, facilitating the extraction of radiomics features from medical images and the subsequent analysis of this data through machine learning models.
 
-### Main documentation 👉 [here](https://medomicslab.gitbook.io/mediml-app-docs/). 👈
+## Key Features
 
-### Development documentation 👇
+- **Graphical User Interface (GUI)**: Simplifies the interaction with the MEDiml package.
+- **Radiomics Feature Extraction**: Extracts a wide range of radiomics features from medical images.
+- **Data Analysis**: Integrates machine learning models for comprehensive data analysis.
+- **Customizable Workflows**: Allows users to design and execute customized workflows tailored to specific research needs.
 
-# Getting started - Development
+## Important Links
 
-## 1. Git clone the project
+- [MEDiml-app Documentation](https://medomicslab.gitbook.io/mediml-app-docs)
+- [MEDiml Python package](https://github.com/MEDomicsLab/MEDiml)
+- [MEDomics Discord](https://discord.gg/ZbaGj8E6mP)
 
-```
-git clone -b develop git@github.com:MEDomicsLab/MEDiml-app.git      # via SSH (recommended)
-git clone -b develop https://github.com/MEDomicsLab/MEDiml-app.git  # via HTTPS
-```
+## Contact
 
-## 2. Be sure to have the npm packages installed
+For any question or support, please [contact us](https://medomicslab.gitbook.io/mediml-app-docs/forms/contact-us).
 
-```
-cd <.../MEDiml-app/>
-npm install
-```
+## Disclaimer
 
-## 3. When you modify .go files, you need to rebuild the executable
-
-- You can do it manually by running `go build main.go` in the `go_server` folder
-- You can also use a script that you can run from the root folder of the project:
-  - Windows : `.\utilScripts\pack_GO.bat`
-  - Linux : `bash utilScripts/pack_GO_linux.sh`
-  - MacOS : `bash utilScripts/pack_GO_mac.sh`
-
-## 4. Python environment
-
-The python environment is installed automatically once you download the app in your user folder under the folder `.mediml`. If you face any issue with the python environment, go to the applicaton settings page, click **Show first setup modal** and click **Start Setup**.
-
-
-When developping python code, you may need to install new packages. To do so, you can open the terminal from the `.mediml` folder and install the packages using the following commands:
-
-```
-cd <USER_PATH>\.mediml\python
-python -m pip install <package_name>
-```
-
-## 5. Run the Electron app in development mode
-
-`npm run dev`
-
-### Modify startup settings
-
-1. Go to file `medomics.dev.js`
-2. Here is a description of the Object:
-
-```javascript
-const config = {
-  // If true, the server will be run automatically when the app is launched
-  runServerAutomatically: true,
-  // If true, use the react dev tools
-  useRactDevTools: false,
-  // the default port to use for the server, be sure that no programs use it by default
-  defaultPort: 5000,
-  // Either "FIX" or "AVAILABLE" (case sensitive)
-  // FIX 		-­> if defaultPort is used, force terminate and use defaultPort
-  // AVAILABLE 	-> if defaultPort is used, iterate to find next available port
-  portFindingMethod: PORT_FINDING_METHOD.FIX
-}
-```
+This application represents the latest version of the radiomics module used in MEDomics. We strive to keep both the application and the package synchronized to ensure the best user experience.
