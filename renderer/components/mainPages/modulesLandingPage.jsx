@@ -1,19 +1,17 @@
 import { randomUUID } from "crypto"
 import { BrainCircuit, Pickaxe } from 'lucide-react'
-import Image from "next/image"
 import { Button } from 'primereact/button'
 import { InputText } from "primereact/inputtext"
 import { useContext, useEffect, useState } from "react"
 import { Card, Stack } from "react-bootstrap"
 import { toast } from "react-toastify"
-import myimage from "../../../resources/medomics_transparent_bg.png"
 import { sceneDescription as extractionMEDimlSceneDescription } from "../../public/setupVariables/extractionMEDimlNodesParams"
 import { sceneDescription as learningMEDimlDefaultSettings } from "../../public/setupVariables/learningMEDimlNodesParams"
 import { LayoutModelContext } from "../layout/layoutContext"
 import { insertMEDDataObjectIfNotExists } from "../mongoDB/mongoDBUtils"
 import { DataContext } from "../workspace/dataContext"
 import { MEDDataObject } from "../workspace/NewMedDataObject"
-
+import ModuleLandingShell, { ModuleGuideText } from "./moduleBasics/ModuleLandingShell"
 
 // Variable used to store some modularity information about the module
 const typeInfo = {
@@ -298,103 +296,97 @@ export default function ModulesLandingPage() {
   }
 
   return (
-    <div className="h-100 w-100" style={{ height: "100vh", overflowY: "auto" }}>
-      <h1 className="text-center  fw-bold text-secondary mt-5" style={{ fontSize: "3rem", letterSpacing: "1px" }}>
-        MEDiml Modules
-      </h1>
-
-      <div className="mx-auto text-center my-4" >
-        <Image className="text-center" src={myimage} alt="" style={{ height: "30px", width: "30px" }} />
-      </div>
-
-      {/* Description of the MEDiml Module */}
-      <div className="mx-auto text-center" style={{ maxWidth: "860px", marginBottom: "40px" }}>
-        <h5 className="lh-lg" style={{ fontSize: "1.1rem" }}>
-          MEDiml offers two central modules: one for radiomic features extraction and another for machine learning. 
-          The Extraction Module allows you to easily extract radiomic features from your medical images, 
-          while the Learning Module enables model training, testing, and explanation of your model's predictions. 
-          Create a new scene to get started!
-        </h5>
-      </div>
-
-      <div style={{ paddingTop: "1rem", display: "flex", flexDirection: "column", flexGrow: "10", width: "100%", margin: "auto" }}>
-          {/* Main Title and Subtitle */}
-          <div className="h-100 w-100 d-flex justify-content-center align-items-center">
-            <Stack
-              direction="horizontal"
-              gap={4}
-              className="w-75 flex-wrap align-items-stretch"
-              style={{ justifyContent: "center" }}
+    <ModuleLandingShell
+      title="MEDiml Modules"
+      description="Extract handcrafted radiomics features from medical images and train and evaluate machine learning models."
+      infoContent={
+        <ModuleGuideText>
+          <p className="mb-0">
+            MEDiml offers two central modules: one for radiomic features extraction and another for machine learning. 
+            The Extraction Module allows you to easily extract radiomic features from your medical images, 
+            while the Learning Module enables model training, testing, and explanation of your model's predictions. 
+            Create a new scene to get started!
+          </p>
+        </ModuleGuideText>
+      }
+      documentation={{
+        url: "https://medomicslab.gitbook.io/mediml-app-docs/radiomics/",
+        label: "MEDiml Modules documentation",
+      }}
+    >
+      <Stack
+        direction="horizontal"
+        gap={4}
+        className="flex-wrap align-items-stretch justify-content-center module-landing-tool-grid w-100"
+        style={{ justifyContent: "center" }}
+      >
+        {/* Extraction Module Card */}
+        <Card
+          className="shadow-sm border-primary hover-border-primary"
+          style={{ cursor: "pointer", flex: "1 1 320px", minWidth: "280px" }}
+        >
+          <Card.Header className="bg-primary text-white d-flex align-items-center">
+            <h5 className="text-white mb-0">Extraction Module</h5>
+          </Card.Header>
+          <Card.Body className="d-flex flex-column justify-content-center align-items-center p-4">
+            <Pickaxe width={120} height={120} color="#3269ce"/>
+            <Card.Text className="mt-3 text-center">
+              Extract radiomics features from your medical images and create comprehensive 
+              datasets for your machine learning projects.
+            </Card.Text>
+            <div 
+              className="p-inputgroup w-full my-3"
+              style={{ margin: "5px", fontSize: "1rem", marginTop: "20px", maxWidth: "300px" }}
             >
-              {/* Extraction Module Card */}
-              <Card
-                className="shadow-sm border-primary hover-border-primary"
-                style={{ cursor: "pointer", flex: "1 1 320px", minWidth: "280px" }}
-              >
-                <Card.Header className="bg-primary text-white d-flex align-items-center">
-                  <h5 className="text-white mb-0">Extraction Module</h5>
-                </Card.Header>
-                <Card.Body className="d-flex flex-column justify-content-center align-items-center p-4">
-                  <Pickaxe width={120} height={120} color="#3269ce"/>
-                  <Card.Text className="mt-3 text-center">
-                    Extract radiomics features from your medical images and create comprehensive 
-                    datasets for your machine learning projects.
-                  </Card.Text>
-                  <div 
-                    className="p-inputgroup w-full my-3"
-                    style={{ margin: "5px", fontSize: "1rem", marginTop: "20px", maxWidth: "300px" }}
-                  >
-                    <InputText placeholder="Scene Name" value={nameExt} onChange={(e) => onNameExtChange(e.target.value)} />
-                    <span className="p-inputgroup-addon">.medext</span>
-                  </div>
-                  {nameExtError && (
-                    <div className="text-danger small mb-4">{nameExtError}</div>
-                  )}
-                  <Button 
-                    loading={loading} 
-                    severity="info" 
-                    onClick={() => createSceneContent(nameExt, "medext", "extractionMEDiml")} disabled={isExtDisabled}
-                    label='Start Extraction'
-                  />
-                </Card.Body>
-              </Card>
+              <InputText placeholder="Scene Name" value={nameExt} onChange={(e) => onNameExtChange(e.target.value)} />
+              <span className="p-inputgroup-addon">.medext</span>
+            </div>
+            {nameExtError && (
+              <div className="text-danger small mb-4">{nameExtError}</div>
+            )}
+            <Button 
+              loading={loading} 
+              severity="info" 
+              onClick={() => createSceneContent(nameExt, "medext", "extractionMEDiml")} disabled={isExtDisabled}
+              label='Start Extraction'
+            />
+          </Card.Body>
+        </Card>
 
-              {/* Learning Module Card */}
-              <Card
-                className="shadow-sm border-success"
-                style={{ cursor: "pointer", flex: "1 1 320px", minWidth: "280px" }}
-              >
-                <Card.Header className="bg-success text-white d-flex align-items-center">
-                  <h5 className="text-white mb-0">Learning Module</h5>
-                </Card.Header>
-                <Card.Body className="d-flex flex-column justify-content-center align-items-center p-4">
-                  <BrainCircuit width={120} height={120} color="#12771b"/>
-                  <Card.Text className="mt-3 text-center">
-                    In the Learning Module, you will be able to train and test machine learning models using the datasets 
-                    created in the Extraction Module.
-                  </Card.Text>
-                  <div 
-                    className="p-inputgroup w-full my-3"
-                    style={{ margin: "5px", fontSize: "1rem", marginTop: "20px", maxWidth: "300px" }}
-                  >
-                    <InputText placeholder="Scene Name" value={nameML} onChange={(e) => onNameMLChange(e.target.value)} />
-                    <span className="p-inputgroup-addon">.mediml</span>
-                  </div>
-                  {nameMlError && (
-                    <div className="text-danger small mb-4">{nameMlError}</div>
-                  )}
-                  <Button 
-                    label='Start Learning'
-                    loading={loading} 
-                    severity="success" 
-                    onClick={(e) => createSceneContent(nameML, "mediml", "learningMEDiml")} 
-                    disabled={isMLDisabled}
-                  />
-                </Card.Body>
-              </Card>
-            </Stack>
-          </div>
-      </div>
-    </div>
+        {/* Learning Module Card */}
+        <Card
+          className="shadow-sm border-success"
+          style={{ cursor: "pointer", flex: "1 1 320px", minWidth: "280px" }}
+        >
+          <Card.Header className="bg-success text-white d-flex align-items-center">
+            <h5 className="text-white mb-0">Learning Module</h5>
+          </Card.Header>
+          <Card.Body className="d-flex flex-column justify-content-center align-items-center p-4">
+            <BrainCircuit width={120} height={120} color="#12771b"/>
+            <Card.Text className="mt-3 text-center">
+              In the Learning Module, you will be able to train and test machine learning models using the datasets 
+              created in the Extraction Module.
+            </Card.Text>
+            <div 
+              className="p-inputgroup w-full my-3"
+              style={{ margin: "5px", fontSize: "1rem", marginTop: "20px", maxWidth: "300px" }}
+            >
+              <InputText placeholder="Scene Name" value={nameML} onChange={(e) => onNameMLChange(e.target.value)} />
+              <span className="p-inputgroup-addon">.mediml</span>
+            </div>
+            {nameMlError && (
+              <div className="text-danger small mb-4">{nameMlError}</div>
+            )}
+            <Button 
+              label='Start Learning'
+              loading={loading} 
+              severity="success" 
+              onClick={(e) => createSceneContent(nameML, "mediml", "learningMEDiml")} 
+              disabled={isMLDisabled}
+            />
+          </Card.Body>
+        </Card>
+      </Stack>
+    </ModuleLandingShell>
   )
 }
