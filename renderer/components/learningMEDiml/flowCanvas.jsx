@@ -45,6 +45,8 @@ import { deepCopy } from "../../utilities/staticFunctions.js"
 // Useful libraries
 import { useRef } from "react"
 
+const staticNodesParams = nodesParams // represents static nodes parameters
+
 /**
  * @param {String} id id of the workflow for multiple workflows management
  * @param {Function} changeSidebarType function to change the sidebar type
@@ -286,9 +288,9 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
     // Add defaut parameters of node to possibleSettings
     let type = newNode.data.internal.type.toLowerCase().replaceAll(" ", "_")
 
-    let setupParams = Object.values(nodesParams[workflowType]).find(
+    let setupParams = deepCopy(Object.values(staticNodesParams[workflowType]).find(
       (element) => element.type?.toLowerCase().replaceAll(" ", "_") === type.toLowerCase()
-    )
+    ))
 
     if (!setupParams) {
       // try again using title
@@ -332,7 +334,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
       const nonDuplicateNodes = nodes.filter((node) => !duplicateExperiments.includes(node))
       duplicateExperiments.forEach((node) => {
         if (node.data.internal.hasWarning && !node.data.internal.hasWarning.state) {
-          node.data.internal.hasWarning = { state: true, tooltip: <p>Duplicate experiment found</p> }
+          node.data.internal.hasWarning = { state: true, tooltip: <p>Duplicate experiment found, please change the experiment name.</p> }
         }
       })
       nonDuplicateNodes.length > 0 && nonDuplicateNodes.forEach((node) => {
@@ -748,11 +750,14 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
       let nodeName = value.name
       if (nodeName === "split") {
         let methodDesing = nodeData.active_method[0]
+        nSplitsTemp.push(nodeData[methodDesing].nSplits || nodeData[methodDesing].nFolds);
+        //setNSplits(nodeData[methodDesing].nSplits || nodeData[methodDesing].nFolds);
+      }
+      if (nodeName === "design") {
         if (!experimentsTemp.includes(nodeData.expName)){
           experimentsTemp.push(nodeData.expName)
         }
         folderNames.push("learn__" + nodeData.expName)
-        nSplitsTemp.push(nodeData[methodDesing].nSplits || nodeData[methodDesing].nFolds);
         //setNSplits(nodeData[methodDesing].nSplits || nodeData[methodDesing].nFolds);
       }
     }
@@ -760,7 +765,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
       let nodeData = value.data
       let nodeName = value.name
       let pathSave = ""
-      if (nodeName === "design") {
+      if (nodeName === "split") {
         // loop over folderNames
         for (const folder of folderNames) {
           if (folder !== "") {
