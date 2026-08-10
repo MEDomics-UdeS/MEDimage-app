@@ -13,22 +13,7 @@ class DesignNode(LearningNode):
     node_type = "design"
 
     def run(self, context: LearningContext) -> None:
-        context.path_outcome_file = Path(self.params["path_outcome_file"])
-        context.path_ws_experiments = Path(self.params["path_ws_experiments"])
-        context.path_save_experiments = Path(self.params["path_save_experiments"])
-        context.outcome_name = self.params["outcome_name"]
-        context.method = self.params["method"]
-        context.holdout_test = context.method != "all_learn"
-        context.evaluate_holdout = context.holdout_test
-
-        path_study = MEDiml.learning.ml_utils.create_holdout_set(
-            path_outcome_file=context.path_outcome_file,
-            path_save_experiments=context.path_save_experiments,
-            outcome_name=context.outcome_name,
-            method=context.method,
-        )
-        context.path_study = Path(path_study) if not isinstance(path_study, Path) else path_study
-
+        context.experiment_label = self.params["expName"]
         experiment = MEDiml.learning.DesignExperiment(
             context.path_study,
             context.path_ws_experiments,
@@ -41,7 +26,6 @@ class DesignNode(LearningNode):
         context.paths_splits = [experiment_dict[run] for run in experiment_dict.keys()]
         context.split_counter = 0
         context.designed_experiment = True
-        context.splitted_data = True
 
     def generate_code(self, file_obj, settings: dict[str, Any]) -> None:
         self._write_lines(
@@ -68,7 +52,6 @@ class DesignNode(LearningNode):
                 "paths_splits = [experiment_dict[run] for run in experiment_dict.keys()]",
                 "split_counter = 0",
                 "designed_experiment = True",
-                "splitted_data = True",
             ],
         )
      
