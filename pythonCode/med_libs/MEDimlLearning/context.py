@@ -35,7 +35,6 @@ class LearningContext:
 
     holdout_test: bool = False
     evaluate_holdout: bool = False
-    splitted_data: bool = False
     designed_experiment: bool = False
     loaded_data: bool = False
     cleaned_data: bool = False
@@ -69,7 +68,6 @@ class LearningContext:
     path_ml_dict: dict[str, Any] = field(default_factory=dict)
     ml_dict_paths: dict[str, Any] = field(default_factory=dict)
 
-    results_avg: list[dict[str, Any]] = field(default_factory=list)
     analysis_dict: dict[str, Any] = field(default_factory=dict)
     figures_dict: dict[str, Any] = field(default_factory=dict)
     final_results: dict[str, Any] | None = None
