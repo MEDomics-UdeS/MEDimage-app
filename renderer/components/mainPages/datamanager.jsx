@@ -3,6 +3,7 @@ import { Dropdown } from "primereact/dropdown"
 import { InputSwitch } from "primereact/inputswitch"
 import { InputText } from 'primereact/inputtext'
 import { MultiSelect } from 'primereact/multiselect'
+import { ProgressSpinner } from 'primereact/progressspinner';
 import { SelectButton } from 'primereact/selectbutton'
 import React, { useContext, useEffect, useState } from 'react'
 import { Alert, Card, Col, Container, Form, Offcanvas, ProgressBar, Row } from 'react-bootstrap'
@@ -62,6 +63,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
   const [runVoxelChecks, setRunVoxelChecks] = useState(true) // Voxel (dimensions) pre-checks
   const [runWindowChecks, setRunWindowChecks] = useState(true) // Window (intensity) pre-checks
   const [useDatasetType, setUseDatasetType] = useState("npy") // Dataset format for pre-checks: npy, nifti, or dicom
+  const [isScanningNpyFolder, setIsScanningNpyFolder] = useState(false)
 
   useEffect(() => {
     updateWSfolder()
@@ -203,6 +205,115 @@ const DataManager = ({ pageId, configPath = "" }) => {
 
   const fs = require('fs');
 
+  const handleNpyFolderChange = (event) => {
+    const path = event.value;
+    setSelectedNpyFolder(path)
+
+    // Clear previous pre-checks options
+    setSelectedPreChecksOptions({
+      studies: [],
+      institutions: [],
+      modalities: []
+    });
+    setSelectedStudies([]);
+    setSelectedInstitutions([]);
+    setSelectedModalities([]);
+
+    processNpyFiles(path) // Search for new Pre-checks options
+  };
+
+  const processNpyFiles = async (path) => {
+    const spinnerTimeout = setTimeout(() => setIsScanningNpyFolder(true), 250); // Progress Spinner
+
+    try {
+      const dir = await fs.promises.opendir(path);
+
+      const studies = new Set();
+      const institutions = new Set();
+      const modalities = new Set();
+      
+      const BATCH_SIZE = 500;
+      let processedCount = 0;
+      let hasNewUniqueData = false;
+      
+      // Helper function to format the values
+      const formatOptions = (set) => Array.from(set).map(value => ({ label: value }));
+
+      for await (const dirent of dir) {
+          if (!dirent.isFile()) continue; 
+
+          const parsed = parseNpyFileName(dirent.name);
+          if (parsed) {
+            const { study, institution, modality } = parsed;
+            
+            if (!studies.has(study)) {
+              studies.add(study);
+              hasNewUniqueData = true;
+            }
+            if (!institutions.has(institution)) {
+              institutions.add(institution);
+              hasNewUniqueData = true;
+            }
+            if (modality && !modalities.has(modality)) {
+              modalities.add(modality);
+              hasNewUniqueData = true;
+            }
+          }
+
+          processedCount++;
+
+          if (processedCount % BATCH_SIZE === 0) {
+            if (hasNewUniqueData) { // Update States with new data
+              setSelectedPreChecksOptions({
+                studies: formatOptions(studies),
+                institutions: formatOptions(institutions),
+                modalities: formatOptions(modalities)
+              })
+              
+              hasNewUniqueData = false; 
+            }
+            
+            // Pause this async function to yield the main thread and
+            // let user interactions process before resuming the loop.
+            await new Promise(resolve => setTimeout(resolve, 0));
+          }
+        }
+        
+        // Final flush
+        if (hasNewUniqueData) {
+          setSelectedPreChecksOptions({
+            studies: formatOptions(studies),
+            institutions: formatOptions(institutions),
+            modalities: formatOptions(modalities)
+          })
+        }
+    } catch (error) {
+      console.error("Failed to process NPY files:", error);
+    } finally {
+      clearTimeout(spinnerTimeout);
+      setIsScanningNpyFolder(false);
+    }
+  }
+
+  const parseNpyFileName = (filename) => {
+    if (!filename.endsWith('.npy')) return null
+
+    const parts = filename.split('.')
+
+    const prefix = parts[0].split('-')
+    if (prefix.length < 3) return null; // Ensure study and institution are present
+    const study = prefix[0];
+    const institution = prefix[1];
+
+    let modality = null;
+    if (parts.length === 3) {
+      modality = parts[1];
+    }
+
+    if (!study || !institution) return null; // Sanity Check
+    return {study, institution, modality}
+  }
+
   function countFoldersInPath(path) {
     try {
       let folderCount = 0;
@@ -316,55 +427,29 @@ const DataManager = ({ pageId, configPath = "" }) => {
   */
   const updateWildCards = (JsonData) => {
     // Initialization
-    let studies = new Array();
-    let institutions = new Array();
-    let modalities = new Array();
-    // get unique studies
+    let studies = new Set();
+    let institutions = new Set();
+    let modalities = new Set();
+
     try {
-      JsonData.map((value, key) => (studies.push(value.study)));
-      studies = [...new Set(studies)];
-      // Delete the empty string
-      studies = studies.filter(function (el) {
-        return el != "";
-      });
-      studies = studies.map((value, key) => ({ label: value}));
-    } catch (error) {
-      console.error('Error counting studies:', error);
-    }
-  
-    // get unique institutions
-    try {
-      JsonData.map((value, _) => (institutions.push(value.institution)));
-      institutions = [...new Set(institutions)];
-      // Delete the empty string
-      institutions = institutions.filter(function (el) {
-        return el != "";
-      });
-      institutions = institutions.map((value, key) => ({ label: value}));
-    } catch (error) {
-      console.error('Error counting institutions:', error);
+      JsonData.map((value, key) => {
+        if (value.study) studies.add(value.study);
+        if (value.institution) institutions.add(value.institution);
+        if (value.scan_type) modalities.add(value.scan_type);
+      })
+    } 
+    catch (error) {
+      console.error('Error parsing JsonData to update studies, institutions, and modalities', error);
     }
 
-    // get unique modalities
-    try {
-      JsonData.map((value, _) => (modalities.push(value.scan_type)));
-      modalities = [...new Set(modalities)];
-      // Delete the empty string
-      modalities = modalities.filter(function (el) {
-        return el != "";
-      });
-      modalities = modalities.map((value, key) => ({ label: value}));
-    } catch (error) {
-      console.error('Error counting modalities:', error);
-    }
+    // Helper function to format values
+    const formatOptions = (set) => Array.from(set).map(value => ({ label: value }));
 
-    // Update pre checks options
-    let preChecksOptions = new Object();
-    preChecksOptions.studies = studies;
-    preChecksOptions.institutions = institutions;
-    preChecksOptions.modalities = modalities;
-    setSelectedPreChecksOptions(preChecksOptions);
-
+    setSelectedPreChecksOptions({
+      studies: formatOptions(studies),
+      institutions: formatOptions(institutions),
+      modalities: formatOptions(modalities)
+    });
   }
 
   /**
@@ -944,7 +1029,7 @@ const DataManager = ({ pageId, configPath = "" }) => {
                 style={{ maxWidth: "100%", height: "auto", width: "auto" }}
                 filter
                 value={selectedNpyFolder}
-                onChange={(e) => setSelectedNpyFolder(e.value)}
+                onChange={handleNpyFolderChange}
                 options={listWSFolders}
                 optionLabel="name"
                 display="chip"
@@ -1050,11 +1135,26 @@ const DataManager = ({ pageId, configPath = "" }) => {
       {/* WILD CARDS*/}
       <Form>
           <Row className="form-group-box">
-            <Form.Label 
-              className="checks-options" 
-              htmlFor="file">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', marginBottom: '4px' }}>
+              <div>{/* empty div for centering */}</div> 
+              <Form.Label 
+                className="checks-options" 
+                htmlFor="file"
+                style={{ margin: 0, textAlign: 'center' }} 
+              >
                 Pre-checks options
-            </Form.Label>
+              </Form.Label>
+              
+              <div style={{ display: 'flex', justifyContent: 'flex-start', paddingLeft: '12px' }}>
+                {isScanningNpyFolder && (
+                  <ProgressSpinner 
+                    style={{ width: '20px', height: '20px', margin: 0 }} 
+                    strokeWidth="6" 
+                    animationDuration=".5s" 
+                  />
+                )}
+              </div>
+            </div>
             <p style={{fontSize: "13px", fontStyle: "italic", fontWeight: "normal", margin: "0 0 8px 0"}}>
               Options to select the scans to check (institutions, modalities, etc.). If empty, use a custom wildcard (e.g. 'STS*CECT*.npy')
             </p>
