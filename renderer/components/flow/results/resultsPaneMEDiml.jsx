@@ -1,0 +1,632 @@
+/* eslint-disable no-prototype-builtins */
+import { Accordion, AccordionTab } from 'primereact/accordion'
+import { Button } from 'primereact/button'
+import { Column } from 'primereact/column'
+import { DataTable } from 'primereact/datatable'
+import { Image } from 'primereact/image'
+import { Message } from 'primereact/message'
+import { OverlayPanel } from 'primereact/overlaypanel'
+import { Panel } from 'primereact/panel'
+import { SelectButton } from "primereact/selectbutton"
+import { Splitter, SplitterPanel } from 'primereact/splitter'
+import { useContext, useEffect, useRef, useState } from "react"
+import { Col, Row } from "react-bootstrap"
+import Card from "react-bootstrap/Card"
+import { toast } from "react-toastify"
+import Lightbox from "yet-another-react-lightbox"
+import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen"
+import Zoom from "yet-another-react-lightbox/plugins/zoom"
+import "yet-another-react-lightbox/styles.css"
+import { requestBackend } from "../../../utilities/requests"
+import { EXPERIMENTS, WorkspaceContext } from "../../workspace/workspaceContext"
+import { FlowInfosContext } from "../context/flowInfosContext"
+import { FlowResultsContext } from "../context/flowResultsContext"
+
+/**
+ *
+ * @returns {JSX.Element} A results pane accessed by using the menu tree
+ *
+ * @description
+ * This component is used to display the results of the pipeline according to the selected nodes.
+ *
+ */
+const ResultsPaneMEDiml = () => {
+  const { selectedResultsId, setSelectedResultsId, flowResults, showResultsPane, setShowResultsPane, isResults } = useContext(FlowResultsContext)
+  const [selectedResults, setSelectedResults] = useState([])
+  const [selectedPipelines, setSelectedPipelines] = useState([])
+  const [generatedPipelines, setGeneratedPipelines] = useState([])
+  const [isGenerating, setIsGenerating] = useState(false)
+  const { flowContent, sceneName } = useContext(FlowInfosContext)
+  const [expNames, setExpNames] = useState([])
+  const [compareMode, setCompareMode] = useState(false)
+  const [showMetrics, setShowMetrics] = useState(true)
+  const [histogramImages, setHistogramImages] = useState([])
+  const [heatMap, setHeatMap] = useState()
+  const [treePlot, setTreePlot] = useState("")
+  const [open, setOpen] = useState(false)
+  const { getBasePath, port } = useContext(WorkspaceContext)
+
+  const op = useRef(null);
+
+  /*
+  * @Description: This function is used to get the save path for the generated notebook
+  */
+  const getSavePath = (flowContent) => {
+    try {
+      let savePath = null
+      savePath = [getBasePath(EXPERIMENTS), "LEARNING", sceneName, "notebooks"].join("/")
+      return savePath
+    } catch (error) {
+      console.error("Error while getting the save path:", error)
+      return null
+    }
+  }
+
+  /*
+  * @Description: This function is used to process the flow data
+  */
+  const processFlowData = (flowContent) => {
+    try {
+      // Initialize the new dictionnary for the modified flow
+      let modifiedFlow = {
+        drawflow: {
+          Home: {
+            data: {}
+          }
+        }
+      }
+      if (!flowContent || !flowContent.nodes) {
+        throw new Error("Invalid flow content: missing nodes");
+      }
+      const newFlow = structuredClone(flowContent);
+      newFlow.nodes.forEach((node) => {
+        const nodeID = node.id.toString();
+        modifiedFlow.drawflow.Home.data[nodeID] = {
+          id: nodeID,
+          name: node.data.internal.type.replaceAll(/ |-/g, "_"),
+          data: node.data.internal.settings ? node.data.internal.settings : {},
+          class: node.className,
+          inputs: {},
+          outputs: {}
+        }
+      });
+
+      // Note : only the nodes in home module can be connected, therefore it is not necessary to check
+      // if the edges to be in the structure other than Home in the dictionnary
+      newFlow.edges.forEach((edge) => {
+        const sourceNode = newFlow.nodes.find((node) => node.id === edge.source)
+        const targetNode = newFlow.nodes.find((node) => node.id === edge.target)
+
+        const sourceNodeID = sourceNode.id
+        const targetNodeID = targetNode.id
+
+        const outputKey = "output_1"
+        const inputKey = "input_1"
+
+        if (!modifiedFlow.drawflow.Home.data[sourceNodeID].outputs[outputKey]) {
+          modifiedFlow.drawflow.Home.data[sourceNodeID].outputs[outputKey] = {
+            connections: [{ node: targetNodeID, input: inputKey }]
+          }
+        } else {
+          modifiedFlow.drawflow.Home.data[sourceNodeID].outputs[outputKey].connections.push({ node: targetNodeID, input: inputKey })
+        }
+
+        if (!modifiedFlow.drawflow.Home.data[targetNodeID].inputs[inputKey]) {
+          modifiedFlow.drawflow.Home.data[targetNodeID].inputs[inputKey] = {
+            connections: [{ node: sourceNodeID, output: outputKey }]
+          }
+        } else {
+          modifiedFlow.drawflow.Home.data[targetNodeID].inputs[inputKey].connections.push({ node: sourceNodeID, output: outputKey })
+        }
+      })
+
+      // extract selected pipelines
+      let pipIndexes = generatedPipelines.map((pipName) => expNames.indexOf(pipName))
+      let pipsToGenerate = pipIndexes.map((pipIndex) => selectedPipelines[pipIndex])
+
+      // Get notebook save path
+      let notebookSavePath = getSavePath(flowContent)
+      if (!notebookSavePath) {
+        throw new Error("Notebook save path not found");
+      }
+      modifiedFlow = {
+        ...modifiedFlow,
+        "pipelines": pipsToGenerate,
+        "pipeline_names": generatedPipelines,
+        "save_path": notebookSavePath
+      };
+
+      return modifiedFlow;
+    }
+    catch (error) {
+      toast.error("Error detected while processing the flow data", error)
+      console.error("Error detected while processing the flow data", error)
+    }
+  };
+
+  /*
+  * @Description: This function is used to generate the code of the selected pipelines
+  */
+  const generateCode = () => {
+    if (generatedPipelines.length == 0){
+      toast.error("No pipeline selected");
+      return;
+    } else {
+      try {
+        // Loading state
+        setIsGenerating(true)
+
+        // Process data
+        let newFlow = processFlowData(flowContent)
+        console.log("newFlow sent to backend", newFlow)
+        requestBackend(
+          port,
+          "/learning_MEDiml/run_all/generate_pips",
+          newFlow,
+          (response) => {
+            console.log("received results:", response)
+            setIsGenerating(false)
+            if (!response.error) {
+              console.log("Success response", response)
+              toast.success("Notebook(s) generated successfully")
+
+              // Open the notebook
+              try{
+                var pathNotebook = response.path_notebook;
+                var portNotebook = port + 1;
+                var exec = require('child_process').exec;
+                exec(`jupyter notebook --port=${portNotebook} ${pathNotebook}`,
+                    function (error, stdout, stderr) {
+                        console.log('stdout: ' + stdout);
+                        console.error('stderr: ' + stderr);
+                        if (error !== null) {
+                            console.error('exec error: ' + error);
+                        }
+                    });
+                  }
+              catch (error) {
+                console.error("Error detected while opening the notebook", error)
+              }
+              
+            } else {
+              toast.error(response.error)
+              console.error("error", response.error)
+            }
+            },
+            (error) => {
+              setIsGenerating(false)
+              toast.error("Error detected while running the experiment", error)
+          }
+        )
+      } catch (error) {
+        setIsGenerating(false)
+        toast.error("Error detected while generating the code", error)
+        console.error("Error detected while generating the code", error)
+      }
+    }
+  }
+
+  /*
+  * @Description: This function is used to render the results in a table (experiment by experiment)
+  */
+  const renderAccordions = (data, isResults) => {
+    // if data is empty, display a warning
+    if (!data || data.length === 0) {
+      return (
+        <Accordion>
+          <AccordionTab key={`AccordionTab-${0}`} header={"No results to display"}>
+            <div style={{ color: 'red' }}>Warning: Values are empty or undefined.</div>
+          </AccordionTab>
+        </Accordion>
+      );
+    }
+
+    // Else
+    try {    
+      return data.map((pipelines, indexPip) => {
+        return (
+              Object.entries(pipelines).map((item, index) => {
+                return (
+                  <Accordion key={`Accordion-${index+indexPip}`}>
+                    <AccordionTab disabled={!isResults} key={`AccordionTab-${index+indexPip}`} header={Object.keys(item[1])[0]}>
+                      {renderAccordionTabs(item[1], index, isResults)}
+
+                      {/*Histograms*/}
+                      <Accordion key={`AccordionTab-Histograms-${index+indexPip}`}>
+                        <AccordionTab disabled={!isResults} key={`AccordionTab-Figures-${index+indexPip}`} header={"Analysis Plots"}>
+                          <Lightbox
+                            open={open}
+                            plugins={[Zoom, Fullscreen]}
+                            close={() => setOpen(false)}
+                            slides={[
+                              { src: histogramImages[indexPip+index] },
+                            ]}
+                            carousel={{ finite: true }}
+                          />
+                        </AccordionTab>
+                      </Accordion>
+                    </AccordionTab>
+                  </Accordion>
+                );
+              })
+            
+      )});
+    } catch (error) {
+      toast.error("Invalid workflow", error)
+    }
+  };
+  
+  const renderAccordionTabs = (item, index, isResults) => {
+    return Object.keys(item).map((currentExp, _) => {
+      if (expNames.includes(currentExp)){
+        return Object.keys(item[currentExp]).map((key, dataIdx) => {
+          let values = item[currentExp][key];
+
+          let keysList = Object.keys(values);
+
+          // Add experiment name to the list of keys
+          if (expNames.length > 0) {
+            if (!values.hasOwnProperty("Experiment")) {
+              values["Experiment"] = currentExp;
+            }
+            if (keysList.includes("Experiment")){
+              keysList.splice(keysList.indexOf("Experiment"), 1);
+            }
+            keysList.unshift("Experiment");
+          }
+
+          // If no metrics are found, display a warning
+          if (!values || keysList.length === 0 || (expNames.length > 0 && keysList.length === 1)){
+            return (
+              <Accordion key={key}>
+                <AccordionTab key={`AccordionTab-${index}-${dataIdx}`} header={key}>
+                  <div style={{ color: 'red' }}>Warning: Values are empty or undefined.</div>
+                </AccordionTab>
+              </Accordion>
+            );
+          }
+          
+          // Display the metrics in a table
+          return (
+            <Accordion key={key}>
+              <AccordionTab disabled={!isResults} key={`AccordionTab-${dataIdx+index+1}`} header={key}>
+                <DataTable value={[values]}>
+                  {keysList.map((key1, columnIndex) => (
+                    <Column key={key1} field={key1} header={key1} style={columnIndex % 2 !== 0 && { backgroundColor: 'lightblue' }}/>
+                  ))}
+                </DataTable>
+              </AccordionTab>
+            </Accordion>
+          );
+        });
+      }
+    });
+  };
+
+  /*
+  * @Description: This function is used to render the results in a table in compare mode
+  */
+  const renderAccordionCompared = (data, isResults) => {
+
+    try {
+      // if data is empty, display a warning
+      if (!data || data.length === 0) {
+        return (
+          <Accordion>
+            <AccordionTab key={`AccordionTab-${0}`} header={"No results to display"}>
+              <div style={{ color: 'red' }}>Warning: Values are empty or undefined.</div>
+            </AccordionTab>
+          </Accordion>
+        );
+      }
+      let values = [[]]
+      let MetricsKeysList = []
+      let keysList = []
+
+      // Find unique keys in both experiments
+      for (let index = 0; index < data.length; index++) {
+        let item = data[index];
+        // loop through item
+        Object.keys(item).map((key, _) => {
+          if (Object.keys(item[key]).length > 1){
+            Object.keys(item[key]).map((key1, _) => {
+              if (expNames.includes(key1)){
+                keysList.push(Object.keys(item[key][key1]));
+              }
+            });
+          }
+        });
+        //keysList.push(Object.keys(item[expNames[index]]));
+      }
+      keysList = keysList.reduce((a, b) => a.filter(c => b.includes(c)));
+
+      // Fill values for Data Table
+      let keyIndex = 0;
+      for (const key of keysList) {
+        values[keyIndex] = []
+        for (let index = 0; index < data.length; index++) {
+            let item = data[index];
+            // loop through item
+            Object.keys(item).map((key1, _) => {
+              if (Object.keys(item[key1]).length > 1){
+                Object.keys(item[key1]).map((key2, _) => {
+                  if (expNames.includes(key2)){
+                    let currectKeys = Object.keys(item[key1][key2][key]);
+
+                    if (currectKeys.length > 1){
+                      values[keyIndex][index] = item[key1][key2][key];
+                      MetricsKeysList = Object.keys(item[key1][key2][key]);
+
+                      // Add experiment name to the list of keys
+                      if (!values.hasOwnProperty("Experiment")) {
+                        values[keyIndex][index]["Experiment"] = key1 + "_" + key2;
+                      }
+                      if (MetricsKeysList.includes("Experiment")){
+                        MetricsKeysList.splice(MetricsKeysList.indexOf("Experiment"), 1);
+                      }
+                      MetricsKeysList.unshift("Experiment");
+                    }
+                  }
+                });
+              }
+            });
+          }
+
+          /*const item = data[index];
+          if (Object.keys(item[expNames[index]][key]).length > 1){
+            values[keyIndex][index] = item[expNames[index]][key];
+            MetricsKeysList = Object.keys(item[expNames[index]][key]);*/
+        
+        keyIndex++;
+      }
+
+      // If no metrics are found, display a warning
+      if (!values || MetricsKeysList.length === 0 || (expNames.length > 0 && MetricsKeysList.length === 1)) {
+        return keysList.map((item, key) => {
+          <Accordion key={`Accordion-${key}`}>
+            <AccordionTab key={`AccordionTab-${key}`} header={item}>
+              <div style={{ color: 'red' }}>Warning: Values are empty or undefined.</div>
+            </AccordionTab>
+          </Accordion>
+        });
+      }
+      
+      // Display the metrics in a table
+      return <>
+      {(showMetrics) && (<Card className="text-center">
+        <Card.Title>Metrics</Card.Title>
+        {keysList.map((item, key) => {
+          return (
+          <Accordion key={`Accordion-${key}`}>
+            <AccordionTab disabled={!isResults} key={`AccordionTab-${key}`} header={item}>
+                <DataTable value={values[key]} stripedRows>
+                  {MetricsKeysList.map((key1, columnIndex) => (
+                    <Column key={key1} field={key1} header={key1}/>
+                  ))}
+                </DataTable>
+            </AccordionTab>
+          </Accordion>
+          );
+        })}
+      </Card>)}
+
+      {/*Figures*/}
+      <Card className="text-center">
+        <Card.Title>Plots</Card.Title>
+          <Accordion>
+            <AccordionTab disabled={!isResults} key={`AccordionTab-Figures`} header={"Compare Analysis Plots"}>
+              {histogramImages.length > 0 ? 
+                (<Panel header="Feature Importance" toggleable>
+                    <Splitter >
+                      {histogramImages.map((image, index) => (
+                        <SplitterPanel key={index}>
+                          <Image key={index} src={histogramImages[index]} alt="Image" width="300" preview/>
+                        </SplitterPanel>
+                      ))}
+                    </Splitter>
+                </Panel>) : (
+                <Panel header="Tree Plot" toggleable>
+                  <div style={{ color: 'red' }}>No feature importance histogram generated.</div>
+                </Panel>
+              )}
+                      
+              {(heatMap === undefined || heatMap === "") && (
+                <Panel header="Heatmap" toggleable>
+                  <div style={{ color: 'red' }}>No heatmap generated.</div>
+                </Panel>
+              )}
+              {(treePlot === undefined || treePlot === "") && (
+                <Panel header="Tree Plot" toggleable>
+                  <div style={{ color: 'red' }}>No tree plot generated.</div>
+                </Panel>
+              )}
+              {(heatMap !== undefined && heatMap !== "") && (
+                <Panel header="Heatmap" toggleable>
+                  <Image key={"Heatmap"} src={heatMap} alt="Image" width="500" preview/>
+                </Panel>
+              )}
+              {(treePlot !== undefined && treePlot !== "") && (
+                <Panel header="Tree Plot" toggleable>
+                  <Image key={"treePlot"} src={treePlot} alt="Image" width="500" preview/>
+                </Panel>
+              )}
+            </AccordionTab>
+        </Accordion>
+      </Card>
+    </>
+    } catch (error) {
+      toast.error("Invalid workflow for compare mode", error)
+      return (
+        <Accordion>
+          <AccordionTab key={`AccordionTab-${0}`} header={"Error occured, no results to display"}>
+            <div style={{ color: 'red' }}>Warning: Values are empty or undefined.</div>
+          </AccordionTab>
+        </Accordion>
+      );
+    }
+  };
+
+  const handleClose = () => setShowResultsPane(false)
+
+  useEffect(() => {
+    if (flowContent.nodes) {
+      const nativeImage = require("electron").nativeImage
+      let histograms = []
+      flowContent.nodes.map((node) => {
+        if (node.type === "Analyze"){
+          // Images
+          if (node.data.internal.results.hasOwnProperty("figures")){
+            // Heatmap
+            if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
+              if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
+                if (node.data.internal.results.figures.heatmap.hasOwnProperty("path")){
+                    const image = nativeImage.createFromPath(node.data.internal.results.figures.heatmap.path)
+                    const url = image.toDataURL()
+                    setHeatMap(url)
+                }
+              }
+            }
+            // Tree Plot
+            if (node.data.internal.results.figures.hasOwnProperty("treeplot")){
+              if (node.data.internal.results.figures.hasOwnProperty("treeplot")){
+                if (node.data.internal.results.figures.treeplot.hasOwnProperty("treeplot")){
+                    setTreePlot(node.data.internal.results.figures.treeplot.path)
+                }
+              }
+            }
+          }
+          // Results - Metrics
+          if (node.data.internal.results.hasOwnProperty("results_avg")){
+            setSelectedResults(node.data.internal.results.results_avg)
+            // Histograms
+            try{
+              for (let index = 0; index < node.data.internal.results.results_avg.length; index++) {
+                Object.entries(node.data.internal.results.results_avg[index]).map((item, _) => {
+                  Object.entries(item[1]).map((itemAnalysis, _) => {
+                    Object.entries(itemAnalysis[1]).map((resultAnalysis, _) => {
+                      let result = resultAnalysis[1];
+                          if (result.hasOwnProperty("histogram")){
+                            if (result.histogram.hasOwnProperty("path")){
+                              if(!histograms.includes(result.histogram.path)){
+                                const image = nativeImage.createFromPath(result.histogram.path)
+                                const url = image.toDataURL()
+                                histograms.push(url)
+                              }
+                            }
+                          }
+                        })
+                  });
+                });
+              }
+            } catch (error) {
+              console.error("Error detected while processing histograms", error)
+            }
+          }
+          if (node.data.internal.results.hasOwnProperty("pipelines")){
+            setSelectedPipelines(node.data.internal.results.pipelines)
+          }
+          if (node.data.internal.results.hasOwnProperty("experiments")){
+            setExpNames(node.data.internal.results.experiments)
+          }
+        }
+      })
+      if (histograms.length > 0) {
+        setHistogramImages(histograms)
+      }
+    }
+  }, [flowContent])
+
+  return (
+    <>
+      <Col className=" padding-0 results-Panel">
+        <Card>
+          <Card.Header className="d-flex justify-content-between align-items-center">
+            <div className="flex justify-content-center">
+              <div className="gap-3 results-header">
+                <div className="flex align-items-center">
+                  <h5>Results</h5>
+                </div>
+              </div>
+            </div>
+            {/*Button to clean all results*/}
+            {/*<Button 
+                  severity="danger"
+                  rounded 
+                  text
+                  aria-label="Clean"
+                  icon="pi pi-trash"
+                  onClick={() => cleanResults()} 
+                  style={{ width: 'fit-content', margin: 'auto' }}
+              />*/}
+            <Button icon="pi pi-times" rounded text raised severity="danger" aria-label="Cancel" onClick={handleClose}/>
+          </Card.Header>
+          <Card.Body>
+            {
+              <Row className="form-group-box justify-content-center">
+                {/*Button to compare*/}
+                <Button 
+                  label={compareMode? ("Compare Mode: ON") : ("Compare Mode: OFF")}
+                  severity={compareMode? ("success") : ("danger")}
+                  rounded 
+                  raised 
+                  icon="pi pi-power-off"
+                  onClick={() => setCompareMode(!compareMode)} 
+                  style={{ width: 'fit-content', margin: 'auto' }}
+                />
+                
+                {/*Button to toggle metrics*/}
+                {(compareMode) && (<Button 
+                  label={showMetrics?  ("Hide Metrics") : ("Show Metrics")}
+                  severity={showMetrics? ("info") : ("success")}
+                  rounded 
+                  raised 
+                  icon={showMetrics? ("pi pi-eye-slash") : ("pi pi-eye")}
+                  onClick={() => setShowMetrics(!showMetrics)} 
+                  style={{ width: 'fit-content', margin: 'auto' }}
+                />)}
+
+                {/*Button to generate pipeline code*/}
+                <Button 
+                  label="Generate"
+                  severity="secondary"
+                  rounded 
+                  raised 
+                  icon="pi pi-code"
+                  onClick={(e) => op.current.toggle(e)} 
+                  style={{ width: 'fit-content', margin: 'auto' }}
+                />
+              </Row>
+            }
+            {compareMode ? (renderAccordionCompared(selectedResults, isResults)) : (renderAccordions(selectedResults, isResults))}
+            {/*Code generation dialog*/}
+            <OverlayPanel ref={op} showCloseIcon>
+                {expNames.length > 0 ? (
+                  <div className="card justify-content-center gap-3">
+                    <SelectButton
+                      value={generatedPipelines} 
+                      onChange={(e) => setGeneratedPipelines(e.value)} 
+                      optionLabel="name" 
+                      options={expNames.map((name, index) => ({ name: `Pipeline ${index + 1}: ${name}`, value: name }))}
+                      multiple
+                    />
+                    <Button 
+                      label="Generate"
+                      severity="secondary"
+                      rounded 
+                      raised 
+                      onClick={() => generateCode()} 
+                      disabled={generatedPipelines.length === 0}
+                      loading={isGenerating}
+                      style={{ width: 'fit-content', margin: 'auto' }}
+                    />
+                  </div>) : (<Message severity="error" text="No pipelines detected"/>
+                )}
+            </OverlayPanel>
+          </Card.Body>
+        </Card>
+      </Col>
+    </>
+  )
+}
+
+export default ResultsPaneMEDiml

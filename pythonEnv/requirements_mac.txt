@@ -1,0 +1,5 @@
+mediml
+jupytext
+ipykernel
+pymongo==4.7.3
+pydantic<2

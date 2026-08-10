@@ -20,7 +20,7 @@ This application is part of the [MEDomics](https://github.com/MEDomicsLab/MEDomi
 
 ## Contact
 
-For any question or support, please contact <medomics.info@gmail.com>.
+For any question or support, please [contact us](https://medomicslab.gitbook.io/mediml-app-docs/forms/contact-us).
 
 ## Disclaimer
 

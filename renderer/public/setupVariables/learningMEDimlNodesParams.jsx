@@ -1,0 +1,125 @@
+import learningMEDimlDefaultSettings from "./possibleSettings/learningMEDiml/learningMEDimlDefaultSettings"
+/* eslint-disable */
+
+export const sceneDescription = {
+  extension: "mediml",
+  externalFolders: ["models", "notebooks"],
+  internalFolders: []
+}
+
+const nodesParams = {
+  split : {
+    type: "Split",
+    section: "initialization",
+    classes: "object segmentation view",
+    nbInput: 0,
+    nbOutput: 1,
+    input: [],
+    output: ["split_data"],
+    img: "split.png",
+    title: "Split",
+    possibleSettings: {
+      defaultSettings: learningMEDimlDefaultSettings.split
+    }
+  },
+  design: {
+    type: "Design",
+    section: "initialization",
+    classes: "object segmentation view",
+    nbInput: 1,
+    nbOutput: 1,
+    input: ["split_data"],
+    output: ["design_data"],
+    img: "optimize.png",
+    title: "Design",
+    possibleSettings: {
+      defaultSettings: learningMEDimlDefaultSettings.design
+    }
+  },
+  data: {
+    type: "Data",
+    section: "initialization",
+    classes: "object segmentation view",
+    nbInput: 1,
+    nbOutput: 1,
+    input: ["design_data"],
+    output: ["data"],
+    img: "dataset.png",
+    title: "Data",
+    possibleSettings: {
+      defaultSettings: learningMEDimlDefaultSettings.data
+    }
+  },
+  cleaning: {
+    type: "Cleaning",
+    section: "Machine Learning",
+    classes: "object segmentation view",
+    nbInput: 1,
+    nbOutput: 1,
+    input: ["data"],
+    output: ["cleaning_data"],
+    img: "clean.png",
+    title: "Cleaning",
+    possibleSettings: {
+      defaultSettings: learningMEDimlDefaultSettings.cleaning
+    }
+  },
+  normalization: {
+    type: "Normalization",
+    section: "Machine Learning",
+    classes: "object segmentation view",
+    nbInput: 1,
+    nbOutput: 1,
+    input: ["data", "data", "cleaning_data"],
+    output: ["normalization_data"],
+    img: "normalize.png",
+    title: "Normalization",
+    possibleSettings: {
+      defaultSettings: learningMEDimlDefaultSettings.normalization
+    }
+  },
+  feature_reduction: {
+    type: "FeatureReduction",
+    section: "Machine Learning",
+    classes: "object segmentation view",
+    nbInput: 1,
+    nbOutput: 1,
+    input: ["data", "cleaning_data", "normalization_data"],
+    output: ["feature_reduction_data"],
+    img: "clear.png",
+    title: "Feature Reduction",
+    possibleSettings: {
+      defaultSettings: learningMEDimlDefaultSettings.feature_reduction
+    }
+  },
+  radiomics_learner: {
+    type: "RadiomicsLearner",
+    section: "Machine Learning",
+    classes: "object segmentation view",
+    nbInput: 1,
+    nbOutput: 1,
+    input: ["feature_reduction_data", "cleaning_data", "data", "normalization_data"],
+    output: ["radiomics_learner_data"],
+    img: "compare_models.png",
+    title: "Radiomics learner",
+    possibleSettings: {
+      defaultSettings: learningMEDimlDefaultSettings.radiomics_learner
+    }
+  },
+  analyze: {
+    type: "Analyze",
+    section: "analysis",
+    classes: "object segmentation view",
+    nbInput: 1,
+    nbOutput: 0,
+    input: ["radiomics_learner_data"],
+    output: ["analyze_data"],
+    img: "analyze.png",
+    title: "Analyze",
+    possibleSettings: {
+      defaultSettings: learningMEDimlDefaultSettings.analyze
+    }
+  },
+}
+
+export default nodesParams
