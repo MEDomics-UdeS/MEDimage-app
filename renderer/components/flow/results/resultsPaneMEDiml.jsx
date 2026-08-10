@@ -213,7 +213,7 @@ const ResultsPaneMEDiml = () => {
     // if data is empty, display a warning
     if (!data || data.length === 0) {
       return (
-        <Accordion style={{ maxWidth: '30px' }}>
+        <Accordion>
           <AccordionTab key={`AccordionTab-${0}`} header={"No results to display"}>
             <div style={{ color: 'red' }}>Warning: Values are empty or undefined.</div>
           </AccordionTab>
@@ -242,13 +242,6 @@ const ResultsPaneMEDiml = () => {
                               { src: histogramImages[indexPip+index] },
                             ]}
                             carousel={{ finite: true }}
-                          />
-                          <Image 
-                            key={indexPip+index} 
-                            src={histogramImages[indexPip+index]} 
-                            alt="Image" 
-                            width="300" 
-                            onClick={() => setOpen(true)}
                           />
                         </AccordionTab>
                       </Accordion>
@@ -487,7 +480,9 @@ const ResultsPaneMEDiml = () => {
             if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
               if (node.data.internal.results.figures.hasOwnProperty("heatmap")){
                 if (node.data.internal.results.figures.heatmap.hasOwnProperty("path")){
-                    setHeatMap(node.data.internal.results.figures.heatmap.path)
+                    const image = nativeImage.createFromPath(node.data.internal.results.figures.heatmap.path)
+                    const url = image.toDataURL()
+                    setHeatMap(url)
                 }
               }
             }
