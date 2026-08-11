@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react"
+import { useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { toast } from "react-toastify"
 
 // Import utilities
@@ -36,12 +36,12 @@ import { Button } from 'primereact/button'
 import { OverlayPanel } from 'primereact/overlaypanel'
 import { SelectButton } from "primereact/selectbutton"
 import { useRef } from "react"
+import { getCollectionData } from "../dbComponents/utils"
 import { FlowInfosContext } from "../flow/context/flowInfosContext"
+import { PageInfosContext } from "../mainPages/moduleBasics/pageInfosContext"
 import { overwriteMEDDataObjectContent } from "../mongoDB/mongoDBUtils"
 import { DataContext } from "../workspace/dataContext"
 import { MEDDataObject } from "../workspace/NewMedDataObject"
-import { PageInfosContext } from "../mainPages/moduleBasics/pageInfosContext"
-import { getCollectionData } from "../dbComponents/utils"
 
 // Static nodes parameters
 const staticNodesParams = nodesParams
