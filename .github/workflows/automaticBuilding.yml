@@ -54,7 +54,7 @@ jobs:
           echo "::set-output name=VERSION::${VERSION#v}"
 
       - name: Archive Windows
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-built
           path: ./build/dist/MEDiml-app-${{ env.VERSION }}-win.exe
@@ -113,7 +113,7 @@ jobs:
           VERSION: ${{ steps.get-tag.outputs.VERSION }}
 
       - name: Archive Linux
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: linux-built-ubuntu
           path: ./build/dist/MEDiml-app-${{ env.VERSION }}-ubuntu.deb
@@ -224,7 +224,7 @@ jobs:
           echo "::set-output name=VERSION::${VERSION#v}"
 
       - name: Archive Mac
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mac-built
           path: ./build/dist/MEDiml-app-${{ env.VERSION }}-mac.dmg
