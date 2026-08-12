@@ -21,6 +21,7 @@
       "./pythonCode/**/*",
       "./baseFiles/**/*",
       "./go_executables/**/*",
+      "./pythonEnv/**/*",
       "!./pythonCode/venv/**/*",
       "!./pythonCode/.idea/**/*",
       "!*.git/**/*"
@@ -28,7 +29,8 @@
     "asarUnpack": [
       "./pythonCode/**/*",
       "./baseFiles/**/*",
-      "./go_executables/**/*"
+      "./go_executables/**/*",
+      "./pythonEnv/**/*"
     ],
     "extends": null,
     "mac": {
