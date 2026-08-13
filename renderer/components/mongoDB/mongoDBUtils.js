@@ -105,9 +105,21 @@ export async function insertMEDDataObjectIfNotExists(medData, path = null, jsonD
       throw new Error('medData.type is required and must be a non-empty string', medData)
     }
 
-    // Skip npy files
-    if (medData.type === "npy" || (path && path.endsWith(".npy"))) {
-      console.log(`Skipping npy file: ${medData.name}`)
+    // Skip npy, DICOM, and NIfTI files
+    if (medData.type === "npy" || 
+      (path && path.endsWith(".npy")) || 
+      (path && path.endsWith(".dcm")) || 
+      (path && path.endsWith(".nii")) || 
+      (path && path.endsWith(".nii.gz"))
+    ) {
+      console.log(
+        `Skipping file: ${medData.name}` +
+        (medData.type
+          ? ` of type ${medData.type}`
+          : path
+            ? ` at path ${path}`
+            : '')
+      )
       return null
     }
 
