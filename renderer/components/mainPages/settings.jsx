@@ -111,6 +111,17 @@ const SettingsPage = ({ pageId = "settings", isActive = true }) => {
     })
   }, [])
 
+  /**
+   * Get the settings from the main process
+   * if the conda path is defined in the settings, set it
+   * Check if the server is running and set the state
+   */
+  useEffect(() => {
+    if (bundledPythonPath && !condaPath) {
+      setCondaPath(bundledPythonPath)
+    }
+  }, [bundledPythonPath])
+
   useEffect(() => {
     if (!isActive) return
     checkMongoIsRunning()
