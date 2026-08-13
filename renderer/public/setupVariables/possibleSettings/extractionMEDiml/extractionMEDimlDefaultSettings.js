@@ -1,5 +1,7 @@
 const extractionDefaultSettings = {
   input: {
+    input_path: "",
+    input_type: "",
     filepath: "",
     rois: {}
   },

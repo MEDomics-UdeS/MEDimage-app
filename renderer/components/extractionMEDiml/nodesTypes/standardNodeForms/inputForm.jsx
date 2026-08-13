@@ -1,6 +1,6 @@
 import { Button } from "primereact/button"
 import { Dropdown } from "primereact/dropdown"
-import React, { useContext, useEffect, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import { Card, Col, Form, Row } from "react-bootstrap"
 import { toast } from "react-toastify"
 import { requestBackend } from "../../../../utilities/requests"
@@ -30,6 +30,10 @@ const InputForm = ({ nodeForm, changeNodeForm, enableView }) => {
   const { globalData } = useContext(DataContext) // We get the global data from the context
   const pageId = "extractionMEDiml" // pageId is used to identify the page in the backend
 
+  const areListsIdentical = (listA, listB) => {
+    return listA.length === listB.length && listA.every((value, index) => value === listB[index]);
+  }
+
   useEffect(() => {
     if (globalData !== undefined) {
       let keys = Object.keys(globalData)
@@ -48,8 +52,17 @@ const InputForm = ({ nodeForm, changeNodeForm, enableView }) => {
       const uniqueDcmFolders = Array.from(new Set(dcmFolders.map((folder) => folder.value))).map((value) => {
         return dcmFolders.find((folder) => folder.value === value)
       })
-      setListNpyFiles(uniqueNpyFiles)
-      setListDicomFolders(uniqueDcmFolders)
+      if (!areListsIdentical(uniqueNpyFiles, listNpyFiles)) {
+        setListNpyFiles(uniqueNpyFiles)
+      }
+      if (!areListsIdentical(uniqueDcmFolders, listDicomFolders)) {
+        setListDicomFolders(uniqueDcmFolders)
+      }
+    }
+    if (nodeForm.input_path && nodeForm.input_type === "npy") {
+      setSelectedFile(nodeForm.input_path)
+    } else if (nodeForm.input_path && nodeForm.input_type === "dicom") {
+      setSelectedDicomFolder(nodeForm.input_path)
     }
   }, [])
 
@@ -58,9 +71,25 @@ const InputForm = ({ nodeForm, changeNodeForm, enableView }) => {
     if (fileList.length > 0) {
       fileList = fileList[0].path
       setSelectedFile(fileList)
+      changeNodeForm({
+        ...nodeForm,
+        target: {name: "input_path", value: fileList}
+      })
+      changeNodeForm({
+        ...nodeForm,
+        target: {name: "input_type", value: "npy"}
+      })
     }
     else {
       setSelectedFile(event.target.files.path)
+      changeNodeForm({
+        ...nodeForm,
+        target: {name: "input_path", value: event.target.files.path}
+      })
+      changeNodeForm({
+        ...nodeForm,
+        target: {name: "input_type", value: "npy"}
+      })
     }
   };
 
@@ -209,7 +238,17 @@ const InputForm = ({ nodeForm, changeNodeForm, enableView }) => {
               filter
               style={{ maxWidth: "300px" }}
               value={selectedDicomFolder}
-              onChange={(e) => setSelectedDicomFolder(e.value)}
+              onChange={(e) => {
+                setSelectedDicomFolder(e.value)
+                changeNodeForm({
+                  ...nodeForm,
+                  target: {name: "input_path", value: e.value}
+                })
+                changeNodeForm({
+                  ...nodeForm,
+                  target: {name: "input_type", value: "dicom"}
+                })
+              }}
               options={listDicomFolders}
               optionLabel="name"
               className="w-full md:w-14rem margintop8px"
