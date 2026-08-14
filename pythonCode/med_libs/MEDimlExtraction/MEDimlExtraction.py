@@ -68,8 +68,8 @@ class ExtractionWorkflow:
         try:
             # Create the node object from the node data
             new_node = Node.create_node(node_data)
-        except ValueError:
-            raise
+        except Exception as e:
+            raise ValueError(f"Error creating node {node_id}: {str(e)}")
         
         nodes_list.append(new_node)
         
@@ -388,8 +388,8 @@ class MEDimlExtraction:
                 # Get the path to the file created by MEDiml
                 file = dm.path_to_objects[0]
 
-            # Check if the file is a valid pickle object
-            if file and allowed_pickle_object(file):
+            # Load and return the MEDscan object
+            try:
                 filename = os.path.basename(file)
                 file_path = os.path.join(UPLOAD_FOLDER, filename)
 
@@ -407,8 +407,8 @@ class MEDimlExtraction:
                 up_file_infos["name"] = filename
                 up_file_infos["rois_list"] = rois_list
                 return up_file_infos
-            else:
-                return {"error": "The file you tried to upload doesn't have the right format."}
+            except Exception as e:
+                return {"error": f"An error occured while loading the file: {e}"}
             
         except Exception as e:
             return {"error": str(e)}
