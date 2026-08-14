@@ -751,6 +751,13 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
   const onRun = useCallback(() => {
     console.log("Running workflow")
 
+    // Check if any warnings exist in the workflow
+    const warningExists = nodes.some((node) => node.data.internal.hasWarning.state === true)
+    if (warningExists) {
+      toast.warn("Some nodes have warnings. Please check the nodes before running the workflow.")
+      return
+    }
+
     // Transform the flow instance to a dictionnary compatible with the backend
     let newFlow = transformFlowInstance()
 
@@ -1030,6 +1037,7 @@ const FlowCanvas = ({ workflowType, setWorkflowType }) => {
         // optional props
         onDeleteNode={deleteNode}
         isGoodConnection={isGoodConnection}
+        workflowType={workflowType}
         // represents the visual of the workflow
 
         uiTopRight={
