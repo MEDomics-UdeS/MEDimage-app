@@ -1,8 +1,7 @@
 import { app } from "electron"
-import { execCallbacksForChildWithNotifications } from "../utils/pythonEnv"
-import { mainWindow, getMongoDBPath } from "../background"
-import { getBundledPythonEnvironment } from "../utils/pythonEnv"
 import fs from "fs"
+import { getMongoDBPath, mainWindow } from "../background"
+import { execCallbacksForChildWithNotifications, getBundledPythonEnvironment } from "../utils/pythonEnv"
 
 //**** LOG ****// This is used to send the console.log messages to the main window
 const originalConsoleLog = console.log
@@ -114,11 +113,12 @@ export const installMongoDB = async () => {
     return getMongoDBPath() !== null
   } else if (process.platform === "linux") {
     const linuxURLDict = {
+      "Ubuntu 24.04 aarch64": "https://fastdl.mongodb.org/linux/mongodb-linux-aarch64-ubuntu2404-8.0.9.tgz",
       "Ubuntu 24.04 x86_64": "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2404-8.0.9.tgz",
-      "Ubuntu 20.04 x86_64": "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2004-7.0.15.tgz",
+      "Ubuntu 22.04 aarch64": "https://fastdl.mongodb.org/linux/mongodb-linux-aarch64-ubuntu2204-7.0.15.tgz",
       "Ubuntu 22.04 x86_64": "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-7.0.15.tgz",
       "Ubuntu 20.04 aarch64": "https://fastdl.mongodb.org/linux/mongodb-linux-aarch64-ubuntu2004-7.0.15.tgz",
-      "Ubuntu 22.04 aarch64": "https://fastdl.mongodb.org/linux/mongodb-linux-aarch64-ubuntu2204-7.0.15.tgz",
+      "Ubuntu 20.04 x86_64": "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2004-7.0.15.tgz",
       "Debian 10 x86_64": "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-debian10-7.0.15.tgz",
       "Debian 11 x86_64": "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-debian11-7.0.15.tgz",
     }
